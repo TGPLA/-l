@@ -8,9 +8,10 @@ interface BookCardProps {
   onClick: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  darkMode: boolean;
 }
 
-export function BookCard({ book, onClick, onDelete, onEdit }: BookCardProps) {
+export function BookCard({ book, onClick, onDelete, onEdit, darkMode }: BookCardProps) {
   const [showDelete, setShowDelete] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   
@@ -22,9 +23,9 @@ export function BookCard({ book, onClick, onDelete, onEdit }: BookCardProps) {
     <div 
       style={{
         position: 'relative',
-        backgroundColor: '#ffffff',
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
         borderRadius: '0.5rem',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        boxShadow: darkMode ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform 0.2s',
@@ -43,7 +44,7 @@ export function BookCard({ book, onClick, onDelete, onEdit }: BookCardProps) {
       <div onClick={onClick} style={{ padding: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>
         <div style={{
           aspectRatio: '3/4',
-          background: 'linear-gradient(to bottom right, #dbeafe, #f3e8ff)',
+          background: darkMode ? 'linear-gradient(to bottom right, #1e3a5f, #2d1f4e)' : 'linear-gradient(to bottom right, #dbeafe, #f3e8ff)',
           borderRadius: '0.5rem',
           marginBottom: getResponsiveValue({ mobile: '0.5rem', tablet: '0.75rem' }),
           display: 'flex',
@@ -54,19 +55,19 @@ export function BookCard({ book, onClick, onDelete, onEdit }: BookCardProps) {
           {book.coverUrl ? (
             <img src={book.coverUrl} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <svg style={{ width: getResponsiveValue({ mobile: '3rem', tablet: '4rem' }), height: getResponsiveValue({ mobile: '3rem', tablet: '4rem' }), color: '#9ca3af' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg style={{ width: getResponsiveValue({ mobile: '3rem', tablet: '4rem' }), height: getResponsiveValue({ mobile: '3rem', tablet: '4rem' }), color: darkMode ? '#6b7280' : '#9ca3af' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           )}
         </div>
-        <h3 style={{ fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '1rem' }) }}>{book.title}</h3>
-        <p style={{ fontSize: getResponsiveValue({ mobile: '0.75rem', tablet: '0.875rem' }), color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</p>
+        <h3 style={{ fontWeight: 600, color: darkMode ? '#f9fafb' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '1rem' }) }}>{book.title}</h3>
+        <p style={{ fontSize: getResponsiveValue({ mobile: '0.75rem', tablet: '0.875rem' }), color: darkMode ? '#9ca3af' : '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.author}</p>
         <div style={{ marginTop: '0.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: darkMode ? '#9ca3af' : '#6b7280', marginBottom: '0.25rem' }}>
             <span>掌握进度</span>
             <span>{progress}%</span>
           </div>
-          <div style={{ height: '0.5rem', backgroundColor: '#e5e7eb', borderRadius: '9999px', overflow: 'hidden' }}>
+          <div style={{ height: '0.5rem', backgroundColor: darkMode ? '#374151' : '#e5e7eb', borderRadius: '9999px', overflow: 'hidden' }}>
             <div 
               style={{ 
                 height: '100%', 
@@ -76,7 +77,7 @@ export function BookCard({ book, onClick, onDelete, onEdit }: BookCardProps) {
               }}
             />
           </div>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+          <p style={{ fontSize: '0.75rem', color: darkMode ? '#6b7280' : '#9ca3af', marginTop: '0.25rem' }}>
             {book.questionCount} 道题目
           </p>
         </div>
@@ -139,9 +140,10 @@ interface AddBookModalProps {
   isOpen: boolean;
   onClose: () => void;
   book?: Book;
+  darkMode: boolean;
 }
 
-export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
+export function AddBookModal({ isOpen, onClose, book, darkMode }: AddBookModalProps) {
   const { addBook, updateBook } = useApp();
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -197,19 +199,19 @@ export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
       padding: '1rem',
     }}>
       <div style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: darkMode ? '#1f2937' : '#ffffff',
         borderRadius: '0.75rem',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         maxWidth: '28rem',
         width: '100%',
         padding: '1.5rem',
       }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: darkMode ? '#f9fafb' : '#111827', marginBottom: '1rem' }}>
           {book ? '编辑书籍' : '添加新书籍'}
         </h2>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
               书名 *
             </label>
             <input
@@ -222,13 +224,15 @@ export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
                 outline: 'none',
+                backgroundColor: darkMode ? '#374151' : '#ffffff',
+                color: darkMode ? '#f9fafb' : '#111827',
               }}
               placeholder="请输入书名"
               required
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
               作者 *
             </label>
             <input
@@ -241,13 +245,15 @@ export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
                 outline: 'none',
+                backgroundColor: darkMode ? '#374151' : '#ffffff',
+                color: darkMode ? '#f9fafb' : '#111827',
               }}
               placeholder="请输入作者"
               required
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
               封面链接（可选）
             </label>
             <input
@@ -260,6 +266,8 @@ export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
                 outline: 'none',
+                backgroundColor: darkMode ? '#374151' : '#ffffff',
+                color: darkMode ? '#f9fafb' : '#111827',
               }}
               placeholder="https://example.com/cover.jpg"
             />
@@ -274,7 +282,7 @@ export function AddBookModal({ isOpen, onClose, book }: AddBookModalProps) {
                 border: '1px solid #d1d5db',
                 borderRadius: '0.5rem',
                 backgroundColor: 'transparent',
-                color: '#374151',
+                color: darkMode ? '#e5e7eb' : '#374151',
                 cursor: 'pointer',
               }}
             >
@@ -306,7 +314,7 @@ interface BookShelfProps {
 }
 
 export function BookShelf({ onSelectBook }: BookShelfProps) {
-  const { books, deleteBook } = useApp();
+  const { books, deleteBook, settings } = useApp();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | undefined>();
 
@@ -328,12 +336,12 @@ export function BookShelf({ onSelectBook }: BookShelfProps) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
+    <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
       <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: getResponsiveValue({ mobile: '1.5rem', tablet: '2rem' }), flexDirection: getResponsiveValue({ mobile: 'column', tablet: 'row' }), gap: getResponsiveValue({ mobile: '1rem', tablet: '0' }), alignItems: getResponsiveValue({ mobile: 'flex-start', tablet: 'center' }) }}>
           <div>
-            <h1 style={{ fontSize: getResponsiveValue({ mobile: '1.5rem', tablet: '1.875rem' }), fontWeight: 700, color: '#111827' }}>📚 阅读回响</h1>
-            <p style={{ color: '#6b7280', marginTop: '0.25rem', fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }) }}>通过主动回忆，加深书籍理解</p>
+            <h1 style={{ fontSize: getResponsiveValue({ mobile: '1.5rem', tablet: '1.875rem' }), fontWeight: 700, color: settings.darkMode ? '#f9fafb' : '#111827' }}>📚 阅读回响</h1>
+            <p style={{ color: settings.darkMode ? '#9ca3af' : '#6b7280', marginTop: '0.25rem', fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }) }}>通过主动回忆，加深书籍理解</p>
           </div>
           <button
             onClick={() => {
@@ -363,8 +371,8 @@ export function BookShelf({ onSelectBook }: BookShelfProps) {
         {books.length === 0 ? (
           <div style={{ textAlign: 'center', padding: getResponsiveValue({ mobile: '3rem 0', tablet: '5rem 0' }) }}>
             <div style={{ fontSize: getResponsiveValue({ mobile: '3rem', tablet: '4rem' }), marginBottom: '1rem' }}>📖</div>
-            <h2 style={{ fontSize: getResponsiveValue({ mobile: '1.125rem', tablet: '1.25rem' }), fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>书架空空如也</h2>
-            <p style={{ color: '#6b7280', marginBottom: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }), fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }) }}>添加第一本书开始你的阅读之旅</p>
+            <h2 style={{ fontSize: getResponsiveValue({ mobile: '1.125rem', tablet: '1.25rem' }), fontWeight: 600, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.5rem' }}>书架空空如也</h2>
+            <p style={{ color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }), fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }) }}>添加第一本书开始你的阅读之旅</p>
             <button
               onClick={() => {
                 setEditingBook(undefined);
@@ -396,13 +404,14 @@ export function BookShelf({ onSelectBook }: BookShelfProps) {
                 onClick={() => onSelectBook(book)}
                 onDelete={() => handleDeleteBook(book.id, book.title)}
                 onEdit={() => handleEditBook(book)}
+                darkMode={settings.darkMode}
               />
             ))}
           </div>
         )}
       </div>
 
-      <AddBookModal isOpen={showAddModal} onClose={handleCloseModal} book={editingBook} />
+      <AddBookModal isOpen={showAddModal} onClose={handleCloseModal} book={editingBook} darkMode={settings.darkMode} />
     </div>
   );
 }
