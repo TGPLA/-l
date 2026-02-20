@@ -653,6 +653,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     color: settings.darkMode ? '#f9fafb' : '#111827',
                     transition: focusedInput === 'email' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
                     boxShadow: focusedInput === 'email' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                    boxSizing: 'border-box',
                   }}
                   placeholder="your@email.com"
                 />
@@ -684,6 +685,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       color: settings.darkMode ? '#f9fafb' : '#111827',
                       transition: focusedInput === 'password' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
                       boxShadow: focusedInput === 'password' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                      boxSizing: 'border-box',
                     }}
                     placeholder="••••••••"
                   />
@@ -759,16 +761,17 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       onFocus={() => setFocusedInput('confirmPassword')}
                       onBlur={() => setFocusedInput(null)}
                       style={{
-                        width: '100%',
-                        padding: '0.5rem 2.5rem 0.5rem 0.75rem',
-                        border: confirmPasswordError ? '1px solid #ef4444' : '1px solid #d1d5db',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.875rem',
-                        backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
-                        color: settings.darkMode ? '#f9fafb' : '#111827',
-                        transition: focusedInput === 'confirmPassword' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
-                        boxShadow: focusedInput === 'confirmPassword' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-                      }}
+                         width: '100%',
+                         padding: '0.5rem 2.5rem 0.5rem 0.75rem',
+                         border: confirmPasswordError ? '1px solid #ef4444' : '1px solid #d1d5db',
+                         borderRadius: '0.5rem',
+                         fontSize: '0.875rem',
+                         backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                         color: settings.darkMode ? '#f9fafb' : '#111827',
+                         transition: focusedInput === 'confirmPassword' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
+                         boxShadow: focusedInput === 'confirmPassword' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                         boxSizing: 'border-box',
+                       }}
                       placeholder="••••••••"
                     />
                     <button
