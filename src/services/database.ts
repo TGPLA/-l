@@ -364,7 +364,12 @@ class DatabaseService {
       }
 
       const settings: Settings = {
-        darkMode: data.dark_mode
+        darkMode: data.dark_mode,
+        zhipuApiKey: data.zhipu_api_key || undefined,
+        zhipuModel: data.zhipu_model || 'glm-4',
+        difyApiKey: data.dify_api_key || undefined,
+        questionWorkflowUrl: data.question_workflow_url || undefined,
+        correctionWorkflowUrl: data.correction_workflow_url || undefined
       };
 
       return { settings, error: null };
@@ -384,7 +389,12 @@ class DatabaseService {
         .from('user_settings')
         .insert({
           user_id: this.userId,
-          dark_mode: settings.darkMode
+          dark_mode: settings.darkMode,
+          zhipu_api_key: settings.zhipuApiKey || null,
+          zhipu_model: settings.zhipuModel || 'glm-4',
+          dify_api_key: settings.difyApiKey || null,
+          question_workflow_url: settings.questionWorkflowUrl || null,
+          correction_workflow_url: settings.correctionWorkflowUrl || null
         });
 
       if (error) {
@@ -403,11 +413,29 @@ class DatabaseService {
     try {
       this.checkAuth();
       
+      const updateData: any = {
+        dark_mode: settings.darkMode
+      };
+
+      if (settings.zhipuApiKey !== undefined) {
+        updateData.zhipu_api_key = settings.zhipuApiKey;
+      }
+      if (settings.zhipuModel !== undefined) {
+        updateData.zhipu_model = settings.zhipuModel;
+      }
+      if (settings.difyApiKey !== undefined) {
+        updateData.dify_api_key = settings.difyApiKey;
+      }
+      if (settings.questionWorkflowUrl !== undefined) {
+        updateData.question_workflow_url = settings.questionWorkflowUrl;
+      }
+      if (settings.correctionWorkflowUrl !== undefined) {
+        updateData.correction_workflow_url = settings.correctionWorkflowUrl;
+      }
+      
       const { error } = await supabase
         .from('user_settings')
-        .update({
-          dark_mode: settings.darkMode
-        })
+        .update(updateData)
         .eq('user_id', this.userId);
 
       if (error) {
