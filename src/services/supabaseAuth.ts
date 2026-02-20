@@ -13,6 +13,29 @@ class AuthService {
   private currentUser: AuthUser | null = null;
   private listeners: ((user: AuthUser | null) => void)[] = [];
 
+  private translateErrorMessage(error: string): string {
+    const errorMap: Record<string, string> = {
+      'Invalid login credentials': '邮箱或密码错误',
+      'User already registered': '该邮箱已被注册',
+      'Email not confirmed': '请先验证邮箱',
+      'Password should be at least 6 characters': '密码至少需要6个字符',
+      'Unable to validate email address: invalid format': '邮箱格式不正确',
+      'Signups not allowed for this instance': '当前不允许注册新用户',
+      'Email rate limit exceeded': '发送邮件过于频繁，请稍后再试',
+      'Invalid email': '邮箱格式不正确',
+      'Password is too short': '密码过短',
+      'User not found': '用户不存在',
+      'Invalid password': '密码错误',
+      'Email already confirmed': '邮箱已验证',
+      'Signup not allowed': '注册功能已关闭',
+      'Invalid token': '验证链接无效或已过期',
+      'Token has expired or is invalid': '验证链接无效或已过期',
+      'Email link is invalid or expired': '验证链接无效或已过期',
+    };
+
+    return errorMap[error] || error;
+  }
+
   constructor() {
     this.initializeAuth();
   }
@@ -67,7 +90,7 @@ class AuthService {
       });
 
       if (error) {
-        return { user: null, error: { message: error.message } };
+        return { user: null, error: { message: this.translateErrorMessage(error.message) } };
       }
 
       if (data.user) {
@@ -82,7 +105,7 @@ class AuthService {
     } catch (error) {
       return { 
         user: null, 
-        error: { message: error instanceof Error ? error.message : '注册失败' } 
+        error: { message: error instanceof Error ? this.translateErrorMessage(error.message) : '注册失败' } 
       };
     }
   }
@@ -95,7 +118,7 @@ class AuthService {
       });
 
       if (error) {
-        return { user: null, error: { message: error.message } };
+        return { user: null, error: { message: this.translateErrorMessage(error.message) } };
       }
 
       if (data.user) {
@@ -110,7 +133,7 @@ class AuthService {
     } catch (error) {
       return { 
         user: null, 
-        error: { message: error instanceof Error ? error.message : '登录失败' } 
+        error: { message: error instanceof Error ? this.translateErrorMessage(error.message) : '登录失败' } 
       };
     }
   }
@@ -119,13 +142,13 @@ class AuthService {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        return { error: { message: error.message } };
+        return { error: { message: this.translateErrorMessage(error.message) } };
       }
       this.currentUser = null;
       return { error: null };
     } catch (error) {
       return { 
-        error: { message: error instanceof Error ? error.message : '登出失败' } 
+        error: { message: error instanceof Error ? this.translateErrorMessage(error.message) : '登出失败' } 
       };
     }
   }
@@ -134,12 +157,12 @@ class AuthService {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) {
-        return { error: { message: error.message } };
+        return { error: { message: this.translateErrorMessage(error.message) } };
       }
       return { error: null };
     } catch (error) {
       return { 
-        error: { message: error instanceof Error ? error.message : '重置密码失败' } 
+        error: { message: error instanceof Error ? this.translateErrorMessage(error.message) : '重置密码失败' } 
       };
     }
   }
@@ -150,12 +173,12 @@ class AuthService {
         password: newPassword
       });
       if (error) {
-        return { error: { message: error.message } };
+        return { error: { message: this.translateErrorMessage(error.message) } };
       }
       return { error: null };
     } catch (error) {
       return { 
-        error: { message: error instanceof Error ? error.message : '更新密码失败' } 
+        error: { message: error instanceof Error ? this.translateErrorMessage(error.message) : '更新密码失败' } 
       };
     }
   }
