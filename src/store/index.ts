@@ -150,4 +150,25 @@ export const storage = {
     localStorage.removeItem(QUESTIONS_KEY);
     localStorage.removeItem(SETTINGS_KEY);
   },
+
+  exportData(): any {
+    return {
+      books: this.getBooks(),
+      questions: this.getQuestions(),
+      settings: this.getSettings(),
+      timestamp: Date.now(),
+    };
+  },
+
+  importData(data: any): void {
+    if (data.books && Array.isArray(data.books)) {
+      this.saveBooks(data.books);
+    }
+    if (data.questions && Array.isArray(data.questions)) {
+      this.saveQuestions(data.questions);
+    }
+    if (data.settings) {
+      this.saveSettings(data.settings);
+    }
+  },
 };

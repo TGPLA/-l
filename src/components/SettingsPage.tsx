@@ -6,6 +6,7 @@ import { getResponsiveValue } from '../utils/responsive';
 import { authService } from '../services/auth';
 import { cloudStorage } from '../services/cloudStorage';
 import { syncService } from '../services/sync';
+import { storage } from '../store';
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -566,34 +567,102 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
             <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: '1rem' }}>
               所有数据保存在浏览器本地存储中
             </p>
-            <button
-              onClick={async () => {
-                const confirmed = await window.confirm('确定要清除所有数据吗？此操作不可恢复。');
-                if (confirmed) {
-                  try {
-                    window.localStorage.clear();
-                    window.alert('数据已清除');
-                    window.location.reload();
-                  } catch (error) {
-                    window.alert('清除数据失败');
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => {
+                  const data = storage.exportData();
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `readrecall-backup-${new Date().toISOString().split('T')[0]}.json`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#10b981',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                导出数据
+              </button>
+              
+              <button
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = '.json';
+                  input.onchange = async (e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.files && target.files[0]) {
+                      const file = target.files[0];
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        try {
+                          const data = JSON.parse(event.target?.result as string);
+                          storage.importData(data);
+                          window.alert('数据导入成功');
+                          window.location.reload();
+                        } catch (error) {
+                          window.alert('数据导入失败，请检查文件格式');
+                        }
+                      };
+                      reader.readAsText(file);
+                    }
+                  };
+                  input.click();
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                导入数据
+              </button>
+              
+              <button
+                onClick={async () => {
+                  const confirmed = await window.confirm('确定要清除所有数据吗？此操作不可恢复。');
+                  if (confirmed) {
+                    try {
+                      window.localStorage.clear();
+                      window.alert('数据已清除');
+                      window.location.reload();
+                    } catch (error) {
+                      window.alert('清除数据失败');
+                    }
+                  } else {
+                    window.alert('操作已取消');
                   }
-                } else {
-                  window.alert('操作已取消');
-                }
-              }}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#ef4444',
-                color: '#ffffff',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: 500,
-              }}
-            >
-              清除所有数据
-            </button>
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#ef4444',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                清除所有数据
+              </button>
+            </div>
           </div>
 
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: '1.5rem' }}>
