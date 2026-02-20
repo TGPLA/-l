@@ -5,6 +5,8 @@ import { BookDetail } from './components/BookDetail';
 import { PracticeMode } from './components/PracticeMode';
 import { SettingsPage } from './components/SettingsPage';
 import { getResponsiveValue } from './utils/responsive';
+import { authService } from './services/auth';
+import { syncService } from './services/sync';
 import type { Book } from './types';
 
 type Page = 'shelf' | 'detail' | 'practice' | 'settings';
@@ -32,6 +34,26 @@ function AppContent() {
     
     return () => clearTimeout(timer);
   }, [settings.darkMode]);
+
+  useEffect(() => {
+    const autoSync = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          await syncService.syncData();
+        } catch (error) {
+          console.error('自动同步失败:', error);
+        }
+      }
+    };
+
+    autoSync();
+
+    const syncInterval = setInterval(() => {
+      autoSync();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(syncInterval);
+  }, []);
 
   const handleSelectBook = (book: Book) => {
     setSelectedBook(book);

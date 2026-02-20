@@ -3,6 +3,9 @@ import { useApp } from '../hooks';
 import type { Settings } from '../types';
 import { validateApiKey } from '../api/zhipu';
 import { getResponsiveValue } from '../utils/responsive';
+import { authService } from '../services/auth';
+import { cloudStorage } from '../services/cloudStorage';
+import { syncService } from '../services/sync';
 
 interface SettingsPageProps {
   onBack: () => void;
@@ -14,6 +17,20 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [saved, setSaved] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{ valid: boolean; message: string } | null>(null);
+  
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string>('');
+  const [showSyncConflict, setShowSyncConflict] = useState(false);
+  const [syncConflicts, setSyncConflicts] = useState<any[]>([]);
+
+  const user = authService.getCurrentUser();
+  const isLoggedIn = authService.isAuthenticated();
+  const lastSyncTime = cloudStorage.getLastSyncTime();
 
   useEffect(() => {
     setFormData(settings);
@@ -29,6 +46,77 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     const newSettings = { ...formData, darkMode: !formData.darkMode };
     setFormData(newSettings);
     updateSettings(newSettings);
+  };
+
+  const handleAuth = async () => {
+    setAuthError('');
+    
+    try {
+      if (authMode === 'login') {
+        await authService.login(email, password);
+      } else {
+        await authService.register(email, password);
+      }
+      
+      setShowAuthModal(false);
+      setEmail('');
+      setPassword('');
+      window.location.reload();
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : '认证失败');
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    window.location.reload();
+  };
+
+  const handleSync = async () => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    setSyncing(true);
+    setSyncStatus('正在同步数据...');
+
+    try {
+      const result = await syncService.syncData();
+      
+      if (result.conflicts.length > 0) {
+        setSyncConflicts(result.conflicts);
+        setShowSyncConflict(true);
+        setSyncStatus('发现数据冲突');
+      } else if (result.downloaded) {
+        setSyncStatus('数据已从云端同步');
+        setTimeout(() => window.location.reload(), 1500);
+      } else if (result.uploaded) {
+        setSyncStatus('数据已上传到云端');
+      }
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : '同步失败');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncStatus(''), 3000);
+    }
+  };
+
+  const handleResolveConflict = async (useRemote: boolean) => {
+    setShowSyncConflict(false);
+    setSyncing(true);
+    setSyncStatus('正在解决冲突...');
+
+    try {
+      await syncService.resolveConflicts(syncConflicts, useRemote);
+      setSyncStatus('冲突已解决，正在重新加载...');
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : '解决冲突失败');
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncStatus(''), 3000);
+    }
   };
 
   const handleValidateApiKey = async () => {
@@ -227,7 +315,88 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
             </button>
           </div>
 
-          <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: '1.5rem' }}>
+          <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
+            <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>数据同步</h2>
+            <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>
+              在不同设备之间同步您的数据
+            </p>
+
+            {isLoggedIn ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: getResponsiveValue({ mobile: 'column', tablet: 'row' }), gap: getResponsiveValue({ mobile: '0.5rem', tablet: '0' }) }}>
+                  <div>
+                    <p style={{ fontWeight: 500, color: settings.darkMode ? '#f9fafb' : '#111827' }}>已登录</p>
+                    <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }}>{user?.email}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    退出登录
+                  </button>
+                </div>
+
+                {lastSyncTime && (
+                  <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }}>
+                    上次同步: {new Date(lastSyncTime).toLocaleString('zh-CN')}
+                  </p>
+                )}
+
+                <button
+                  onClick={handleSync}
+                  disabled={syncing}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: syncing ? '#9ca3af' : '#3b82f6',
+                    color: '#ffffff',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: syncing ? 'not-allowed' : 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  {syncing ? '同步中...' : '立即同步'}
+                </button>
+
+                {syncStatus && (
+                  <p style={{ 
+                    fontSize: '0.875rem', 
+                    color: syncStatus.includes('失败') || syncStatus.includes('冲突') ? '#ef4444' : '#10b981',
+                  }}>
+                    {syncStatus}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                登录以启用数据同步
+              </button>
+            )}
+          </div>
+
+          <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
             <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '1rem' }}>数据管理</h2>
             <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: '1rem' }}>
               所有数据保存在浏览器本地存储中
@@ -272,6 +441,219 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           </div>
         </div>
       </div>
+
+      {showAuthModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff',
+            borderRadius: '0.75rem',
+            padding: '2rem',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '1.5rem' }}>
+              {authMode === 'login' ? '登录' : '注册'}
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
+                  邮箱
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                    color: settings.darkMode ? '#f9fafb' : '#111827',
+                  }}
+                  placeholder="your@email.com"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
+                  密码
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                    color: settings.darkMode ? '#f9fafb' : '#111827',
+                  }}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {authError && (
+                <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>
+                  {authError}
+                </p>
+              )}
+
+              <button
+                onClick={handleAuth}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                {authMode === 'login' ? '登录' : '注册'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setAuthError('');
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'transparent',
+                  color: '#3b82f6',
+                  borderRadius: '0.5rem',
+                  border: '1px solid #3b82f6',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                {authMode === 'login' ? '没有账号？注册' : '已有账号？登录'}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowAuthModal(false);
+                  setAuthError('');
+                  setEmail('');
+                  setPassword('');
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'transparent',
+                  color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSyncConflict && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff',
+            borderRadius: '0.75rem',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '1rem' }}>
+              发现数据冲突
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: '1.5rem' }}>
+              本地和云端都有数据修改，请选择要保留的数据版本
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button
+                onClick={() => handleResolveConflict(false)}
+                style={{
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#3b82f6',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                使用本地数据
+              </button>
+
+              <button
+                onClick={() => handleResolveConflict(true)}
+                style={{
+                  padding: '0.75rem 1rem',
+                  backgroundColor: '#10b981',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                使用云端数据
+              </button>
+
+              <button
+                onClick={() => setShowSyncConflict(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'transparent',
+                  color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

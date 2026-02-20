@@ -4,6 +4,30 @@ export type MasteryLevel = '未掌握' | '学习中' | '已掌握';
 export type AnswerStatus = 'forgot' | 'vague' | 'mastered' | null;
 export type QuestionCategory = 'standard' | 'concept';
 
+export interface User {
+  id: string;
+  email: string;
+  createdAt: number;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface SyncData {
+  books: Book[];
+  questions: Question[];
+  settings: Settings;
+  timestamp: number;
+}
+
+export interface SyncConflict {
+  type: 'books' | 'questions' | 'settings';
+  localData: any;
+  remoteData: any;
+}
+
 export interface Question {
   id: string;
   bookId: string;
