@@ -31,6 +31,20 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [syncStatus, setSyncStatus] = useState<string>('');
   const [showSyncConflict, setShowSyncConflict] = useState(false);
   const [syncConflicts, setSyncConflicts] = useState<any[]>([]);
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [rememberPassword, setRememberPassword] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [authSuccess, setAuthSuccess] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailError, setResetEmailError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   const user = authService.getCurrentUser();
   const isLoggedIn = authService.isAuthenticated();
@@ -51,6 +65,34 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     setFormData(newSettings);
     updateSettings(newSettings);
   };
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!showAuthModal) return;
+      
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!authLoading && !authSuccess) {
+          handleAuth();
+        }
+      }
+      
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowAuthModal(false);
+        setAuthError('');
+        setEmailError('');
+        setPasswordError('');
+        setConfirmPasswordError('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [showAuthModal, email, password, confirmPassword, authMode, authLoading, authSuccess]);
 
   const validateEmail = (email: string): string => {
     if (!email.trim()) {
@@ -81,6 +123,21 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     return '';
   };
 
+  const calculatePasswordStrength = (password: string): number => {
+    let strength = 0;
+    
+    if (password.length >= 6) strength += 1;
+    if (password.length >= 10) strength += 1;
+    if (password.length >= 12) strength += 1;
+    
+    if (/[a-z]/.test(password)) strength += 1;
+    if (/[A-Z]/.test(password)) strength += 1;
+    if (/[0-9]/.test(password)) strength += 1;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 1;
+    
+    return Math.min(strength, 5);
+  };
+
   const validateConfirmPassword = (password: string, confirm: string): string => {
     if (!confirm.trim()) {
       return '请确认密码';
@@ -99,6 +156,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setPasswordError(validatePassword(value));
+    setPasswordStrength(calculatePasswordStrength(value));
     if (confirmPassword) {
       setConfirmPasswordError(validateConfirmPassword(value, confirmPassword));
     }
@@ -114,21 +172,33 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     setEmailError('');
     setPasswordError('');
     setConfirmPasswordError('');
+    setAuthLoading(true);
+    setAuthSuccess(false);
     
     try {
       if (authMode === 'login') {
         await authService.login(email, password);
+        if (rememberPassword) {
+          localStorage.setItem('rememberedEmail', email);
+        } else {
+          localStorage.removeItem('rememberedEmail');
+        }
       } else {
         await authService.register(email, password, confirmPassword);
       }
       
-      setShowAuthModal(false);
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      window.location.reload();
+      setAuthSuccess(true);
+      setTimeout(() => {
+        setShowAuthModal(false);
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setAuthSuccess(false);
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : '认证失败');
+      setAuthLoading(false);
     }
   };
 
@@ -137,8 +207,38 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     window.location.reload();
   };
 
+  const handleResetPassword = async () => {
+    setResetError('');
+    setResetEmailError(validateEmail(resetEmail));
+    
+    if (resetEmailError) {
+      return;
+    }
+    
+    setResetLoading(true);
+    
+    try {
+      await authService.resetPassword(resetEmail);
+      setResetSuccess(true);
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetEmail('');
+        setResetSuccess(false);
+      }, 2000);
+    } catch (error) {
+      setResetError(error instanceof Error ? error.message : '重置密码失败');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const handleSync = async () => {
     if (!isLoggedIn) {
+      const rememberedEmail = localStorage.getItem('rememberedEmail');
+      if (rememberedEmail) {
+        setEmail(rememberedEmail);
+        setRememberPassword(true);
+      }
       setShowAuthModal(true);
       return;
     }
@@ -541,6 +641,8 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   type="email"
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
+                  onFocus={() => setFocusedInput('email')}
+                  onBlur={() => setFocusedInput(null)}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
@@ -549,6 +651,8 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     fontSize: '0.875rem',
                     backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
                     color: settings.darkMode ? '#f9fafb' : '#111827',
+                    transition: focusedInput === 'email' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
+                    boxShadow: focusedInput === 'email' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
                   }}
                   placeholder="your@email.com"
                 />
@@ -563,25 +667,82 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
                   密码
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => handlePasswordChange(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    border: passwordError ? '1px solid #ef4444' : '1px solid #d1d5db',
-                    borderRadius: '0.5rem',
-                    fontSize: '0.875rem',
-                    backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
-                    color: settings.darkMode ? '#f9fafb' : '#111827',
-                  }}
-                  placeholder="••••••••"
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 2.5rem 0.5rem 0.75rem',
+                      border: passwordError ? '1px solid #ef4444' : '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                      color: settings.darkMode ? '#f9fafb' : '#111827',
+                      transition: focusedInput === 'password' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
+                      boxShadow: focusedInput === 'password' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                    }}
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0.25rem',
+                      color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                    }}
+                  >
+                    {showPassword ? (
+                      <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {passwordError && (
                   <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
                     {passwordError}
                   </p>
+                )}
+                {password && passwordStrength > 0 && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.25rem' }}>
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <div
+                          key={level}
+                          style={{
+                            flex: 1,
+                            height: '0.25rem',
+                            backgroundColor: passwordStrength >= level 
+                              ? level <= 2 ? '#ef4444' 
+                              : level <= 3 ? '#f59e0b' 
+                              : '#10b981'
+                              : '#d1d5db',
+                            borderRadius: '0.125rem',
+                            transition: 'background-color 0.3s',
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }}>
+                      {passwordStrength <= 2 ? '弱' : passwordStrength <= 3 ? '中等' : passwordStrength <= 4 ? '强' : '非常强'}
+                    </p>
+                  </div>
                 )}
               </div>
 
@@ -590,21 +751,53 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
                     确认密码
                   </label>
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: confirmPasswordError ? '1px solid #ef4444' : '1px solid #d1d5db',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
-                      color: settings.darkMode ? '#f9fafb' : '#111827',
-                    }}
-                    placeholder="••••••••"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                      onFocus={() => setFocusedInput('confirmPassword')}
+                      onBlur={() => setFocusedInput(null)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 2.5rem 0.5rem 0.75rem',
+                        border: confirmPasswordError ? '1px solid #ef4444' : '1px solid #d1d5db',
+                        borderRadius: '0.5rem',
+                        fontSize: '0.875rem',
+                        backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                        color: settings.darkMode ? '#f9fafb' : '#111827',
+                        transition: focusedInput === 'confirmPassword' ? 'border-color 0.2s, box-shadow 0.2s' : 'none',
+                        boxShadow: focusedInput === 'confirmPassword' ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
+                      }}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                      }}
+                    >
+                      {showConfirmPassword ? (
+                        <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      ) : (
+                        <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                   {confirmPasswordError && (
                     <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
                       {confirmPasswordError}
@@ -614,26 +807,106 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
               )}
 
               {authError && (
-                <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>
-                  {authError}
-                </p>
+                <div style={{
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid #ef4444',
+                  borderRadius: '0.5rem',
+                  animation: 'shake 0.5s ease-in-out',
+                }}>
+                  <p style={{ fontSize: '0.875rem', color: '#ef4444', margin: 0 }}>
+                    {authError}
+                  </p>
+                </div>
               )}
 
               <button
                 onClick={handleAuth}
+                disabled={authLoading || authSuccess}
                 style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#3b82f6',
+                  padding: '0.75rem 1rem',
+                  backgroundColor: authSuccess ? '#10b981' : authLoading ? '#9ca3af' : '#3b82f6',
                   color: '#ffffff',
                   borderRadius: '0.5rem',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: authLoading || authSuccess ? 'not-allowed' : 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.3s',
                 }}
               >
-                {authMode === 'login' ? '登录' : '注册'}
+                {authLoading ? (
+                  <>
+                    <svg style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    {authMode === 'login' ? '登录中...' : '注册中...'}
+                  </>
+                ) : authSuccess ? (
+                  <>
+                    <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {authMode === 'login' ? '登录成功' : '注册成功'}
+                  </>
+                ) : (
+                  authMode === 'login' ? '登录' : '注册'
+                )}
               </button>
+
+              {authMode === 'login' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    checked={rememberPassword}
+                    onChange={(e) => setRememberPassword(e.target.checked)}
+                    style={{
+                      width: '1rem',
+                      height: '1rem',
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <label
+                    htmlFor="remember"
+                    style={{
+                      fontSize: '0.875rem',
+                      color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    记住我
+                  </label>
+                </div>
+              )}
+
+              {authMode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAuthModal(false);
+                    setShowResetModal(true);
+                    setResetEmail(email);
+                  }}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: '#3b82f6',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                  }}
+                >
+                  忘记密码？
+                </button>
+              )}
 
               <button
                 onClick={() => {
@@ -664,6 +937,154 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   setEmail('');
                   setPassword('');
                   setConfirmPassword('');
+                }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'transparent',
+                  color: settings.darkMode ? '#9ca3af' : '#6b7280',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                }}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResetModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff',
+            borderRadius: '0.75rem',
+            padding: '2rem',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+          }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '1rem' }}>
+              重置密码
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: '1.5rem' }}>
+              输入您的邮箱地址，我们将为您生成临时密码
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
+                  邮箱
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => {
+                    setResetEmail(e.target.value);
+                    setResetEmailError(validateEmail(e.target.value));
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: resetEmailError ? '1px solid #ef4444' : '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                    color: settings.darkMode ? '#f9fafb' : '#111827',
+                  }}
+                  placeholder="your@email.com"
+                />
+                {resetEmailError && (
+                  <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
+                    {resetEmailError}
+                  </p>
+                )}
+              </div>
+
+              {resetError && (
+                <div style={{
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid #ef4444',
+                  borderRadius: '0.5rem',
+                  animation: 'shake 0.5s ease-in-out',
+                }}>
+                  <p style={{ fontSize: '0.875rem', color: '#ef4444', margin: 0 }}>
+                    {resetError}
+                  </p>
+                </div>
+              )}
+
+              {resetSuccess && (
+                <div style={{
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid #10b981',
+                  borderRadius: '0.5rem',
+                }}>
+                  <p style={{ fontSize: '0.875rem', color: '#10b981', margin: 0 }}>
+                    ✓ 临时密码已生成，请查看弹窗
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={handleResetPassword}
+                disabled={resetLoading || resetSuccess}
+                style={{
+                  padding: '0.75rem 1rem',
+                  backgroundColor: resetSuccess ? '#10b981' : resetLoading ? '#9ca3af' : '#3b82f6',
+                  color: '#ffffff',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: resetLoading || resetSuccess ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                {resetLoading ? (
+                  <>
+                    <svg style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeOpacity="0.25" />
+                      <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    处理中...
+                  </>
+                ) : resetSuccess ? (
+                  <>
+                    <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    完成
+                  </>
+                ) : (
+                  '生成临时密码'
+                )}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetEmail('');
+                  setResetEmailError('');
+                  setResetError('');
+                  setResetSuccess(false);
                 }}
                 style={{
                   padding: '0.5rem 1rem',

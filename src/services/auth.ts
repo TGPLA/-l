@@ -187,4 +187,29 @@ export const authService = {
       return false;
     }
   },
+
+  async resetPassword(email: string): Promise<void> {
+    if (!email.trim()) {
+      throw new Error('请输入邮箱');
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error('邮箱格式不正确');
+    }
+
+    const users = getAllUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    const newPassword = Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+    const newPasswordHash = await hashPassword(newPassword);
+
+    user.passwordHash = newPasswordHash;
+    saveUsers(users);
+
+    window.alert(`您的临时密码是：${newPassword}\n\n请登录后立即修改密码！`);
+  },
 };
