@@ -1,7 +1,9 @@
 import type { User, AuthResponse } from '../types';
+import { userCloudStorage } from './userCloudStorage';
 
 const AUTH_KEY = 'readrecall_auth';
 const TOKEN_KEY = 'readrecall_token';
+const USERS_KEY = 'readrecall_users';
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -41,17 +43,49 @@ function validatePasswordStrength(password: string): { valid: boolean; message: 
   return { valid: true, message: '' };
 }
 
-function getAllUsers(): User[] {
+async function getAllUsers(token?: string): Promise<User[]> {
   try {
-    const data = localStorage.getItem('readrecall_users');
-    return data ? JSON.parse(data) : [];
+    const localData = localStorage.getItem(USERS_KEY);
+    let localUsers: User[] = localData ? JSON.parse(localData) : [];
+    
+    if (token) {
+      try {
+        const cloudUsers = await userCloudStorage.downloadUsers(token);
+        
+        if (cloudUsers.length > 0) {
+          const mergedUsers = [...cloudUsers];
+          const localEmails = new Set(cloudUsers.map(u => u.email.toLowerCase()));
+          
+          for (const localUser of localUsers) {
+            if (!localEmails.has(localUser.email.toLowerCase())) {
+              mergedUsers.push(localUser);
+            }
+          }
+          
+          localStorage.setItem(USERS_KEY, JSON.stringify(mergedUsers));
+          return mergedUsers;
+        }
+      } catch (error) {
+        console.error('从云端获取用户数据失败:', error);
+      }
+    }
+    
+    return localUsers;
   } catch {
     return [];
   }
 }
 
-function saveUsers(users: User[]): void {
-  localStorage.setItem('readrecall_users', JSON.stringify(users));
+async function saveUsers(users: User[], token?: string): Promise<void> {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  
+  if (token) {
+    try {
+      await userCloudStorage.uploadUsers(users, token);
+    } catch (error) {
+      console.error('上传用户数据到云端失败:', error);
+    }
+  }
 }
 
 function generateToken(userId: string): string {
@@ -106,7 +140,8 @@ export const authService = {
       throw new Error('两次输入的密码不一致');
     }
 
-    const users = getAllUsers();
+    const githubToken = localStorage.getItem('github_token');
+    const users = await getAllUsers(githubToken || undefined);
     
     if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
       throw new Error('该邮箱已被注册');
@@ -122,9 +157,9 @@ export const authService = {
     };
 
     users.push(newUser);
-    saveUsers(users);
-
+    
     const token = generateToken(newUser.id);
+    await saveUsers(users, githubToken || undefined);
 
     localStorage.setItem(AUTH_KEY, JSON.stringify(newUser));
     localStorage.setItem(TOKEN_KEY, token);
@@ -148,7 +183,8 @@ export const authService = {
       throw new Error('请输入密码');
     }
 
-    const users = getAllUsers();
+    const githubToken = localStorage.getItem('github_token');
+    const users = await getAllUsers(githubToken || undefined);
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
     if (!user) {
@@ -197,7 +233,8 @@ export const authService = {
       throw new Error('邮箱格式不正确');
     }
 
-    const users = getAllUsers();
+    const githubToken = localStorage.getItem('github_token');
+    const users = await getAllUsers(githubToken || undefined);
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
     if (!user) {
@@ -208,7 +245,8 @@ export const authService = {
     const newPasswordHash = await hashPassword(newPassword);
 
     user.passwordHash = newPasswordHash;
-    saveUsers(users);
+    
+    await saveUsers(users, githubToken || undefined);
 
     window.alert(`您的临时密码是：${newPassword}\n\n请登录后立即修改密码！`);
   },

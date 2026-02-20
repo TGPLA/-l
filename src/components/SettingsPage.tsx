@@ -46,6 +46,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetError, setResetError] = useState('');
+  const [githubToken, setGithubToken] = useState('');
 
   const user = authService.getCurrentUser();
   const isLoggedIn = authService.isAuthenticated();
@@ -184,8 +185,14 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
         } else {
           localStorage.removeItem('rememberedEmail');
         }
+        if (githubToken) {
+          localStorage.setItem('github_token', githubToken);
+        }
       } else {
         await authService.register(email, password, confirmPassword);
+        if (githubToken) {
+          localStorage.setItem('github_token', githubToken);
+        }
       }
       
       setAuthSuccess(true);
@@ -194,6 +201,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
         setEmail('');
         setPassword('');
         setConfirmPassword('');
+        setGithubToken('');
         setAuthSuccess(false);
         window.location.reload();
       }, 1000);
@@ -877,6 +885,31 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   )}
                 </div>
               )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
+                  GitHub Token (跨浏览器登录)
+                </label>
+                <input
+                  type="password"
+                  value={githubToken}
+                  onChange={(e) => setGithubToken(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '0.5rem',
+                    fontSize: '0.875rem',
+                    backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                    color: settings.darkMode ? '#f9fafb' : '#111827',
+                    boxSizing: 'border-box',
+                  }}
+                  placeholder="ghp_xxxxxxxxxxxx (可选)"
+                />
+                <p style={{ fontSize: '0.75rem', color: settings.darkMode ? '#6b7280' : '#9ca3af', marginTop: '0.25rem' }}>
+                  在 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>GitHub Settings</a> 创建 Personal Access Token，用于跨浏览器登录
+                </p>
+              </div>
 
               {authError && (
                 <div style={{
