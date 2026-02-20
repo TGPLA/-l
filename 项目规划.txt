@@ -1,0 +1,55 @@
+📚 阅读回响（ReadRecall）- 项目规划总结
+一、项目定位
+一个帮助读者通过主动回忆机制加深书籍理解的个人刷题工具。不同于传统学科刷题，这里刷的是课外书籍的知识点，核心是"读书记得住"。
+
+二、核心功能
+1. 书籍管理
+添加书籍（书名、作者、封面）
+书架展示（网格布局 + 掌握进度）
+书籍详情页
+删除书籍
+2. AI 问题生成
+用户输入：
+
+书籍名称、作者
+问题类型（理解概念 / 应用分析 / 批判思考 / 关联联想 / 实践运用）
+难度等级（基础 / 中等 / 进阶 / 挑战）
+原文引用
+→ 调用 Dify API 生成问题 → 用户补充个人感悟 → 保存
+
+3. 刷题模式（两种）
+模式A：标准刷题
+
+卡片展示问题 → 点击翻转看答案 → 标记掌握度
+模式B：概念考察
+
+展示问题 → 用户用自己的话描述 → 调用 Dify 纠错 API → 显示 AI 反馈（问题 + 你的回答 + 评价补充）→ 标记掌握度
+4. 设置
+Dify API Key 配置
+问题生成 Workflow URL
+概念纠错 Workflow URL
+深色模式
+三、技术方案
+前端框架：React + Vite + TypeScript
+样式：Tailwind CSS
+数据存储：浏览器 LocalStorage（无需后端）
+AI 接入：用户配置 Dify Key，前端仅负责 HTTP 接口调用
+四、Dify Workflow 需要你配置的
+Workflow	输入变量	预期输出
+问题生成	book_title, book_author, question_type, difficulty, source_text	questions[{question, answer}]
+概念纠错	book_title, question, user_answer	{evaluation, supplement}
+五、MVP 验收标准
+1.
+✅ 能添加书籍并展示
+2.
+✅ 能手动添加问题
+3.
+✅ 能调用 Dify 生成问题
+4.
+✅ 能标准刷题（卡片翻转）
+5.
+✅ 能概念考察（用户回答 + AI纠错反馈）
+6.
+✅ 数据保存在浏览器
+7.
+✅ 界面简洁、体验流畅

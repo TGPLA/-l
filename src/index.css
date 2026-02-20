@@ -1,0 +1,19 @@
+html {
+  background-color: #f9fafb;
+}
+
+html.dark {
+  background-color: #111827;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
