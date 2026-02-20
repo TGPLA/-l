@@ -16,11 +16,21 @@ function AppContent() {
   const [practiceMode, setPracticeMode] = useState<'standard' | 'concept' | 'wrong'>('standard');
 
   useEffect(() => {
+    const html = document.documentElement;
+    
     if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
+      html.classList.add('dark');
+      html.classList.add('dark-mode-transition');
     } else {
-      document.documentElement.classList.remove('dark');
+      html.classList.remove('dark');
+      html.classList.add('dark-mode-transition');
     }
+    
+    const timer = setTimeout(() => {
+      html.classList.remove('dark-mode-transition');
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [settings.darkMode]);
 
   const handleSelectBook = (book: Book) => {
