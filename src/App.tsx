@@ -64,6 +64,10 @@ function AppContent() {
     setCurrentPage('practice');
   };
 
+  const handleOpenSettings = () => {
+    setCurrentPage('settings');
+  };
+
   if (isLoading) {
     return (
       <div style={{ 
@@ -99,6 +103,7 @@ function AppContent() {
       {currentPage === 'shelf' && (
         <BookShelf 
           onSelectBook={handleSelectBook}
+          onOpenSettings={handleOpenSettings}
         />
       )}
 
