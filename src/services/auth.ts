@@ -7,6 +7,40 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hash));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validatePasswordStrength(password: string): { valid: boolean; message: string } {
+  if (password.length < 6) {
+    return { valid: false, message: '密码长度至少为 6 位' };
+  }
+  
+  if (password.length > 50) {
+    return { valid: false, message: '密码长度不能超过 50 位' };
+  }
+  
+  if (!/[a-zA-Z]/.test(password)) {
+    return { valid: false, message: '密码必须包含字母' };
+  }
+  
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: '密码必须包含数字' };
+  }
+  
+  return { valid: true, message: '' };
+}
+
 function getAllUsers(): User[] {
   try {
     const data = localStorage.getItem('readrecall_users');
@@ -45,19 +79,45 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    return this.getToken() !== null;
+    const token = this.getToken();
+    const user = this.getCurrentUser();
+    return token !== null && user !== null;
   },
 
-  async register(email: string, _password: string): Promise<AuthResponse> {
+  async register(email: string, password: string, confirmPassword: string): Promise<AuthResponse> {
+    if (!email.trim()) {
+      throw new Error('请输入邮箱');
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error('邮箱格式不正确');
+    }
+
+    if (!password.trim()) {
+      throw new Error('请输入密码');
+    }
+
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      throw new Error(passwordValidation.message);
+    }
+
+    if (password !== confirmPassword) {
+      throw new Error('两次输入的密码不一致');
+    }
+
     const users = getAllUsers();
     
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
       throw new Error('该邮箱已被注册');
     }
 
+    const passwordHash = await hashPassword(password);
+
     const newUser: User = {
       id: generateId(),
-      email,
+      email: email.toLowerCase(),
+      passwordHash,
       createdAt: Date.now(),
     };
 
@@ -75,12 +135,30 @@ export const authService = {
     };
   },
 
-  async login(email: string, _password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    if (!email.trim()) {
+      throw new Error('请输入邮箱');
+    }
+
+    if (!validateEmail(email)) {
+      throw new Error('邮箱格式不正确');
+    }
+
+    if (!password.trim()) {
+      throw new Error('请输入密码');
+    }
+
     const users = getAllUsers();
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
 
     if (!user) {
       throw new Error('用户不存在');
+    }
+
+    const passwordHash = await hashPassword(password);
+
+    if (user.passwordHash !== passwordHash) {
+      throw new Error('密码错误');
     }
 
     const token = generateToken(user.id);

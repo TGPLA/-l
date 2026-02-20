@@ -7,6 +7,7 @@ export type QuestionCategory = 'standard' | 'concept';
 export interface User {
   id: string;
   email: string;
+  passwordHash: string;
   createdAt: number;
 }
 

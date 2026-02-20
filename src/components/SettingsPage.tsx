@@ -22,7 +22,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string>('');
   const [showSyncConflict, setShowSyncConflict] = useState(false);
@@ -48,19 +52,80 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     updateSettings(newSettings);
   };
 
+  const validateEmail = (email: string): string => {
+    if (!email.trim()) {
+      return '请输入邮箱';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return '邮箱格式不正确';
+    }
+    return '';
+  };
+
+  const validatePassword = (password: string): string => {
+    if (!password.trim()) {
+      return '请输入密码';
+    }
+    if (password.length < 6) {
+      return '密码长度至少为 6 位';
+    }
+    if (password.length > 50) {
+      return '密码长度不能超过 50 位';
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      return '密码必须包含字母';
+    }
+    if (!/[0-9]/.test(password)) {
+      return '密码必须包含数字';
+    }
+    return '';
+  };
+
+  const validateConfirmPassword = (password: string, confirm: string): string => {
+    if (!confirm.trim()) {
+      return '请确认密码';
+    }
+    if (password !== confirm) {
+      return '两次输入的密码不一致';
+    }
+    return '';
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    setEmailError(validateEmail(value));
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordError(validatePassword(value));
+    if (confirmPassword) {
+      setConfirmPasswordError(validateConfirmPassword(value, confirmPassword));
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    setConfirmPasswordError(validateConfirmPassword(password, value));
+  };
+
   const handleAuth = async () => {
     setAuthError('');
+    setEmailError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
     
     try {
       if (authMode === 'login') {
         await authService.login(email, password);
       } else {
-        await authService.register(email, password);
+        await authService.register(email, password, confirmPassword);
       }
       
       setShowAuthModal(false);
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
       window.location.reload();
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : '认证失败');
@@ -475,11 +540,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    border: '1px solid #d1d5db',
+                    border: emailError ? '1px solid #ef4444' : '1px solid #d1d5db',
                     borderRadius: '0.5rem',
                     fontSize: '0.875rem',
                     backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
@@ -487,6 +552,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   }}
                   placeholder="your@email.com"
                 />
+                {emailError && (
+                  <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
+                    {emailError}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -496,11 +566,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.5rem 0.75rem',
-                    border: '1px solid #d1d5db',
+                    border: passwordError ? '1px solid #ef4444' : '1px solid #d1d5db',
                     borderRadius: '0.5rem',
                     fontSize: '0.875rem',
                     backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
@@ -508,7 +578,40 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   }}
                   placeholder="••••••••"
                 />
+                {passwordError && (
+                  <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
+                    {passwordError}
+                  </p>
+                )}
               </div>
+
+              {authMode === 'register' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
+                    确认密码
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: confirmPasswordError ? '1px solid #ef4444' : '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
+                      color: settings.darkMode ? '#f9fafb' : '#111827',
+                    }}
+                    placeholder="••••••••"
+                  />
+                  {confirmPasswordError && (
+                    <p style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '0.25rem' }}>
+                      {confirmPasswordError}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {authError && (
                 <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>
@@ -555,8 +658,12 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                 onClick={() => {
                   setShowAuthModal(false);
                   setAuthError('');
+                  setEmailError('');
+                  setPasswordError('');
+                  setConfirmPasswordError('');
                   setEmail('');
                   setPassword('');
+                  setConfirmPassword('');
                 }}
                 style={{
                   padding: '0.5rem 1rem',
