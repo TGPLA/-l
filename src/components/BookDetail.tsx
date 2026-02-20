@@ -3,6 +3,8 @@ import { useApp } from '../hooks';
 import type { Book, Question, QuestionType, Difficulty, Settings } from '../types';
 import { generateQuestions } from '../api/zhipu';
 import { getResponsiveValue } from '../utils/responsive';
+import { GuidedTour } from './GuidedTour';
+import { QuestionManagementModal } from './QuestionManagementModal';
 
 interface BookDetailProps {
   book: Book;
@@ -16,51 +18,43 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'standard' | 'concept' | 'stats' | 'info'>('standard');
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
-  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [activeTab, setActiveTab] = useState<'standard' | 'concept' | 'stats' | 'info'>('stats');
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [showQuestionManagement, setShowQuestionManagement] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTour = localStorage.getItem('hasSeenTour');
+    if (!hasSeenTour && questions.length === 0) {
+      setShowWelcomeBanner(true);
+      setTimeout(() => setShowGuidedTour(true), 500);
+    }
+  }, [questions.length]);
+
+  const handleTourComplete = () => {
+    setShowGuidedTour(false);
+    setShowWelcomeBanner(false);
+    localStorage.setItem('hasSeenTour', 'true');
+  };
+
+  const handleStartPractice = (mode: 'standard' | 'concept' | 'wrong') => {
+    const relevantQuestions = mode === 'standard' 
+      ? questions.filter(q => q.category === 'standard')
+      : mode === 'concept'
+      ? questions.filter(q => q.category === 'concept')
+      : questions.filter(q => q.masteryLevel === '未掌握');
+
+    if (relevantQuestions.length === 0) {
+      alert(`还没有${mode === 'standard' ? '标准刷题' : mode === 'concept' ? '概念考察' : '错题'}题目，请先添加题目。`);
+      setShowQuestionManagement(true);
+      return;
+    }
+
+    onStartPractice(mode);
+  };
 
   const standardQuestions = questions.filter(q => q.category === 'standard');
   const conceptQuestions = questions.filter(q => q.category === 'concept');
-  const currentQuestions = activeTab === 'standard' ? standardQuestions : conceptQuestions;
-
-  const handleDeleteQuestion = async (questionId: string, questionText: string) => {
-    const confirmed = await confirm(`确定要删除这个问题吗？\n"${questionText.substring(0, 50)}..."`);
-    if (confirmed) {
-      deleteQuestion(questionId);
-    }
-  };
-
-  const handleBatchDelete = async () => {
-    if (selectedQuestionIds.size === 0) return;
-    
-    const confirmed = await confirm(`确定要删除选中的 ${selectedQuestionIds.size} 个题目吗？`);
-    if (confirmed) {
-      selectedQuestionIds.forEach(id => deleteQuestion(id));
-      setSelectedQuestionIds(new Set());
-      setIsBatchMode(false);
-    }
-  };
-
-  const toggleQuestionSelection = (questionId: string) => {
-    setSelectedQuestionIds(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(questionId)) {
-        newSet.delete(questionId);
-      } else {
-        newSet.add(questionId);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedQuestionIds.size === currentQuestions.length) {
-      setSelectedQuestionIds(new Set());
-    } else {
-      setSelectedQuestionIds(new Set(currentQuestions.map(q => q.id)));
-    }
-  };
 
   const progress = book.questionCount > 0 
     ? Math.round((book.masteredCount / book.questionCount) * 100) 
@@ -125,13 +119,7 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
               
               <div style={{ marginTop: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }), display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <button
-                  onClick={() => {
-                    if (standardQuestions.length === 0) {
-                      setActiveTab('standard');
-                    } else {
-                      onStartPractice('standard');
-                    }
-                  }}
+                  onClick={() => handleStartPractice('standard')}
                   style={{
                     padding: getResponsiveValue({ mobile: '0.375rem 0.75rem', tablet: '0.5rem 1rem' }),
                     backgroundColor: standardQuestions.length === 0 ? '#93c5fd' : '#3b82f6',
@@ -145,13 +133,7 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
                   标准刷题 ({standardQuestions.length})
                 </button>
                 <button
-                  onClick={() => {
-                    if (conceptQuestions.length === 0) {
-                      setActiveTab('concept');
-                    } else {
-                      onStartPractice('concept');
-                    }
-                  }}
+                  onClick={() => handleStartPractice('concept')}
                   style={{
                     padding: getResponsiveValue({ mobile: '0.375rem 0.75rem', tablet: '0.5rem 1rem' }),
                     backgroundColor: conceptQuestions.length === 0 ? '#c4b5fd' : '#8b5cf6',
@@ -165,7 +147,7 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
                   概念考察 ({conceptQuestions.length})
                 </button>
                 <button
-                  onClick={() => onStartPractice('wrong')}
+                  onClick={() => handleStartPractice('wrong')}
                   disabled={questions.filter(q => q.masteryLevel === '未掌握').length === 0}
                   style={{
                     padding: getResponsiveValue({ mobile: '0.375rem 0.75rem', tablet: '0.5rem 1rem' }),
@@ -180,10 +162,89 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
                   错题集 ({questions.filter(q => q.masteryLevel === '未掌握').length})
                 </button>
               </div>
+              
+              <div style={{ marginTop: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>
+                <button
+                  onClick={() => setShowQuestionManagement(true)}
+                  style={{
+                    width: '100%',
+                    padding: getResponsiveValue({ mobile: '0.5rem 1rem', tablet: '0.75rem 1.5rem' }),
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    borderRadius: '0.5rem',
+                    border: '2px dashed #d1d5db',
+                    cursor: 'pointer',
+                    fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                  }}
+                >
+                  <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  管理题目
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {showWelcomeBanner && (
+        <div style={{
+          backgroundColor: '#dbeafe',
+          borderBottom: '1px solid #bfdbfe',
+          padding: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }),
+          marginBottom: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }),
+        }}>
+          <div style={{
+            maxWidth: '72rem',
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }),
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>
+              <div style={{ fontSize: getResponsiveValue({ mobile: '1.5rem', tablet: '2rem' }) }}>👋</div>
+              <div>
+                <h3 style={{
+                  fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }),
+                  fontWeight: 600,
+                  color: '#1e40af',
+                  margin: 0,
+                }}>
+                  欢迎使用阅读回响！
+                </h3>
+                <p style={{
+                  fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }),
+                  color: '#3b82f6',
+                  margin: '0.25rem 0 0 0',
+                }}>
+                  这是你首次使用，让我们一起开始吧！
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWelcomeBanner(false)}
+              style={{
+                padding: getResponsiveValue({ mobile: '0.5rem 1rem', tablet: '0.5rem 1rem' }),
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: getResponsiveValue({ mobile: '0.875rem', tablet: '0.875rem' }),
+              }}
+            >
+              开始引导
+            </button>
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: '72rem', margin: '0 auto', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }), flexWrap: 'wrap' }}>
@@ -231,38 +292,6 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
 
         <div style={{ display: 'flex', gap: getResponsiveValue({ mobile: '0.5rem', tablet: '1rem' }), borderBottom: '1px solid #e5e7eb', marginBottom: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }), flexWrap: 'wrap' }}>
           <button
-            onClick={() => setActiveTab('standard')}
-            style={{
-              paddingBottom: '0.5rem',
-              fontWeight: 500,
-              color: activeTab === 'standard' ? '#3b82f6' : '#6b7280',
-              borderTop: 'none',
-              borderLeft: 'none',
-              borderRight: 'none',
-              borderBottom: activeTab === 'standard' ? '2px solid #3b82f6' : 'none',
-              background: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            标准刷题 ({standardQuestions.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('concept')}
-            style={{
-              paddingBottom: '0.5rem',
-              fontWeight: 500,
-              color: activeTab === 'concept' ? '#8b5cf6' : '#6b7280',
-              borderTop: 'none',
-              borderLeft: 'none',
-              borderRight: 'none',
-              borderBottom: activeTab === 'concept' ? '2px solid #8b5cf6' : 'none',
-              background: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            概念考察 ({conceptQuestions.length})
-          </button>
-          <button
             onClick={() => setActiveTab('stats')}
             style={{
               paddingBottom: '0.5rem',
@@ -296,112 +325,6 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
           </button>
         </div>
 
-        {(activeTab === 'standard' || activeTab === 'concept') && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {isBatchMode && (
-                  <>
-                    <button
-                      onClick={toggleSelectAll}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#f3f4f6',
-                        color: '#374151',
-                        borderRadius: '0.5rem',
-                        border: '1px solid #d1d5db',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      {selectedQuestionIds.size === currentQuestions.length ? '取消全选' : '全选'}
-                    </button>
-                    <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      已选择 {selectedQuestionIds.size} 项
-                    </span>
-                  </>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {isBatchMode ? (
-                  <>
-                    <button
-                      onClick={() => {
-                        setIsBatchMode(false);
-                        setSelectedQuestionIds(new Set());
-                      }}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#f3f4f6',
-                        color: '#374151',
-                        borderRadius: '0.5rem',
-                        border: '1px solid #d1d5db',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={handleBatchDelete}
-                      disabled={selectedQuestionIds.size === 0}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: selectedQuestionIds.size === 0 ? '#fca5a5' : '#ef4444',
-                        color: '#ffffff',
-                        borderRadius: '0.5rem',
-                        border: 'none',
-                        cursor: selectedQuestionIds.size === 0 ? 'not-allowed' : 'pointer',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      删除选中 ({selectedQuestionIds.size})
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => setIsBatchMode(true)}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#3b82f6',
-                      color: '#ffffff',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    批量管理
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {currentQuestions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', backgroundColor: '#ffffff', borderRadius: '0.75rem' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📝</div>
-                <p style={{ color: '#6b7280' }}>
-                  {activeTab === 'standard' ? '还没有标准刷题题目' : '还没有概念考察题目'}
-                </p>
-              </div>
-            ) : (
-              currentQuestions.map(question => (
-                <QuestionCard
-                  key={question.id}
-                  question={question}
-                  isBatchMode={isBatchMode}
-                  isSelected={selectedQuestionIds.has(question.id)}
-                  onToggleSelection={() => toggleQuestionSelection(question.id)}
-                  onUpdate={(updates) => updateQuestion(question.id, updates)}
-                  onDelete={() => handleDeleteQuestion(question.id, question.question)}
-                />
-              ))
-            )}
-          </div>
-          </>
-        )}
-
         {activeTab === 'stats' && (
           <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', padding: '1.5rem' }}>
             <StatsView questions={questions} />
@@ -431,6 +354,19 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
         category={activeTab === 'standard' ? 'standard' : 'concept'}
         onAdd={addQuestion}
       />
+
+      <QuestionManagementModal
+        isOpen={showQuestionManagement}
+        onClose={() => setShowQuestionManagement(false)}
+        book={book}
+        questions={questions}
+        onUpdate={updateQuestion}
+        onDelete={deleteQuestion}
+        onAddQuestion={() => setShowAddModal(true)}
+        onAIGenerate={() => setShowAIGenerateModal(true)}
+      />
+
+      {showGuidedTour && <GuidedTour onComplete={handleTourComplete} />}
     </div>
   );
 }
@@ -545,176 +481,6 @@ function BookInfoForm({ book, onUpdate }: BookInfoFormProps) {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-interface QuestionCardProps {
-  question: Question;
-  isBatchMode: boolean;
-  isSelected: boolean;
-  onToggleSelection: () => void;
-  onUpdate: (updates: Partial<Question>) => void;
-  onDelete: () => void;
-}
-
-function QuestionCard({ question, isBatchMode, isSelected, onToggleSelection, onUpdate, onDelete }: QuestionCardProps) {
-  const [expanded, setExpanded] = useState(false);
-
-  const masteryColors: Record<string, string> = {
-    '未掌握': '#fef2f2',
-    '学习中': '#fefce8',
-    '已掌握': '#f0fdf4',
-  };
-
-  const masteryTextColors: Record<string, string> = {
-    '未掌握': '#dc2626',
-    '学习中': '#ca8a04',
-    '已掌握': '#16a34a',
-  };
-
-  const difficultyColors: Record<string, string> = {
-    '基础': '#f3f4f6',
-    '中等': '#dbeafe',
-    '进阶': '#f3e8ff',
-    '挑战': '#fef2f2',
-  };
-
-  const difficultyTextColors: Record<string, string> = {
-    '基础': '#374151',
-    '中等': '#2563eb',
-    '进阶': '#7c3aed',
-    '挑战': '#dc2626',
-  };
-
-  return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
-      <div 
-        style={{ padding: '1rem', cursor: isBatchMode ? 'default' : 'pointer' }}
-        onClick={() => !isBatchMode && setExpanded(!expanded)}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
-          {isBatchMode && (
-            <div style={{ display: 'flex', alignItems: 'center', paddingTop: '0.25rem' }}>
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={onToggleSelection}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: '1.25rem',
-                  height: '1.25rem',
-                  cursor: 'pointer',
-                  accentColor: '#3b82f6',
-                }}
-              />
-            </div>
-          )}
-          <div style={{ flex: 1 }}>
-            <p style={{ color: '#111827', fontWeight: 500 }}>{question.question}</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <span style={{ 
-                fontSize: '0.75rem', 
-                padding: '0.125rem 0.5rem', 
-                borderRadius: '9999px',
-                backgroundColor: masteryColors[question.masteryLevel],
-                color: masteryTextColors[question.masteryLevel],
-              }}>
-                {question.masteryLevel}
-              </span>
-              <span style={{ 
-                fontSize: '0.75rem', 
-                padding: '0.125rem 0.5rem', 
-                borderRadius: '9999px',
-                backgroundColor: difficultyColors[question.difficulty],
-                color: difficultyTextColors[question.difficulty],
-              }}>
-                {question.difficulty}
-              </span>
-              <span style={{ 
-                fontSize: '0.75rem', 
-                padding: '0.125rem 0.5rem', 
-                borderRadius: '9999px',
-                backgroundColor: '#f3f4f6',
-                color: '#6b7280',
-              }}>
-                {question.questionType}
-              </span>
-            </div>
-          </div>
-          {!isBatchMode && (
-            <svg 
-              style={{ 
-                width: '1.25rem', 
-                height: '1.25rem', 
-                color: '#9ca3af', 
-                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s',
-              }} 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          )}
-        </div>
-      </div>
-      
-      {expanded && !isBatchMode && (
-        <div style={{ padding: '0 1rem 1rem', borderTop: '1px solid #f3f4f6', paddingTop: '1rem' }}>
-          {question.questionType === '选择题' && question.options && (
-            <div style={{ marginBottom: '1rem' }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.5rem' }}>选项</p>
-              {question.options.map((opt, i) => (
-                <div 
-                  key={i} 
-                  style={{ 
-                    padding: '0.5rem', 
-                    marginBottom: '0.25rem', 
-                    borderRadius: '0.375rem',
-                    backgroundColor: i === question.correctIndex ? '#dcfce7' : '#f9fafb',
-                    border: i === question.correctIndex ? '1px solid #22c55e' : '1px solid #e5e7eb',
-                  }}
-                >
-                  <span style={{ fontWeight: i === question.correctIndex ? 600 : 400, color: i === question.correctIndex ? '#16a34a' : '#374151' }}>
-                    {String.fromCharCode(65 + i)}. {opt}
-                    {i === question.correctIndex && ' ✓'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <div style={{ marginBottom: '1rem' }}>
-            <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#6b7280', marginBottom: '0.25rem' }}>答案</p>
-            <p style={{ color: '#374151', whiteSpace: 'pre-wrap' }}>{question.answer}</p>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '0.5rem' }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <select
-                value={question.masteryLevel}
-                onChange={(e) => onUpdate({ masteryLevel: e.target.value as Question['masteryLevel'] })}
-                style={{ fontSize: '0.875rem', padding: '0.25rem 0.5rem', border: '1px solid #d1d5db', borderRadius: '0.375rem' }}
-              >
-                <option value="未掌握">未掌握</option>
-                <option value="学习中">学习中</option>
-                <option value="已掌握">已掌握</option>
-              </select>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.875rem' }}
-            >
-              删除
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

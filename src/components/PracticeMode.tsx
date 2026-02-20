@@ -972,7 +972,7 @@ function ConceptCard({
                     <p style={{ color: '#374151' }}>{evaluation.supplement}</p>
                   </div>
                 )}
-                {evaluation.translation && typeof evaluation.translation === 'string' && (
+                {(evaluation.translation && typeof evaluation.translation === 'string') ? (
                   <div style={{ padding: '1rem', backgroundColor: '#fef9c3', borderRadius: '0.5rem', border: '2px solid #fbbf24' }}>
                     <p style={{ fontSize: '0.875rem', color: '#d97706', marginBottom: '0.5rem', fontWeight: 600 }}>📢 翻译成人话</p>
                     <div style={{ color: '#374151', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
@@ -987,6 +987,13 @@ function ConceptCard({
                           )}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '1rem', backgroundColor: '#fef9c3', borderRadius: '0.5rem', border: '2px solid #fbbf24' }}>
+                    <p style={{ fontSize: '0.875rem', color: '#d97706', marginBottom: '0.5rem', fontWeight: 600 }}>📢 翻译成人话</p>
+                    <div style={{ color: '#374151', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                      <p>提交你的理解后，AI会为你生成白话翻译，帮助你更好地理解这个概念。</p>
                     </div>
                   </div>
                 )}
