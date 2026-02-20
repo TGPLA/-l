@@ -31,21 +31,6 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     updateSettings(newSettings);
   };
 
-  const handleClearData = async () => {
-    const confirmed = await window.confirm('确定要清除所有数据吗？此操作不可恢复。');
-    if (confirmed) {
-      try {
-        window.localStorage.clear();
-        window.alert('数据已清除');
-        window.location.reload();
-      } catch (error) {
-        window.alert('清除数据失败');
-      }
-    } else {
-      window.alert('操作已取消');
-    }
-  };
-
   const handleValidateApiKey = async () => {
     if (!formData.zhipuApiKey) {
       setValidationResult({ valid: false, message: '请先输入 API Key' });

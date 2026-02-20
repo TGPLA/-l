@@ -492,13 +492,6 @@ function NavPanel({ questions, currentIndex, onQuestionClick, onClose, onDeleteQ
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<Set<string>>(new Set());
 
-  const filteredQuestions = questions.filter((q, index) => {
-    if (filter === 'all') return true;
-    if (filter === 'unanswered') return q.masteryLevel === '未掌握';
-    if (filter === 'wrong') return q.masteryLevel === '未掌握';
-    return true;
-  });
-
   const masteredCount = questions.filter(q => q.masteryLevel === '已掌握').length;
   const learningCount = questions.filter(q => q.masteryLevel === '学习中').length;
   const notMasteredCount = questions.filter(q => q.masteryLevel === '未掌握').length;
