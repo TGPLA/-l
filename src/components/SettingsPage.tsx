@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../hooks';
 import type { Settings } from '../types';
 import { validateApiKey } from '../api/zhipu';
+import { authService } from '../services/supabaseAuth';
 import { getResponsiveValue } from '../utils/responsive';
 
 interface SettingsPageProps {
@@ -14,6 +15,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [saved, setSaved] = useState(false);
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<{ valid: boolean; message: string } | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     setFormData(settings);
@@ -50,6 +52,20 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
       });
     } finally {
       setValidating(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    const confirmed = await confirm('确定要退出登录吗？');
+    if (confirmed) {
+      setLoggingOut(true);
+      const { error } = await authService.signOut();
+      if (error) {
+        alert(`登出失败：${error.message}`);
+      } else {
+        onBack();
+      }
+      setLoggingOut(false);
     }
   };
 
@@ -234,6 +250,35 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
               <p>一个帮助读者通过主动回忆机制加深书籍理解的个人刷题工具。</p>
               <p style={{ fontSize: '0.875rem' }}>版本: 1.0.0</p>
             </div>
+          </div>
+
+          <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '1rem' }}>账户</h2>
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                borderRadius: '0.5rem',
+                border: 'none',
+                fontSize: '1rem',
+                fontWeight: 500,
+                cursor: loggingOut ? 'not-allowed' : 'pointer',
+                opacity: loggingOut ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4 4m4-4h-4m4 4v-4m-4 4v4M9 12h6m-6 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              {loggingOut ? '退出中...' : '退出登录'}
+            </button>
           </div>
         </div>
       </div>
