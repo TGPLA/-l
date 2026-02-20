@@ -4,9 +4,9 @@ import { BookShelf } from './components/BookShelf';
 import { BookDetail } from './components/BookDetail';
 import { PracticeMode } from './components/PracticeMode';
 import { SettingsPage } from './components/SettingsPage';
+import { AuthPage } from './components/AuthPage';
 import { getResponsiveValue } from './utils/responsive';
-import { authService } from './services/auth';
-import { syncService } from './services/sync';
+import { authService } from './services/supabaseAuth';
 import type { Book } from './types';
 
 type Page = 'shelf' | 'detail' | 'practice' | 'settings';
@@ -16,6 +16,17 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('shelf');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [practiceMode, setPracticeMode] = useState<'standard' | 'concept' | 'wrong'>('standard');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = authService.onAuthChange((user) => {
+      setIsAuthenticated(!!user);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -35,26 +46,6 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [settings.darkMode]);
 
-  useEffect(() => {
-    const autoSync = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          await syncService.syncData();
-        } catch (error) {
-          console.error('自动同步失败:', error);
-        }
-      }
-    };
-
-    autoSync();
-
-    const syncInterval = setInterval(() => {
-      autoSync();
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(syncInterval);
-  }, []);
-
   const handleSelectBook = (book: Book) => {
     setSelectedBook(book);
     setCurrentPage('detail');
@@ -73,6 +64,43 @@ function AppContent() {
   const handleBackToDetail = () => {
     setCurrentPage('detail');
   };
+
+  const handleLogout = async () => {
+    const { error } = await authService.signOut();
+    if (!error) {
+      setSelectedBook(null);
+      setCurrentPage('shelf');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '3rem',
+            height: '3rem',
+            border: '3px solid #e5e7eb',
+            borderTopColor: '#3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem'
+          }} />
+          <p style={{ color: '#6b7280', margin: 0 }}>加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={() => {}} />;
+  }
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb' }}>
@@ -140,7 +168,7 @@ function AppContent() {
       )}
 
       {currentPage === 'settings' && (
-        <SettingsPage onBack={handleBackToShelf} />
+        <SettingsPage onBack={handleBackToShelf} onLogout={handleLogout} />
       )}
     </div>
   );

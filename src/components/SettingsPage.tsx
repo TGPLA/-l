@@ -10,9 +10,10 @@ import { storage } from '../store';
 
 interface SettingsPageProps {
   onBack: () => void;
+  onLogout?: () => void;
 }
 
-export function SettingsPage({ onBack }: SettingsPageProps) {
+export function SettingsPage({ onBack, onLogout }: SettingsPageProps) {
   const { settings, updateSettings } = useApp();
   const [formData, setFormData] = useState<Settings>(settings);
   const [saved, setSaved] = useState(false);
@@ -212,8 +213,12 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   };
 
   const handleLogout = async () => {
-    await authService.logout();
-    window.location.reload();
+    if (onLogout) {
+      await onLogout();
+    } else {
+      await authService.logout();
+      window.location.reload();
+    }
   };
 
   const handleResetPassword = async () => {

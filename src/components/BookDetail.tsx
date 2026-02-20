@@ -608,7 +608,7 @@ interface AddQuestionModalProps {
   onClose: () => void;
   bookId: string;
   category: 'standard' | 'concept';
-  onAdd: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Question;
+  onAdd: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Promise<Question>;
 }
 
 function AddQuestionModal({ isOpen, onClose, bookId, category, onAdd }: AddQuestionModalProps) {
@@ -625,7 +625,7 @@ function AddQuestionModal({ isOpen, onClose, bookId, category, onAdd }: AddQuest
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim() || !answer.trim()) return;
 
@@ -635,7 +635,7 @@ function AddQuestionModal({ isOpen, onClose, bookId, category, onAdd }: AddQuest
         alert('选择题至少需要2个选项');
         return;
       }
-      onAdd({
+      await onAdd({
         bookId,
         question: question.trim(),
         answer: answer.trim(),
@@ -646,7 +646,7 @@ function AddQuestionModal({ isOpen, onClose, bookId, category, onAdd }: AddQuest
         category,
       });
     } else {
-      onAdd({
+      await onAdd({
         bookId,
         question: question.trim(),
         answer: answer.trim(),
@@ -813,7 +813,7 @@ interface AIGenerateModalProps {
   book: Book;
   settings: Settings;
   category: 'standard' | 'concept';
-  onAdd: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Question;
+  onAdd: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Promise<Question>;
 }
 
 function AIGenerateModal({ isOpen, onClose, book, settings, category, onAdd }: AIGenerateModalProps) {
@@ -862,9 +862,9 @@ function AIGenerateModal({ isOpen, onClose, book, settings, category, onAdd }: A
     }
   };
 
-  const handleSaveAll = () => {
-    generatedQuestions.forEach(q => {
-      onAdd({
+  const handleSaveAll = async () => {
+    for (const q of generatedQuestions) {
+      await onAdd({
         bookId: book.id,
         question: q.question,
         answer: q.answer || '',
@@ -875,7 +875,7 @@ function AIGenerateModal({ isOpen, onClose, book, settings, category, onAdd }: A
         knowledgePoint: (q as any).knowledgePoint,
         category,
       });
-    });
+    }
     onClose();
   };
 

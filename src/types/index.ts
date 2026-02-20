@@ -38,11 +38,13 @@ export interface Question {
   difficulty: Difficulty;
   masteryLevel: MasteryLevel;
   createdAt: number;
+  updatedAt?: number;
   lastPracticedAt?: number;
   practiceCount: number;
   options?: string[];
   correctIndex?: number;
   knowledgePoint?: string;
+  explanation?: string;
   answerStatus?: AnswerStatus;
   answeredAt?: number;
   userAnswer?: string;
@@ -55,11 +57,13 @@ export interface Book {
   author: string;
   coverUrl?: string;
   createdAt: number;
+  updatedAt?: number;
   questionCount: number;
   masteredCount: number;
   summary?: string;
   contents?: string;
   keyPoints?: string[];
+  description?: string;
 }
 
 export interface Settings {

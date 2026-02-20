@@ -5,15 +5,15 @@ interface AppContextType {
   books: Book[];
   questions: Question[];
   settings: Settings;
-  refreshBooks: () => void;
-  refreshQuestions: () => void;
+  refreshBooks: () => Promise<void>;
+  refreshQuestions: () => Promise<void>;
   updateSettings: (settings: Settings) => void;
-  addBook: (book: Omit<Book, 'id' | 'createdAt' | 'questionCount' | 'masteredCount'>) => Book;
-  updateBook: (id: string, updates: Partial<Book>) => Book | null;
-  deleteBook: (id: string) => boolean;
-  addQuestion: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Question;
-  updateQuestion: (id: string, updates: Partial<Question>) => Question | null;
-  deleteQuestion: (id: string) => boolean;
+  addBook: (book: Omit<Book, 'id' | 'createdAt' | 'questionCount' | 'masteredCount'>) => Promise<Book>;
+  updateBook: (id: string, updates: Partial<Book>) => Promise<Book | null>;
+  deleteBook: (id: string) => Promise<boolean>;
+  addQuestion: (question: Omit<Question, 'id' | 'createdAt' | 'masteryLevel' | 'practiceCount'>) => Promise<Question>;
+  updateQuestion: (id: string, updates: Partial<Question>) => Promise<Question | null>;
+  deleteQuestion: (id: string) => Promise<boolean>;
   getQuestionsByBook: (bookId: string) => Question[];
 }
 
