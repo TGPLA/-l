@@ -87,6 +87,12 @@ class AuthService {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            skip_email_verification: true
+          }
+        }
       });
 
       if (error) {
