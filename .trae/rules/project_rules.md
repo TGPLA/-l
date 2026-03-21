@@ -16,3 +16,4 @@
 | `rules_debug.md` | 前端调试流程 |
 | `rules_architecture.md` | 架构变更同步 |
 | `rules_testing.md` | 后端 API 本地集成测试规范 |
+| `rules_verification.md` | 任务闭环验证：立即验证、文档同步、引用验证、立即提交 |
