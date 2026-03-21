@@ -1,0 +1,40 @@
+# 阅读回响 - Docker Compose 配置文件
+# 用于在 1Panel 环境中部署 Go 后端服务
+
+version: '3.8'
+
+services:
+  readrecall-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: readrecall-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - DB_HOST=${DB_HOST:-1Panel-mysql-OHb5}
+      - DB_PORT=3306
+      - DB_USER=readrecall
+      - DB_PASSWORD=${DB_PASSWORD:-your_password}
+      - DB_NAME=reading_reflection
+      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-change-me}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY:-}
+      - ZHIPU_MODEL=glm-4-flash
+    networks:
+      - readrecall-network
+      - 1panel-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  readrecall-network:
+    driver: bridge
+    name: readrecall-network
+  1panel-network:
+    external: true

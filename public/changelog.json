@@ -1,0 +1,114 @@
+{
+  "projectName": "ReadRecall",
+  "version": "1.7.6",
+  "changelog": [
+    {
+      "version": "1.7.6",
+      "date": "2026-03-11",
+      "category": "[Architecture]",
+      "content": "部署流程优化：1. 部署脚本新增步骤：上传前先清空服务器旧文件（rm -rf）；2. 避免旧版本文件堆积问题；3. 更新部署指南文档说明"
+    },
+    {
+      "version": "1.7.5",
+      "date": "2026-03-10",
+      "category": "[Architecture]",
+      "content": "完全移除 Supabase 依赖，迁移到 Go 后端 + MySQL：1. 删除 Supabase 客户端文件（supabase.ts, supabaseAuth.ts）；2. 创建新的认证服务 auth.ts，基于 REST API；3. 重写 database.ts，使用 fetch 调用 Go 后端 API；4. 更新所有组件的导入路径（AppProvider.tsx, AuthPage.tsx, SettingsPage.tsx, App.tsx）；5. 移除 main.tsx 中的 Supabase 环境变量检查；6. 清理 .env 文件中的 Supabase 配置"
+    },
+    {
+      "version": "1.7.4",
+      "date": "2026-03-10",
+      "category": "[BugFix]",
+      "content": "修复部署路径错误：1. 修正部署脚本中的服务器路径（从 /www/sites/... 改为 /opt/1panel/www/sites/...）；2. 1Panel 的 OpenResty 容器挂载了 /opt/1panel/www → 容器内 /www，之前上传到了错误的宿主机目录导致 Nginx 读取旧文件；3. 更新所有相关文档（01_README.md、07_部署指南.md、deploy.ps1）；4. 添加部署路径说明到项目进度文档"
+    },
+    {
+      "version": "1.7.3",
+      "date": "2026-03-10",
+      "category": "[Feature]",
+      "content": "移除选择题功能：1. 移除 QuestionType 中的选择题类型，仅保留简答题；2. 移除 Question 接口中的 options 和 correctIndex 字段；3. 移除 PracticeMode.tsx 中的 ChoiceCard 组件；4. 简化 BookDetail.tsx 中的添加问题和 AI 生成问题弹窗；5. 重构 zhipu.ts API 模块，移除选择题相关逻辑；6. 清理 QuestionManagementModal.tsx 中的选项展示"
+    },
+    {
+      "version": "1.7.2",
+      "date": "2026-03-10",
+      "category": "[Architecture]",
+      "content": "项目模块化重构：1. 按人体模型分为 core（头部）、infrastructure（躯干）、features（手脚）、shared（医疗包）四层；2. 清理垃圾文件 8 个，归档废弃文件 6 个；3. 配置 Vite 和 TypeScript 路径别名；4. 更新所有 import 路径使用 @ 别名；5. 更新项目文档（README、项目地图）；6. 解决文档编号冲突"
+    },
+    {
+      "version": "1.7.1",
+      "date": "2026-03-10",
+      "category": "[BugFix]",
+      "content": "修复 Nginx 配置缺失 proxy_pass 导致 API 无法访问的问题；修复数据库缺少 chapters 表导致新建章节失败的问题；更新 README 文档，补充完整项目架构说明"
+    },
+    {
+      "version": "1.7.0",
+      "date": "2026-03-06",
+      "category": "[Feature]",
+      "content": "书籍策略配置系统 & API 请求模块重写：1. 添加 WeiDuCeLuePeiZhi、ShuJiCeLuePeiZhi 等类型定义；2. 创建全局默认提示词配置 defaultPrompts.ts；3. 创建书籍策略配置组件 书籍策略配置.tsx；4. 重写智谱 AI API 模块 zhipu.ts，实现策略提取、Prompt 组装、自适应反馈处理；5. 练习页面优化：进入练习前校验章节内容、文本长度检查、强化章节列表展示弱化书籍信息；6. 所有错误信息翻译成中文；7. 添加详细的中文注释说明逻辑流转。"
+    },
+    {
+      "version": "1.6.7",
+      "date": "2026-03-04",
+      "category": "[Feature]",
+      "content": "AI 出题功能重构 - 深度提示词配置系统：1. 新增 ShuJiTiShiCiPeiZhi.ts 内置提示词配置文件，支持三种题型（名词解释/意图理解/生活应用）；2. 新增 ShuJiPeiZhiMianBan.tsx 书籍定制配置面板，支持用户为每本书录入专属提示词；3. 扩展 Book 类型添加 dingZhiTiShiCi 字段；4. 重构 generateQuestions 函数实现精准提示词注入，支持三层优先级回退（自定义>内置>通用）；5. 重构 evaluateAnswer 函数实现评价标准与出题要求一致，AI 人设自动继承；6. 前端交互适配，练习模式显示专属模式提示；7. 完善错误翻译机制和 Loading 状态反馈。"
+    },
+    {
+      "version": "1.6.6",
+      "date": "2026-03-03",
+      "category": "[BugFix]",
+      "content": "修复创建书籍 500 错误：1. 数据库 books 表缺少 unit_count 字段导致插入失败；2. Settings 模型表名映射错误（GORM 查找 settings 表但数据库中是 user_settings）；3. Docker 网络配置错误（Linux 环境不支持 host.docker.internal，改用 MySQL 容器名称 1Panel-mysql-OHb5）。修改文件：数据模型.go（添加 TableName 方法）、.env.example（添加配置说明）。"
+    },
+    {
+      "version": "1.6.5",
+      "date": "2026-03-03",
+      "category": "[BugFix]",
+      "content": "修复网页版本号不同步问题：1. Nginx 缺少缓存控制头导致浏览器缓存旧版 index.html；2. SSL 证书路径配置错误导致 HTTPS 访问失败；3. 服务器多目录文件不一致（中转目录 vs 部署目录）；4. 一键部署脚本编码问题导致执行失败。修复方案：添加 Cache-Control 头禁止 index.html 和项目日志.json 缓存、修正 SSL 证书路径、统一部署到正确目录、重写部署脚本。"
+    },
+    {
+      "version": "1.6.4",
+      "date": "2026-03-03",
+      "category": "[BugFix]",
+      "content": "修复 token 过期保存书籍失败问题：1. aliyunFc.ts 请求方法增加 401 状态码检测；2. token 过期时清除 localStorage 中的认证信息；3. 触发 auth-expired 自定义事件；4. AppProvider.tsx 监听事件并清除本地状态；5. App.tsx 监听事件并跳转到登录页。"
+    },
+    {
+      "version": "1.6.3",
+      "date": "2026-03-03",
+      "category": "[Architecture]",
+      "content": "后端从 Node.js 迁移到 Go：1. 使用 Gin 框架重写所有 API；2. 解决 Go 中文命名导出问题（使用英文命名+中文别名）；3. 更新前端 API 服务适配 Go 后端（snake_case 转 camelCase）；4. 增加章节管理功能；5. 配置 Docker 部署到 1Panel 网络；6. 更新 Nginx 反向代理配置。"
+    },
+    {
+      "version": "1.6.2",
+      "date": "2026-03-03",
+      "category": "[Feature]",
+      "content": "AI 出题逻辑重构：1. 从基于书籍信息改为基于章节段落的精准出题；2. 生成 3 种题型：术语解释、作者意图、生活应用；3. 更新评估标准；4. 增加文本段落输入框；5. 题目增加类型字段。"
+    },
+    {
+      "version": "1.6.1",
+      "date": "2026-03-03",
+      "category": "[Security]",
+      "content": "部署脚本安全增强：1. 增加体积审计（Test-DistSize），超过 50MB 中止部署；2. 清理 dist 目录并验证删除；3. 显示完整文件列表；4. 自动翻译错误信息为中文；5. 整合部署流程，自动复制到域名目录。"
+    },
+    {
+      "version": "1.6.0",
+      "date": "2026-03-03",
+      "category": "[Architecture]",
+      "content": "完全移除 LocalStorage 逻辑，纯云端数据同步：1. 重构 AppProvider.tsx，移除所有 localStorage 读写；2. 删除本地到服务器合并逻辑；3. 未登录用户看到空数据，必须登录才能使用；4. 保留 token 用于登录状态；5. 保留 UI 状态存储（更新横幅、引导提示）。"
+    },
+    {
+      "version": "1.5.9",
+      "date": "2026-03-02",
+      "category": "[UX]",
+      "content": "修复书籍封面显示问题：1. 确认后端封面获取和存储逻辑正常；2. BookCard 组件增加图片加载错误处理（onError）；3. 实现优雅的首字母占位符：根据书名首字符自动选择 10 种渐变色之一，显示大号首字母+毛玻璃效果。"
+    },
+    {
+      "version": "1.5.8",
+      "date": "2026-03-02",
+      "category": "[UX]",
+      "content": "修复书籍列表闪烁问题：1. 在 AppContext 中增加 isLoading 状态并传递给子组件；2. BookShelf 在加载时显示骨架屏而非空白；3. 修复未登录时 isLoading 永远为 true 导致无限加载的问题；4. 为骨架屏添加闪烁动画。"
+    },
+    {
+      "version": "0.1.0",
+      "date": "Initial",
+      "category": "[Foundation]",
+      "content": "项目初始化，建立 React 18 + TypeScript + Vite 技术栈，完成前端项目骨架。"
+    }
+  ]
+}
