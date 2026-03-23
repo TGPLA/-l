@@ -2,12 +2,15 @@
 // 章节详情组件 - 显示章节内容、划词创建段落、AI出题
 
 import { useState, useEffect, useRef } from 'react';
-import type { Chapter, Question, Difficulty, Paragraph, QuestionTypeEnum } from '@infrastructure/types';
+import type { Chapter, Question, Difficulty, Paragraph, QuestionTypeEnum, PromptTemplate } from '@infrastructure/types';
 import { chapterService } from '@shared/services/chapterService';
 import { aiService } from '@shared/services/aiService';
 import { paragraphService } from '@shared/services/paragraphService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 import { JiaZaiZhuangTai } from '@shared/utils/common/JiaZaiZhuangTai';
+import { ZhuiJiaTiMu } from './题目管理/ZhuiJiaTiMu';
+import { TiShiCiMoBan } from './提示词管理/TiShiCiMoBan';
+import { TiShiCiBianJi } from './提示词管理/TiShiCiBianJi';
 
 const TI_XING: QuestionTypeEnum[] = ['名词解释', '意图理解', '生活应用'];
 
@@ -23,10 +26,13 @@ export function ChapterDetail({ chapter, onBack, onStartPractice }: ChapterDetai
   const [selectedText, setSelectedText] = useState('');
   const [showSelectionBar, setShowSelectionBar] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showZhuiJiaModal, setShowZhuiJiaModal] = useState(false);
+  const [showTiShiCiBianJiModal, setShowTiShiCiBianJiModal] = useState(false);
   const [generateTarget, setGenerateTarget] = useState<'chapter' | 'paragraph' | null>(null);
   const [selectedParagraphId, setSelectedParagraphId] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('中等');
   const [questionType, setQuestionType] = useState<QuestionTypeEnum>('名词解释');
+  const [selectedTemplate, setSelectedTemplate] = useState<PromptTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +137,11 @@ export function ChapterDetail({ chapter, onBack, onStartPractice }: ChapterDetai
     }
   };
 
+  const handleZhuiJiaSuccess = async () => {
+    const { questions: loadedQuestions } = await chapterService.getChapterDetail(chapter.id);
+    setQuestions(loadedQuestions);
+  };
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
       <TouBuDaoHang chapter={chapter} onBack={onBack} />
@@ -206,6 +217,23 @@ export function ChapterDetail({ chapter, onBack, onStartPractice }: ChapterDetai
           >
             AI 生成题目
           </button>
+          {questions.some(q => q.paragraphId) && (
+            <button
+              onClick={() => setShowZhuiJiaModal(true)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#f59e0b',
+                color: '#ffffff',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.9375rem',
+                fontWeight: 600,
+              }}
+            >
+              批量追加
+            </button>
+          )}
           {questions.length > 0 && (
             <button
               onClick={handleStartPractice}
@@ -299,10 +327,23 @@ export function ChapterDetail({ chapter, onBack, onStartPractice }: ChapterDetai
           setDifficulty={setDifficulty}
           questionType={questionType}
           setQuestionType={setQuestionType}
+          selectedTemplate={selectedTemplate}
+          setSelectedTemplate={setSelectedTemplate}
+          showTiShiCiBianJiModal={showTiShiCiBianJiModal}
+          setShowTiShiCiBianJiModal={setShowTiShiCiBianJiModal}
           loading={loading}
           error={error}
           onClose={() => setShowGenerateModal(false)}
           onGenerate={handleGenerate}
+        />
+      )}
+
+      {showZhuiJiaModal && (
+        <ZhuiJiaTiMu
+          visible={showZhuiJiaModal}
+          questions={questions}
+          onClose={() => setShowZhuiJiaModal(false)}
+          onSuccess={handleZhuiJiaSuccess}
         />
       )}
     </div>
@@ -335,6 +376,10 @@ function ShengChengTanChuang({
   setDifficulty,
   questionType,
   setQuestionType,
+  selectedTemplate,
+  setSelectedTemplate,
+  showTiShiCiBianJiModal,
+  setShowTiShiCiBianJiModal,
   loading,
   error,
   onClose,
@@ -349,130 +394,157 @@ function ShengChengTanChuang({
   setDifficulty: (d: Difficulty) => void;
   questionType: QuestionTypeEnum;
   setQuestionType: (t: QuestionTypeEnum) => void;
+  selectedTemplate: PromptTemplate | null;
+  setSelectedTemplate: (template: PromptTemplate | null) => void;
+  showTiShiCiBianJiModal: boolean;
+  setShowTiShiCiBianJiModal: (show: boolean) => void;
   loading: boolean;
   error: string | null;
   onClose: () => void;
   onGenerate: () => void;
 }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={onClose}>
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', maxWidth: '28rem', width: '100%', padding: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '1rem' }}>AI 生成题目</h2>
+    <>
+      <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }} onClick={onClose}>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', maxWidth: '32rem', width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '1.5rem' }} onClick={(e) => e.stopPropagation()}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827', marginBottom: '1rem' }}>AI 生成题目</h2>
 
-        {error && <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
+          {error && <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', color: '#dc2626', borderRadius: '0.5rem', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</div>}
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>选择出题范围</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button
-              onClick={() => { setGenerateTarget('chapter'); setSelectedParagraphId(null); }}
-              style={{
-                padding: '0.75rem',
-                backgroundColor: generateTarget === 'chapter' ? '#eff6ff' : '#f9fafb',
-                border: generateTarget === 'chapter' ? '2px solid #3b82f6' : '2px solid transparent',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                textAlign: 'left',
-              }}
-            >
-              <div style={{ fontWeight: 500, color: '#111827' }}>基于整章内容</div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>使用章节的全部内容生成题目</div>
-            </button>
-            {paragraphs.length > 0 && (
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>选择出题范围</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <button
-                onClick={() => setGenerateTarget('paragraph')}
+                onClick={() => { setGenerateTarget('chapter'); setSelectedParagraphId(null); }}
                 style={{
                   padding: '0.75rem',
-                  backgroundColor: generateTarget === 'paragraph' ? '#eff6ff' : '#f9fafb',
-                  border: generateTarget === 'paragraph' ? '2px solid #3b82f6' : '2px solid transparent',
+                  backgroundColor: generateTarget === 'chapter' ? '#eff6ff' : '#f9fafb',
+                  border: generateTarget === 'chapter' ? '2px solid #3b82f6' : '2px solid transparent',
                   borderRadius: '0.5rem',
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
-                <div style={{ fontWeight: 500, color: '#111827' }}>基于段落内容</div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>选择特定段落生成题目</div>
+                <div style={{ fontWeight: 500, color: '#111827' }}>基于整章内容</div>
+                <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>使用章节的全部内容生成题目</div>
               </button>
-            )}
-          </div>
-        </div>
-
-        {generateTarget === 'paragraph' && paragraphs.length > 0 && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>选择段落</label>
-            <div style={{ maxHeight: '10rem', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
-              {paragraphs.map((p, i) => (
-                <div
-                  key={p.id}
-                  onClick={() => setSelectedParagraphId(p.id)}
-                  style={{
-                    padding: '0.5rem 0.75rem',
-                    backgroundColor: selectedParagraphId === p.id ? '#eff6ff' : 'transparent',
-                    borderBottom: i < paragraphs.length - 1 ? '1px solid #f3f4f6' : 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span style={{ fontWeight: 500, color: '#111827' }}>段落 {i + 1}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '0.5rem' }}>({p.content.length} 字)</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {generateTarget === 'paragraph' && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>题型选择</label>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {TI_XING.map(type => (
+              {paragraphs.length > 0 && (
                 <button
-                  key={type}
-                  onClick={() => setQuestionType(type)}
+                  onClick={() => setGenerateTarget('paragraph')}
                   style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: questionType === type ? '#3b82f6' : '#f9fafb',
-                    color: questionType === type ? '#ffffff' : '#374151',
-                    border: questionType === type ? 'none' : '1px solid #d1d5db',
+                    padding: '0.75rem',
+                    backgroundColor: generateTarget === 'paragraph' ? '#eff6ff' : '#f9fafb',
+                    border: generateTarget === 'paragraph' ? '2px solid #3b82f6' : '2px solid transparent',
                     borderRadius: '0.5rem',
                     cursor: 'pointer',
-                    fontSize: '0.875rem',
+                    textAlign: 'left',
                   }}
                 >
-                  {type}
+                  <div style={{ fontWeight: 500, color: '#111827' }}>基于段落内容</div>
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>选择特定段落生成题目</div>
                 </button>
-              ))}
+              )}
             </div>
           </div>
-        )}
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>难度</label>
-          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)} style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }}>
-            <option value="基础">基础</option>
-            <option value="中等">中等</option>
-            <option value="进阶">进阶</option>
-            <option value="挑战">挑战</option>
-          </select>
-        </div>
+          {generateTarget === 'paragraph' && paragraphs.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>选择段落</label>
+              <div style={{ maxHeight: '10rem', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '0.5rem' }}>
+                {paragraphs.map((p, i) => (
+                  <div
+                    key={p.id}
+                    onClick={() => setSelectedParagraphId(p.id)}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      backgroundColor: selectedParagraphId === p.id ? '#eff6ff' : 'transparent',
+                      borderBottom: i < paragraphs.length - 1 ? '1px solid #f3f4f6' : 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontWeight: 500, color: '#111827' }}>段落 {i + 1}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#6b7280', marginLeft: '0.5rem' }}>({p.content.length} 字)</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-          <button onClick={onClose} style={{ padding: '0.5rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', backgroundColor: 'transparent', color: '#374151', cursor: 'pointer' }}>取消</button>
-          <button
-            onClick={onGenerate}
-            disabled={loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)}
-            style={{
-              padding: '0.5rem 1rem',
-              border: 'none',
-              borderRadius: '0.5rem',
-              backgroundColor: (loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)) ? '#9ca3af' : '#3b82f6',
-              color: '#ffffff',
-              cursor: (loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)) ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {loading ? '生成中...' : '生成题目'}
-          </button>
+          {generateTarget === 'paragraph' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>题型选择</label>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {TI_XING.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => { setQuestionType(type); setSelectedTemplate(null); }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: questionType === type ? '#3b82f6' : '#f9fafb',
+                      color: questionType === type ? '#ffffff' : '#374151',
+                      border: questionType === type ? 'none' : '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {generateTarget === 'paragraph' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <TiShiCiMoBan
+                questionType={questionType}
+                onSelect={(template) => setSelectedTemplate(template)}
+                onCreateCustom={() => setShowTiShiCiBianJiModal(true)}
+              />
+            </div>
+          )}
+
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.25rem' }}>难度</label>
+            <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as Difficulty)} style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem' }}>
+              <option value="基础">基础</option>
+              <option value="中等">中等</option>
+              <option value="进阶">进阶</option>
+              <option value="挑战">挑战</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+            <button onClick={onClose} style={{ padding: '0.5rem 1rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', backgroundColor: 'transparent', color: '#374151', cursor: 'pointer' }}>取消</button>
+            <button
+              onClick={onGenerate}
+              disabled={loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)}
+              style={{
+                padding: '0.5rem 1rem',
+                border: 'none',
+                borderRadius: '0.5rem',
+                backgroundColor: (loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)) ? '#9ca3af' : '#3b82f6',
+                color: '#ffffff',
+                cursor: (loading || !generateTarget || (generateTarget === 'paragraph' && !selectedParagraphId)) ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {loading ? '生成中...' : '生成题目'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showTiShiCiBianJiModal && (
+        <TiShiCiBianJi
+          questionType={questionType}
+          onClose={() => setShowTiShiCiBianJiModal(false)}
+          onSave={(template) => {
+            setSelectedTemplate(template);
+            setShowTiShiCiBianJiModal(false);
+          }}
+        />
+      )}
+    </>
   );
 }

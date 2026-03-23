@@ -4,15 +4,20 @@ import { useState } from 'react';
 import type { PromptTemplate, QuestionTypeEnum } from '@infrastructure/types';
 import { promptService } from '@shared/services/promptService';
 
+const TI_XING: QuestionTypeEnum[] = ['名词解释', '意图理解', '生活应用'];
+
 interface TiShiCiBianJiProps {
-  questionType: QuestionTypeEnum;
+  questionType?: QuestionTypeEnum;
   template?: PromptTemplate;
   onClose: () => void;
   onSave: (template: PromptTemplate) => void;
 }
 
-export function TiShiCiBianJi({ questionType, template, onClose, onSave }: TiShiCiBianJiProps) {
+export function TiShiCiBianJi({ questionType: initialQuestionType, template, onClose, onSave }: TiShiCiBianJiProps) {
   const [name, setName] = useState(template?.name || '');
+  const [selectedQuestionType, setSelectedQuestionType] = useState<QuestionTypeEnum>(
+    template?.questionType || initialQuestionType || '名词解释'
+  );
   const [content, setContent] = useState(template?.content || '');
   const [isDefault, setIsDefault] = useState(template?.isDefault || false);
   const [saving, setSaving] = useState(false);
@@ -37,7 +42,7 @@ export function TiShiCiBianJi({ questionType, template, onClose, onSave }: TiShi
     } else {
       const { template: created, error } = await promptService.createPromptTemplate({
         name: name.trim(),
-        questionType,
+        questionType: selectedQuestionType,
         content: content.trim(),
         isDefault,
       });
@@ -105,19 +110,51 @@ export function TiShiCiBianJi({ questionType, template, onClose, onSave }: TiShi
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}>
               题型
             </label>
-            <input
-              type="text"
-              value={questionType}
-              disabled
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                backgroundColor: '#f9fafb',
-                color: '#6b7280',
-              }}
-            />
+            {initialQuestionType ? (
+              <input
+                type="text"
+                value={initialQuestionType}
+                disabled
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  backgroundColor: '#f9fafb',
+                  color: '#6b7280',
+                }}
+              />
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {TI_XING.map((type) => (
+                  <label
+                    key={type}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      backgroundColor: selectedQuestionType === type ? '#eff6ff' : '#f9fafb',
+                      border: selectedQuestionType === type ? '2px solid #3b82f6' : '2px solid transparent',
+                      borderRadius: '0.5rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="questionType"
+                      value={type}
+                      checked={selectedQuestionType === type}
+                      onChange={() => setSelectedQuestionType(type)}
+                      style={{ width: '1.25rem', height: '1.25rem' }}
+                    />
+                    <span style={{ fontSize: '0.875rem', color: '#374151', fontWeight: 500 }}>
+                      {type}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: '1rem' }}>

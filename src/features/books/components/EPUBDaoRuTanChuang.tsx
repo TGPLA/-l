@@ -133,6 +133,7 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, darkMode }: EPU
             )}
 
             <label
+              htmlFor="epub-file-input"
               style={{
                 display: 'block',
                 border: `2px dashed ${darkMode ? '#4b5563' : '#d1d5db'}`,
@@ -142,20 +143,15 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, darkMode }: EPU
                 cursor: loading ? 'wait' : 'pointer',
                 transition: 'border-color 0.2s',
                 opacity: loading ? 0.7 : 1,
-                position: 'relative',
               }}
             >
               <input
+                id="epub-file-input"
                 type="file"
                 accept=".epub"
                 onChange={handleFileSelect}
                 disabled={loading}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  opacity: 0,
-                  cursor: 'pointer',
-                }}
+                style={{ display: 'none' }}
               />
               {loading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>

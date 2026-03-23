@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "id": 1,
+      "text": "测试待办",
+      "status": "done",
+      "group": "默认",
+      "createdAt": "2026-03-23T11:39:05.895Z",
+      "updatedAt": "2026-03-23T11:39:29.201Z"
+    }
+  ],
+  "groups": [
+    "默认"
+  ],
+  "nextId": 2
+}
