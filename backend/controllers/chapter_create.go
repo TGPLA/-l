@@ -82,8 +82,10 @@ func UpdateChapter(c *gin.Context) {
 	}
 
 	updates := map[string]interface{}{
-		"title":   req.Title,
-		"content": req.Content,
+		"title": req.Title,
+	}
+	if req.Content != "" {
+		updates["content"] = req.Content
 	}
 
 	if err := tx.Model(&chapter).Updates(updates).Error; err != nil {
