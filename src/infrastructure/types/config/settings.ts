@@ -5,4 +5,5 @@ export interface Settings {
   questionWorkflowUrl?: string;
   correctionWorkflowUrl?: string;
   darkMode: boolean;
+  hasBuiltInKey?: boolean;
 }

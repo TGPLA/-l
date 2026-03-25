@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"reading-reflection/models"
 
 	"github.com/joho/godotenv"
@@ -34,8 +35,28 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
+func GetZhipuAPIKey(userKey string) string {
+	if userKey != "" {
+		return userKey
+	}
+	if AppConfig.ZhipuAPIKey != "" {
+		return AppConfig.ZhipuAPIKey
+	}
+	return ""
+}
+
 func LoadConfig() {
-	godotenv.Load()
+	exePath, _ := os.Executable()
+	envPath := filepath.Join(filepath.Dir(exePath), "backend", ".env")
+	if _, err := os.Stat(envPath); os.IsNotExist(err) {
+		envPath = "backend/.env"
+	}
+	
+	if err := godotenv.Load(envPath); err != nil {
+		log.Printf("⚠️  加载环境变量文件失败: %v，尝试从当前目录加载", err)
+		godotenv.Load()
+	}
+
 	AppConfig = Config{
 		ServerPort:  getEnv("SERVER_PORT", "8080"),
 		DBHost:      getEnv("DB_HOST", "localhost"),
@@ -47,7 +68,7 @@ func LoadConfig() {
 		ZhipuAPIKey: getEnv("ZHIPU_API_KEY", ""),
 		ZhipuModel:  getEnv("ZHIPU_MODEL", "glm-4-flash"),
 	}
-	log.Println("✅ 配置加载完成")
+	log.Printf("✅ 配置加载完成，ZhipuAPIKey=%s", AppConfig.ZhipuAPIKey)
 }
 
 func getEnv(key, defaultValue string) string {
@@ -73,13 +94,13 @@ func InitDB() {
 		log.Fatal("❌ 数据库连接失败:", err)
 	}
 	log.Println("✅ 数据库连接成功")
-	
+
 	AutoMigrate()
 }
 
 func AutoMigrate() {
 	log.Println("🔄 开始自动迁移数据库表结构...")
-	
+
 	if err := DB.AutoMigrate(
 		&models.User{},
 		&models.Book{},
@@ -92,6 +113,6 @@ func AutoMigrate() {
 	); err != nil {
 		log.Fatal("❌ 数据库迁移失败:", err)
 	}
-	
+
 	log.Println("✅ 数据库表结构迁移完成")
 }

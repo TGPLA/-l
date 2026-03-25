@@ -6,6 +6,8 @@ import { AppProvider, useApp } from '@infrastructure/hooks';
 import { BookShelf } from '@features/books/components/BookShelf';
 import { BookDetail } from '@features/books/components/BookDetail';
 import { DaTiZhu } from '@features/practice/DaTiZhu';
+import { GaiNianXueXi } from '@features/practice/GaiNianXueXi';
+import { YiTuLiJie } from '@features/practice/YiTuLiJie';
 import { SettingsPage } from '@features/user/components/SettingsPage';
 import { TiShiCiGuanLi } from '@features/user/components/TiShiCiGuanLi';
 import { AuthPage } from '@features/user/components/AuthPage';
@@ -15,13 +17,20 @@ import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
 import type { Book, Paragraph, Question } from '@infrastructure/types';
 
-type Page = 'shelf' | 'detail' | 'practice' | 'answer' | 'settings' | 'prompts';
+type Page = 'shelf' | 'detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
+
+interface LearningSource {
+  chapterId?: string;
+  paragraphId?: string;
+  content: string;
+}
 
 function AppContent() {
   const { settings } = useApp();
   const [currentPage, setCurrentPage] = useState<Page>('shelf');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedParagraph, setSelectedParagraph] = useState<Paragraph | null>(null);
+  const [learningSource, setLearningSource] = useState<LearningSource | null>(null);
   const [practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,24 +61,31 @@ function AppContent() {
     setCurrentPage('shelf');
     setSelectedBook(null);
     setSelectedParagraph(null);
+    setLearningSource(null);
     setPracticeQuestions([]);
   };
 
-  const handleStartPractice = (paragraph: Paragraph, questions: Question[]) => {
-    setSelectedParagraph(paragraph);
-    setPracticeQuestions(questions);
-    setCurrentPage('answer');
+  const handleStartConceptLearning = (source: LearningSource) => {
+    setLearningSource(source);
+    setCurrentPage('concept-learning');
+  };
+
+  const handleStartIntentionLearning = (source: LearningSource) => {
+    setLearningSource(source);
+    setCurrentPage('intention-learning');
   };
 
   const handleBackToDetail = () => {
     setCurrentPage('detail');
     setSelectedParagraph(null);
+    setLearningSource(null);
     setPracticeQuestions([]);
   };
 
   const handleComplete = () => {
     setCurrentPage('detail');
     setSelectedParagraph(null);
+    setLearningSource(null);
     setPracticeQuestions([]);
   };
 
@@ -87,10 +103,28 @@ function AppContent() {
         <BookShelf onSelectBook={handleSelectBook} onOpenSettings={() => setCurrentPage('settings')} />
       )}
       {currentPage === 'detail' && selectedBook && (
-        <BookDetail book={selectedBook} onBack={handleBackToShelf} onStartPractice={handleStartPractice} />
+        <BookDetail
+          book={selectedBook}
+          onBack={handleBackToShelf}
+          onStartConceptLearning={handleStartConceptLearning}
+          onStartIntentionLearning={handleStartIntentionLearning}
+        />
       )}
       {currentPage === 'answer' && selectedParagraph && practiceQuestions.length > 0 && (
         <DaTiZhu paragraph={selectedParagraph} questions={practiceQuestions} onComplete={handleComplete} />
+      )}
+      {currentPage === 'concept-learning' && learningSource && (
+        <GaiNianXueXi 
+          key={learningSource.chapterId ? `chapter-${learningSource.chapterId}-${Date.now()}` : `paragraph-${learningSource.paragraphId}-${Date.now()}`}
+          chapterId={learningSource.chapterId}
+          paragraphId={learningSource.paragraphId}
+          content={learningSource.content}
+          onComplete={handleComplete}
+          onBack={handleBackToDetail}
+        />
+      )}
+      {currentPage === 'intention-learning' && selectedParagraph && (
+        <YiTuLiJie paragraph={selectedParagraph} onComplete={handleComplete} onBack={handleBackToDetail} />
       )}
       {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} onOpenPrompts={() => setCurrentPage('prompts')} />}
       {currentPage === 'prompts' && <TiShiCiGuanLi onBack={() => setCurrentPage('settings')} />}

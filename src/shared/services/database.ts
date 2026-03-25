@@ -64,26 +64,26 @@ class DatabaseService {
       if (response.status === 401) {
         await authService.signOut();
         window.location.reload();
-        return { 
-          data: null, 
-          error: { message: '登录已过期，请重新登录' } 
+        return {
+          data: null,
+          error: { message: '登录已过期，请重新登录' }
         };
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        return { 
-          data: null, 
-          error: { message: errorData.error || errorData.message || `请求失败：${response.status}` } 
+        return {
+          data: null,
+          error: { message: errorData.error || errorData.message || `请求失败：${response.status}` }
         };
       }
 
       const data = await response.json();
       return { data, error: null };
     } catch (error) {
-      return { 
-        data: null, 
-        error: { message: error instanceof Error ? error.message : '网络错误' } 
+      return {
+        data: null,
+        error: { message: error instanceof Error ? error.message : '网络错误' }
       };
     }
   }
@@ -91,18 +91,18 @@ class DatabaseService {
   async getAllBooks(): Promise<{ books: Book[]; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<{ success: boolean; data: RawBook[] }>(`/books?userId=${this.userId}`);
-      
+
       if (error) {
         return { books: [], error };
       }
 
       return { books: (data?.data || []).map(zhuanHuanShuJi), error: null };
     } catch (error) {
-      return { 
-        books: [], 
-        error: { message: error instanceof Error ? error.message : '获取书籍失败' } 
+      return {
+        books: [],
+        error: { message: error instanceof Error ? error.message : '获取书籍失败' }
       };
     }
   }
@@ -110,7 +110,7 @@ class DatabaseService {
   async createBook(book: Omit<Book, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ book: Book | null; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<{ success: boolean; data: RawBook }>('/books', {
         method: 'POST',
         body: JSON.stringify({
@@ -127,9 +127,9 @@ class DatabaseService {
 
       return { book: data?.data ? zhuanHuanShuJi(data.data) : null, error: null };
     } catch (error) {
-      return { 
-        book: null, 
-        error: { message: error instanceof Error ? error.message : '创建书籍失败' } 
+      return {
+        book: null,
+        error: { message: error instanceof Error ? error.message : '创建书籍失败' }
       };
     }
   }
@@ -137,7 +137,7 @@ class DatabaseService {
   async updateBook(bookId: string, updates: Partial<Book>): Promise<{ book: Book | null; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<{ success: boolean; data: RawBook }>(`/books/${bookId}`, {
         method: 'PUT',
         body: JSON.stringify({
@@ -153,9 +153,9 @@ class DatabaseService {
 
       return { book: data?.data ? zhuanHuanShuJi(data.data) : null, error: null };
     } catch (error) {
-      return { 
-        book: null, 
-        error: { message: error instanceof Error ? error.message : '更新书籍失败' } 
+      return {
+        book: null,
+        error: { message: error instanceof Error ? error.message : '更新书籍失败' }
       };
     }
   }
@@ -163,15 +163,15 @@ class DatabaseService {
   async deleteBook(bookId: string): Promise<{ error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { error } = await this.request(`/books/${bookId}`, {
         method: 'DELETE',
       });
 
       return { error };
     } catch (error) {
-      return { 
-        error: { message: error instanceof Error ? error.message : '删除书籍失败' } 
+      return {
+        error: { message: error instanceof Error ? error.message : '删除书籍失败' }
       };
     }
   }
@@ -179,18 +179,18 @@ class DatabaseService {
   async getQuestionsByBook(bookId: string): Promise<{ questions: Question[]; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<{ success: boolean; data: Question[] }>(`/questions/book/${bookId}`);
-      
+
       if (error) {
         return { questions: [], error };
       }
 
       return { questions: data?.data || [], error: null };
     } catch (error) {
-      return { 
-        questions: [], 
-        error: { message: error instanceof Error ? error.message : '获取题目失败' } 
+      return {
+        questions: [],
+        error: { message: error instanceof Error ? error.message : '获取题目失败' }
       };
     }
   }
@@ -198,7 +198,7 @@ class DatabaseService {
   async createQuestion(question: Omit<Question, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ question: Question | null; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<Question>('/questions', {
         method: 'POST',
         body: JSON.stringify({
@@ -222,9 +222,9 @@ class DatabaseService {
 
       return { question: data, error: null };
     } catch (error) {
-      return { 
-        question: null, 
-        error: { message: error instanceof Error ? error.message : '创建题目失败' } 
+      return {
+        question: null,
+        error: { message: error instanceof Error ? error.message : '创建题目失败' }
       };
     }
   }
@@ -232,7 +232,7 @@ class DatabaseService {
   async updateQuestion(questionId: string, updates: Partial<Question>): Promise<{ question: Question | null; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { data, error } = await this.request<Question>(`/questions/${questionId}`, {
         method: 'PUT',
         body: JSON.stringify(updates),
@@ -244,9 +244,9 @@ class DatabaseService {
 
       return { question: data, error: null };
     } catch (error) {
-      return { 
-        question: null, 
-        error: { message: error instanceof Error ? error.message : '更新题目失败' } 
+      return {
+        question: null,
+        error: { message: error instanceof Error ? error.message : '更新题目失败' }
       };
     }
   }
@@ -254,15 +254,15 @@ class DatabaseService {
   async deleteQuestion(questionId: string): Promise<{ error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { error } = await this.request(`/questions/${questionId}`, {
         method: 'DELETE',
       });
 
       return { error };
     } catch (error) {
-      return { 
-        error: { message: error instanceof Error ? error.message : '删除题目失败' } 
+      return {
+        error: { message: error instanceof Error ? error.message : '删除题目失败' }
       };
     }
   }
@@ -270,7 +270,7 @@ class DatabaseService {
   async getUserSettings(): Promise<{ settings: Settings | null; error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       interface RawSettings {
         id: string;
         user_id: string;
@@ -284,8 +284,15 @@ class DatabaseService {
         updated_at: string;
       }
 
-      const { data, error } = await this.request<{ success: boolean; data: RawSettings }>(`/settings?userId=${this.userId}`);
-      
+      interface SettingsResponse {
+        success: boolean;
+        data: RawSettings;
+        builtInApiKey: string;
+        hasBuiltInKey: boolean;
+      }
+
+      const { data, error } = await this.request<SettingsResponse>(`/settings?userId=${this.userId}`);
+
       if (error) {
         return { settings: null, error };
       }
@@ -295,8 +302,9 @@ class DatabaseService {
         return {
           settings: {
             darkMode: raw.dark_mode,
-            zhipuApiKey: raw.zhipu_api_key,
-            zhipuModel: raw.zhipu_model,
+            zhipuApiKey: data.builtInApiKey,
+            zhipuModel: raw.zhipu_model || 'glm-4-flash',
+            hasBuiltInKey: data.hasBuiltInKey || false,
           },
           error: null,
         };
@@ -304,9 +312,9 @@ class DatabaseService {
 
       return { settings: null, error: null };
     } catch (error) {
-      return { 
-        settings: null, 
-        error: { message: error instanceof Error ? error.message : '获取设置失败' } 
+      return {
+        settings: null,
+        error: { message: error instanceof Error ? error.message : '获取设置失败' }
       };
     }
   }
@@ -314,7 +322,7 @@ class DatabaseService {
   async updateUserSettings(settings: Partial<Settings>): Promise<{ error: DatabaseError | null }> {
     try {
       this.checkAuth();
-      
+
       const { error } = await this.request('/settings', {
         method: 'PUT',
         body: JSON.stringify({
@@ -327,8 +335,8 @@ class DatabaseService {
 
       return { error };
     } catch (error) {
-      return { 
-        error: { message: error instanceof Error ? error.message : '更新设置失败' } 
+      return {
+        error: { message: error instanceof Error ? error.message : '更新设置失败' }
       };
     }
   }

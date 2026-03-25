@@ -3,9 +3,9 @@
 package controllers
 
 type AIGenerateRequest struct {
-	ChapterId  string `json:"chapter_id" binding:"required"`
-	Difficulty string `json:"difficulty" binding:"required"`
-	Count      int    `json:"count" binding:"required,min=1,max=10"`
+	ChapterId   string `json:"chapter_id" binding:"required"`
+	QuestionType string `json:"question_type" binding:"required"`
+	Count       int    `json:"count" binding:"required,min=1,max=10"`
 }
 
 type AIEvaluateRequest struct {

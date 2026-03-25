@@ -23,16 +23,40 @@ func UpdateParagraph(c *gin.Context) {
 
 	db := config.GetDB()
 
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var paragraph models.Paragraph
-	result := db.Where("id = ? AND user_id = ?", paragraphId, userId).First(&paragraph)
+	result := tx.Where("id = ? AND user_id = ?", paragraphId, userId).First(&paragraph)
 	if result.Error == gorm.ErrRecordNotFound {
+		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "段落不存在"})
 		return
 	}
 
 	paragraph.Content = req.Content
-	if err := db.Save(&paragraph).Error; err != nil {
+	if err := tx.Save(&paragraph).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "更新失败"})
+		return
+	}
+
+	println("🗑️ 开始删除段落关联概念 - paragraphId:", paragraphId, "userId:", userId)
+	result = tx.Where("user_id = ? AND source_type = ? AND source_id = ?", userId, "paragraph", paragraphId).Delete(&models.Concept{})
+	if result.Error != nil {
+		tx.Rollback()
+		println("❌ 删除关联概念失败:", result.Error.Error())
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "删除关联概念失败"})
+		return
+	}
+	println("✅ 删除概念成功，删除数量:", result.RowsAffected)
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "提交失败"})
 		return
 	}
 

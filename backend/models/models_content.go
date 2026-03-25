@@ -23,10 +23,47 @@ type Chapter struct {
 	UpdatedAt      time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
 	Paragraphs     []Paragraph `gorm:"foreignKey:ChapterId;constraint:OnDelete:CASCADE" json:"paragraphs,omitempty"`
 	Questions      []Question  `gorm:"foreignKey:ChapterId;constraint:OnDelete:CASCADE" json:"questions,omitempty"`
+	Concepts       []Concept   `gorm:"foreignKey:SourceId;constraint:OnDelete:CASCADE" json:"concepts,omitempty"`
 	Book           *Book       `gorm:"foreignKey:BookId" json:"book,omitempty"`
 }
 
 func (c *Chapter) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == "" {
+		c.ID = uuid.New().String()
+	}
+	return nil
+}
+
+type Concept struct {
+	ID           string                  `gorm:"type:char(36);primaryKey" json:"id"`
+	UserId       string                  `gorm:"type:char(36);not null;index" json:"user_id"`
+	SourceType   string                  `gorm:"type:varchar(50);not null;index" json:"source_type"`
+	SourceId     string                  `gorm:"type:char(36);not null;index" json:"source_id"`
+	Concept      string                  `gorm:"type:varchar(255);not null" json:"concept"`
+	Explanation  string                  `gorm:"type:text;not null" json:"explanation"`
+	OrderIndex   int                     `gorm:"default:0" json:"order_index"`
+	PracticeRecords []ConceptPracticeRecord `gorm:"foreignKey:ConceptId;constraint:OnDelete:CASCADE" json:"practice_records,omitempty"`
+	CreatedAt    time.Time               `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt    time.Time               `gorm:"autoUpdateTime" json:"updated_at"`
+}
+
+func (c *Concept) BeforeCreate(tx *gorm.DB) error {
+	if c.ID == "" {
+		c.ID = uuid.New().String()
+	}
+	return nil
+}
+
+type ConceptPracticeRecord struct {
+	ID          string    `gorm:"type:char(36);primaryKey" json:"id"`
+	UserId      string    `gorm:"type:char(36);not null;index" json:"user_id"`
+	ConceptId   string    `gorm:"type:char(36);not null;index" json:"concept_id"`
+	UserAnswer  string    `gorm:"type:text" json:"user_answer"`
+	AIEvaluation string   `gorm:"type:text" json:"ai_evaluation"`
+	PracticedAt time.Time `gorm:"autoCreateTime" json:"practiced_at"`
+}
+
+func (c *ConceptPracticeRecord) BeforeCreate(tx *gorm.DB) error {
 	if c.ID == "" {
 		c.ID = uuid.New().String()
 	}

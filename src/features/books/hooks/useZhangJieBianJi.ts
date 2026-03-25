@@ -1,0 +1,66 @@
+// @审计已完成
+// 章节编辑相关逻辑
+
+import { useState, useCallback } from 'react';
+import type { Chapter } from '@infrastructure/types';
+import { chapterService } from '@shared/services/chapterService';
+import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
+
+export function useZhangJieBianJi() {
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const openEditModal = useCallback((chapter: Chapter) => {
+    setEditingChapter(chapter);
+    setTitle(chapter.title);
+    setContent(chapter.content);
+    setShowEditModal(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setEditingChapter(null);
+    setTitle('');
+    setContent('');
+    setShowEditModal(false);
+  }, []);
+
+  const handleSaveEdit = useCallback(async (onChapterUpdated: () => void) => {
+    if (!editingChapter || !title.trim() || !content.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await chapterService.updateChapter(editingChapter.id, {
+        title: title.trim(),
+        content: content.trim(),
+      });
+
+      if (error) {
+        showError(error.message);
+        return;
+      }
+
+      showSuccess('章节更新成功');
+      closeModal();
+      onChapterUpdated();
+    } finally {
+      setLoading(false);
+    }
+  }, [editingChapter, title, content, closeModal]);
+
+  return {
+    showEditModal,
+    setShowEditModal,
+    editingChapter,
+    title,
+    setTitle,
+    content,
+    setContent,
+    loading,
+    openEditModal,
+    closeModal,
+    handleSaveEdit,
+  };
+}

@@ -66,9 +66,17 @@ func UpdateChapter(c *gin.Context) {
 
 	db := config.GetDB()
 
+	tx := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var chapter models.Chapter
-	result := db.Where("id = ? AND user_id = ?", chapterId, userId).First(&chapter)
+	result := tx.Where("id = ? AND user_id = ?", chapterId, userId).First(&chapter)
 	if result.Error == gorm.ErrRecordNotFound {
+		tx.Rollback()
 		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "章节不存在"})
 		return
 	}
@@ -78,8 +86,20 @@ func UpdateChapter(c *gin.Context) {
 		"content": req.Content,
 	}
 
-	if err := db.Model(&chapter).Updates(updates).Error; err != nil {
+	if err := tx.Model(&chapter).Updates(updates).Error; err != nil {
+		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "更新章节失败"})
+		return
+	}
+
+	if err := tx.Where("user_id = ? AND source_type = ? AND source_id = ?", userId, "chapter", chapterId).Delete(&models.Concept{}).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "删除关联概念失败"})
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "提交失败"})
 		return
 	}
 

@@ -38,7 +38,18 @@ func AIEvaluateAnswer(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	aiService := services.NewZhipuAIService(userSettings.ZhipuAPIKey, userSettings.ZhipuModel)
+	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	if apiKey == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		return
+	}
+
+	model := userSettings.ZhipuModel
+	if model == "" {
+		model = config.AppConfig.ZhipuModel
+	}
+
+	aiService := services.NewZhipuAIService(apiKey, model)
 	evaluation, err := aiService.EvaluateAnswer(question.Chapter.Content, question.Question, req.UserAnswer)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "AI 评估答案失败：" + err.Error()})

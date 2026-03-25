@@ -82,14 +82,14 @@ class AIService {
     return false;
   }
 
-  async generateQuestions(chapterId: string, difficulty: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
+  async generateQuestions(chapterId: string, questionType: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
     try {
       const response = await fetch(`${API_BASE}/ai/generate-questions`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           chapter_id: chapterId,
-          difficulty,
+          question_type: questionType,
           count,
         }),
       });
@@ -202,6 +202,155 @@ class AIService {
         return { data: null, error: { message: error.message } };
       }
       return { data: null, error: { message: error instanceof Error ? error.message : 'AI 生成题目失败' } };
+    }
+  }
+
+  async extractConcepts(chapterId?: string, paragraphId?: string, content?: string): Promise<{ data: { concepts: Array<{ id?: string; concept: string; explanation: string }> } | null; error: string | null }> {
+    try {
+      console.log('🔍 提取概念 - chapterId:', chapterId, 'paragraphId:', paragraphId, 'content 长度:', content?.length);
+      const response = await fetch(`${API_BASE}/ai/extract-concepts`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          chapter_id: chapterId || '',
+          paragraph_id: paragraphId || '',
+          content: content || '',
+        }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json();
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 提取概念失败' };
+    }
+  }
+
+  async getConcepts(sourceType: string, sourceId: string): Promise<{ data: { concepts: Array<{ id: string; concept: string; explanation: string; has_practice: boolean; last_practice?: any }> } | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/concepts/${sourceType}/${sourceId}`, {
+        method: 'GET',
+        headers: this.getHeaders(),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json();
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : '获取概念失败' };
+    }
+  }
+
+  async saveConceptPractice(conceptId: string, userAnswer: string, aiEvaluation: string): Promise<{ data: { id: string } | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/concepts/${conceptId}/practice`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          user_answer: userAnswer,
+          ai_evaluation: aiEvaluation,
+        }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json();
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : '保存练习记录失败' };
+    }
+  }
+
+  async evaluateConcept(concept: string, explanation: string, userAnswer: string): Promise<{ data: { evaluation: string } | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/evaluate-concept`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          concept,
+          explanation,
+          user_answer: userAnswer,
+        }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json();
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 评价失败' };
+    }
+  }
+
+  async evaluateIntention(paragraph: string, userAnswer: string): Promise<{ data: { correct: string; incorrect: string; incomplete: string } | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/evaluate-intention`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({
+          paragraph,
+          user_answer: userAnswer,
+        }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json();
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : 'AI 评价失败' };
     }
   }
 }

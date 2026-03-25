@@ -93,6 +93,16 @@ func InitRoutes() *gin.Engine {
 			ai.POST("/generate-questions", controllers.AIGenerateQuestions)
 			ai.POST("/generate-questions-paragraph", controllers.AIGenerateQuestionsForParagraph)
 			ai.POST("/evaluate-answer", controllers.AIEvaluateAnswer)
+			ai.POST("/extract-concepts", controllers.AIExtractConcepts)
+			ai.POST("/evaluate-concept", controllers.AIEvaluateConcept)
+			ai.POST("/evaluate-intention", controllers.AIEvaluateIntention)
+		}
+
+		concepts := api.Group("/concepts")
+		concepts.Use(middleware.AuthMiddleware())
+		{
+			concepts.GET("/:source_type/:source_id", controllers.GetConcepts)
+			concepts.POST("/:id/practice", controllers.CreateConceptPracticeRecord)
 		}
 
 		settings := api.Group("/settings")

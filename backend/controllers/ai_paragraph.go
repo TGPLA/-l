@@ -51,12 +51,18 @@ func AIGenerateQuestionsForParagraph(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	if userSettings.ZhipuAPIKey == "" {
+	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	if apiKey == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
 		return
 	}
 
-	aiService := services.NewZhipuAIService(userSettings.ZhipuAPIKey, userSettings.ZhipuModel)
+	model := userSettings.ZhipuModel
+	if model == "" {
+		model = config.AppConfig.ZhipuModel
+	}
+
+	aiService := services.NewZhipuAIService(apiKey, model)
 	generatedQuestions, err := aiService.GenerateQuestionsForParagraph(paragraph.Content, req.QuestionType, req.Count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "AI 生成题目失败：" + err.Error()})

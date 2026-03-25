@@ -11,28 +11,12 @@ import { questionService } from '@shared/services/questionService';
 interface BookDetailProps {
   book: Book;
   onBack: () => void;
-  onStartPractice: (paragraph: Paragraph, questions: Question[]) => void;
+  onStartConceptLearning: (paragraph: Paragraph) => void;
+  onStartIntentionLearning: (paragraph: Paragraph) => void;
 }
 
-export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
+export function BookDetail({ book, onBack, onStartConceptLearning, onStartIntentionLearning }: BookDetailProps) {
   const { settings } = useApp();
-  const [practiceLoading, setPracticeLoading] = useState(false);
-
-  const handleStartPractice = async (paragraph: Paragraph) => {
-    setPracticeLoading(true);
-    try {
-      const { questions: paragraphQuestions } = await questionService.getQuestionsByParagraph(paragraph.id);
-      if (paragraphQuestions.length === 0) {
-        alert('该段落暂无题目，请先添加题目');
-        return;
-      }
-      onStartPractice(paragraph, paragraphQuestions);
-    } catch (error) {
-      alert(error instanceof Error ? error.message : '获取题目失败');
-    } finally {
-      setPracticeLoading(false);
-    }
-  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb' }}>
@@ -40,10 +24,10 @@ export function BookDetail({ book, onBack, onStartPractice }: BookDetailProps) {
       <ShuJiXinXi book={book} darkMode={settings.darkMode} />
 
       <div style={{ maxWidth: '72rem', margin: '0 auto', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
-        <ZhangJieGuanLi 
-          bookId={book.id} 
-          onStartPractice={handleStartPractice}
-          practiceLoading={practiceLoading}
+        <ZhangJieGuanLi
+          bookId={book.id}
+          onStartConceptLearning={onStartConceptLearning}
+          onStartIntentionLearning={onStartIntentionLearning}
           darkMode={settings.darkMode}
         />
       </div>
@@ -91,10 +75,23 @@ function ShuJiXinXi({ book, darkMode }: { book: Book; darkMode: boolean }) {
   );
 }
 
-function ZhangJieGuanLi({ bookId, onStartPractice, practiceLoading, darkMode }: { bookId: string; onStartPractice: (paragraph: Paragraph) => void; practiceLoading: boolean; darkMode: boolean }) {
+function ZhangJieGuanLi({ bookId, onStartPractice, onStartConceptLearning, onStartIntentionLearning, practiceLoading, darkMode }: {
+  bookId: string;
+  onStartPractice: (paragraph: Paragraph) => void;
+  onStartConceptLearning: (paragraph: Paragraph) => void;
+  onStartIntentionLearning: (paragraph: Paragraph) => void;
+  practiceLoading: boolean;
+  darkMode: boolean;
+}) {
   return (
     <div style={{ backgroundColor: darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', padding: '1.5rem' }}>
-      <ChapterView bookId={bookId} onStartPractice={onStartPractice} onQuestionsChange={() => {}} />
+      <ChapterView
+        bookId={bookId}
+        onStartPractice={onStartPractice}
+        onStartConceptLearning={onStartConceptLearning}
+        onStartIntentionLearning={onStartIntentionLearning}
+        onQuestionsChange={() => {}}
+      />
     </div>
   );
 }

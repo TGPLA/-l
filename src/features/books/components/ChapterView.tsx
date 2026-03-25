@@ -9,10 +9,11 @@ import { ChapterDetail } from './ChapterDetail';
 
 interface ChapterViewProps {
   bookId: string;
-  onStartPractice: (paragraph: Paragraph, questions: Question[]) => void;
+  onStartConceptLearning: (paragraph: Paragraph) => void;
+  onStartIntentionLearning: (paragraph: Paragraph) => void;
 }
 
-export function ChapterView({ bookId, onStartPractice }: ChapterViewProps) {
+export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLearning }: ChapterViewProps) {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,8 @@ export function ChapterView({ bookId, onStartPractice }: ChapterViewProps) {
       <ChapterDetail
         chapter={selectedChapter}
         onBack={() => { setSelectedChapter(null); loadChapters(); }}
-        onStartPractice={onStartPractice}
+        onStartConceptLearning={onStartConceptLearning}
+        onStartIntentionLearning={onStartIntentionLearning}
       />
     );
   }

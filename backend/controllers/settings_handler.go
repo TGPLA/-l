@@ -11,12 +11,12 @@ import (
 )
 
 type UpdateSettingsRequest struct {
-	DarkMode              *bool  `json:"dark_mode"`
-	ZhipuAPIKey           string `json:"zhipu_api_key"`
-	ZhipuModel            string `json:"zhipu_model"`
-	DifyAPIKey            string `json:"dify_api_key"`
-	QuestionWorkflowUrl   string `json:"question_workflow_url"`
-	CorrectionWorkflowUrl string `json:"correction_workflow_url"`
+	DarkMode              *bool   `json:"dark_mode"`
+	ZhipuAPIKey           *string `json:"zhipu_api_key"`
+	ZhipuModel            *string `json:"zhipu_model"`
+	DifyAPIKey            *string `json:"dify_api_key"`
+	QuestionWorkflowUrl   *string `json:"question_workflow_url"`
+	CorrectionWorkflowUrl *string `json:"correction_workflow_url"`
 }
 
 func GetSettings(c *gin.Context) {
@@ -31,7 +31,25 @@ func GetSettings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": settings})
+	builtInApiKey := config.GetZhipuAPIKey("")
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"id":                        settings.ID,
+			"user_id":                   settings.UserId,
+			"dark_mode":                 settings.DarkMode,
+			"zhipu_api_key":             settings.ZhipuAPIKey,
+			"zhipu_model":              settings.ZhipuModel,
+			"dify_api_key":              settings.DifyAPIKey,
+			"question_workflow_url":      settings.QuestionWorkflowUrl,
+			"correction_workflow_url":   settings.CorrectionWorkflowUrl,
+			"created_at":                settings.CreatedAt,
+			"updated_at":                settings.UpdatedAt,
+		},
+		"builtInApiKey": builtInApiKey,
+		"hasBuiltInKey": builtInApiKey != "",
+	})
 }
 
 func UpdateSettings(c *gin.Context) {
@@ -48,16 +66,30 @@ func UpdateSettings(c *gin.Context) {
 	var settings models.Settings
 	result := db.Where("user_id = ?", userId).First(&settings)
 	if result.Error == gorm.ErrRecordNotFound {
+		zhipuAPIKey := ""
+		if req.ZhipuAPIKey != nil {
+			zhipuAPIKey = *req.ZhipuAPIKey
+		}
+		zhipuModel := "glm-4-flash"
+		if req.ZhipuModel != nil {
+			zhipuModel = *req.ZhipuModel
+		}
 		settings = models.Settings{
 			UserId:                userId,
-			ZhipuAPIKey:           req.ZhipuAPIKey,
-			ZhipuModel:            req.ZhipuModel,
-			DifyAPIKey:            req.DifyAPIKey,
-			QuestionWorkflowUrl:   req.QuestionWorkflowUrl,
-			CorrectionWorkflowUrl: req.CorrectionWorkflowUrl,
+			ZhipuAPIKey:           zhipuAPIKey,
+			ZhipuModel:            zhipuModel,
 		}
 		if req.DarkMode != nil {
 			settings.DarkMode = *req.DarkMode
+		}
+		if req.DifyAPIKey != nil {
+			settings.DifyAPIKey = *req.DifyAPIKey
+		}
+		if req.QuestionWorkflowUrl != nil {
+			settings.QuestionWorkflowUrl = *req.QuestionWorkflowUrl
+		}
+		if req.CorrectionWorkflowUrl != nil {
+			settings.CorrectionWorkflowUrl = *req.CorrectionWorkflowUrl
 		}
 		db.Create(&settings)
 	} else {
@@ -66,20 +98,20 @@ func UpdateSettings(c *gin.Context) {
 		if req.DarkMode != nil {
 			updates["dark_mode"] = *req.DarkMode
 		}
-		if req.ZhipuAPIKey != "" {
-			updates["zhipu_api_key"] = req.ZhipuAPIKey
+		if req.ZhipuAPIKey != nil {
+			updates["zhipu_api_key"] = *req.ZhipuAPIKey
 		}
-		if req.ZhipuModel != "" {
-			updates["zhipu_model"] = req.ZhipuModel
+		if req.ZhipuModel != nil {
+			updates["zhipu_model"] = *req.ZhipuModel
 		}
-		if req.DifyAPIKey != "" {
-			updates["dify_api_key"] = req.DifyAPIKey
+		if req.DifyAPIKey != nil {
+			updates["dify_api_key"] = *req.DifyAPIKey
 		}
-		if req.QuestionWorkflowUrl != "" {
-			updates["question_workflow_url"] = req.QuestionWorkflowUrl
+		if req.QuestionWorkflowUrl != nil {
+			updates["question_workflow_url"] = *req.QuestionWorkflowUrl
 		}
-		if req.CorrectionWorkflowUrl != "" {
-			updates["correction_workflow_url"] = req.CorrectionWorkflowUrl
+		if req.CorrectionWorkflowUrl != nil {
+			updates["correction_workflow_url"] = *req.CorrectionWorkflowUrl
 		}
 
 		if len(updates) > 0 {

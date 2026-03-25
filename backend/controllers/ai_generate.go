@@ -38,8 +38,19 @@ func AIGenerateQuestions(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	aiService := services.NewZhipuAIService(userSettings.ZhipuAPIKey, userSettings.ZhipuModel)
-	generatedQuestions, err := aiService.GenerateQuestions(chapter.Content, req.Difficulty, req.Count)
+	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	if apiKey == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		return
+	}
+
+	model := userSettings.ZhipuModel
+	if model == "" {
+		model = config.AppConfig.ZhipuModel
+	}
+
+	aiService := services.NewZhipuAIService(apiKey, model)
+	generatedQuestions, err := aiService.GenerateQuestions(chapter.Content, req.QuestionType, req.Count)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "AI 生成题目失败：" + err.Error()})
 		return
@@ -52,9 +63,9 @@ func AIGenerateQuestions(c *gin.Context) {
 			BookId:         chapter.BookId,
 			ChapterId:      req.ChapterId,
 			Question:       q.Question,
-			QuestionType:   q.Type,
+			QuestionType:   req.QuestionType,
 			Answer:         q.Answer,
-			Difficulty:     req.Difficulty,
+			Difficulty:     "中等",
 			KnowledgePoint: q.KnowledgePoint,
 			MasteryLevel:   "未掌握",
 		}

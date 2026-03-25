@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@infrastructure/hooks';
 import type { Settings } from '@infrastructure/types';
-import { validateApiKey } from '@shared/api/zhipu';
 import { authService } from '@shared/services/auth';
 import { getResponsiveValue } from '@shared/utils/responsive';
 
@@ -13,15 +12,20 @@ interface SettingsPageProps {
 export function SettingsPage({ onBack, onOpenPrompts }: SettingsPageProps) {
   const { settings, updateSettings } = useApp();
   const [formData, setFormData] = useState<Settings>(settings);
-  const [saved, setSaved] = useState(false);
-  const [validating, setValidating] = useState(false);
-  const [validationResult, setValidationResult] = useState<{ valid: boolean; message: string } | null>(null);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [version, setVersion] = useState('加载中...');
+  const formDataRef = useRef<Settings>(formData);
 
   useEffect(() => {
     setFormData(settings);
+    formDataRef.current = settings;
   }, [settings]);
+
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  const [saved, setSaved] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [version, setVersion] = useState('加载中...');
 
   useEffect(() => {
     fetch('/changelog.json')
@@ -40,28 +44,6 @@ export function SettingsPage({ onBack, onOpenPrompts }: SettingsPageProps) {
     const newSettings = { ...formData, darkMode: !formData.darkMode };
     setFormData(newSettings);
     updateSettings(newSettings);
-  };
-
-  const handleValidateApiKey = async () => {
-    if (!formData.zhipuApiKey) {
-      setValidationResult({ valid: false, message: '请先输入 API Key' });
-      return;
-    }
-
-    setValidating(true);
-    setValidationResult(null);
-
-    try {
-      const result = await validateApiKey(formData.zhipuApiKey, formData.zhipuModel || 'glm-4-flash');
-      setValidationResult(result);
-    } catch (error) {
-      setValidationResult({
-        valid: false,
-        message: error instanceof Error ? error.message : '验证失败',
-      });
-    } finally {
-      setValidating(false);
-    }
   };
 
   const handleLogout = async () => {
@@ -161,61 +143,20 @@ export function SettingsPage({ onBack, onOpenPrompts }: SettingsPageProps) {
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
             <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>智谱 AI API 配置</h2>
             <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>
-              配置智谱 AI API 以使用 AI 生成问题和概念纠错功能
+              系统已内置智谱 AI API Key，开箱即用
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>
-                  智谱 AI API Key
-                </label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: getResponsiveValue({ mobile: 'column', tablet: 'row' }) }}>
-                  <input
-                    type="password"
-                    value={formData.zhipuApiKey || ''}
-                    onChange={(e) => setFormData({ ...formData, zhipuApiKey: e.target.value })}
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      width: getResponsiveValue({ mobile: '100%', tablet: 'auto' }),
-                      backgroundColor: settings.darkMode ? '#374151' : '#ffffff',
-                      color: settings.darkMode ? '#f9fafb' : '#111827',
-                    }}
-                    placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  />
-                  <button
-                    onClick={handleValidateApiKey}
-                    disabled={validating}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: validating ? '#9ca3af' : '#10b981',
-                      color: '#ffffff',
-                      borderRadius: '0.5rem',
-                      border: 'none',
-                      cursor: validating ? 'not-allowed' : 'pointer',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {validating ? '验证中...' : '验证'}
-                  </button>
-                </div>
-                {validationResult && (
-                  <p style={{ 
-                    fontSize: '0.75rem', 
-                    marginTop: '0.25rem',
-                    color: validationResult.valid ? '#10b981' : '#ef4444',
-                  }}>
-                    {validationResult.message}
-                  </p>
-                )}
-                <p style={{ fontSize: '0.75rem', color: settings.darkMode ? '#6b7280' : '#9ca3af', marginTop: '0.25rem' }}>
-                  在 <a href="https://open.bigmodel.cn/" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6' }}>智谱 AI 开放平台</a> 获取 API Key
-                </p>
+              <div style={{ 
+                padding: '0.75rem 1rem', 
+                backgroundColor: settings.darkMode ? '#064e3b' : '#d1fae5', 
+                borderRadius: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span style={{ color: '#10b981', fontSize: '1.25rem' }}>✓</span>
+                <span style={{ color: settings.darkMode ? '#6ee7b7' : '#065f46', fontWeight: 500 }}>已启用内置智谱 AI API Key</span>
               </div>
 
               <div>
