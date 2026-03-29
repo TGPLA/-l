@@ -16,6 +16,7 @@ interface RawBook {
   title: string;
   author: string;
   cover_url?: string;
+  epub_file_path?: string;
   chapter_count: number;
   question_count: number;
   created_at: string;
@@ -29,6 +30,7 @@ function zhuanHuanShuJi(raw: RawBook): Book {
     title: raw.title,
     author: raw.author,
     coverUrl: raw.cover_url,
+    epubFilePath: raw.epub_file_path,
     chapterCount: raw.chapter_count,
     questionCount: raw.question_count,
     createdAt: new Date(raw.created_at).getTime(),
@@ -62,6 +64,9 @@ class DatabaseService {
       });
 
       if (response.status === 401) {
+        // @关键代码-不要随意删除 [认证失败后刷新页面]
+        // 原因：确保 401 后 AppProvider 能正确重置状态，避免用户信息不同步
+        console.warn('认证失败，清除本地认证状态');
         await authService.signOut();
         window.location.reload();
         return {
@@ -174,6 +179,60 @@ class DatabaseService {
         error: { message: error instanceof Error ? error.message : '删除书籍失败' }
       };
     }
+  }
+
+  async uploadEPUB(bookId: string, file: File): Promise<{ book: Book | null; error: DatabaseError | null }> {
+    try {
+      this.checkAuth();
+
+      console.log('🔄 uploadEPUB 开始:', { bookId, fileName: file.name, fileSize: file.size });
+      
+      const token = authService.getToken();
+      const formData = new FormData();
+      formData.append('epub_file', file);
+
+      const url = `${API_BASE}/books/${bookId}/upload-epub`;
+      console.log('🌐 请求 URL:', url);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: formData,
+      });
+      
+      console.log('📡 响应状态:', response.status);
+
+      if (response.status === 401) {
+        console.warn('认证失败，清除本地认证状态');
+        await authService.signOut();
+        window.location.reload();
+        return { book: null, error: { message: '登录已过期，请重新登录' } };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { book: null, error: { message: errorData.error || errorData.message || `请求失败：${response.status}` } };
+      }
+
+      const data = await response.json();
+      return { book: data.data ? zhuanHuanShuJi(data.data) : null, error: null };
+    } catch (error) {
+      return {
+        book: null,
+        error: { message: error instanceof Error ? error.message : '上传 EPUB 失败' }
+      };
+    }
+  }
+
+  getEPUBUrl(bookId: string, epubFilePath: string): string {
+    const baseUrl = window.location.origin;
+    let 标准化路径 = epubFilePath.replace(/\\/g, '/');
+    标准化路径 = 标准化路径.replace(/^\/+/, '');
+    const finalUrl = `${baseUrl}/${标准化路径}`;
+    console.log('🔗 getEPUBUrl:', { epubFilePath, 标准化路径, finalUrl });
+    return finalUrl;
   }
 
   async getQuestionsByBook(bookId: string): Promise<{ questions: Question[]; error: DatabaseError | null }> {
