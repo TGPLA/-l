@@ -95,8 +95,7 @@ func InitRoutes() *gin.Engine {
 		ai := api.Group("/ai")
 		ai.Use(middleware.AuthMiddleware())
 		{
-			ai.POST("/generate-questions", controllers.AIGenerateQuestions)
-			ai.POST("/generate-questions-paragraph", controllers.AIGenerateQuestionsForParagraph)
+			ai.POST("/generate-from-selection", controllers.AIGenerateFromSelection)
 			ai.POST("/evaluate-answer", controllers.AIEvaluateAnswer)
 			ai.POST("/extract-concepts", controllers.AIExtractConcepts)
 			ai.POST("/evaluate-concept", controllers.AIEvaluateConcept)

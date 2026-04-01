@@ -12,3 +12,10 @@ type AIEvaluateRequest struct {
 	QuestionId string `json:"question_id" binding:"required"`
 	UserAnswer string `json:"user_answer" binding:"required"`
 }
+
+type AIGenerateSelectionRequest struct {
+	ChapterId    string `json:"chapter_id" binding:"required"`
+	SelectedText string `json:"selected_text" binding:"required"`
+	QuestionType  string `json:"question_type" binding:"required"`
+	Count         int    `json:"count"`
+}
