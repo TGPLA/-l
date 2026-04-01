@@ -28,3 +28,7 @@ dist-ssr
 
 # Project reference directory
 项目参考/
+
+# Submodule changes (prevent accidental modifications)
+项目参考/react-reader/node_modules
+项目参考/react-reader/package-lock.json
