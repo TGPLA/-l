@@ -19,6 +19,7 @@ interface EPUBDaoRuTanChuangProps {
 interface JianYuanShuJu {
   title: string;
   author: string;
+  coverImage: string | null;
 }
 
 export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks, darkMode }: EPUBDaoRuTanChuangProps) {
@@ -30,9 +31,9 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks,
 
   if (!isOpen) return null;
 
-  const handleFileSelected = (file: File, title: string, author: string) => {
+  const handleFileSelected = (file: File, title: string, author: string, coverImage: string | null) => {
     setSelectedFile(file);
-    setJianYuanShuJu({ title, author });
+    setJianYuanShuJu({ title, author, coverImage });
     setStep('confirm');
   };
 
@@ -47,7 +48,7 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks,
       const { book: newBook, error: createError } = await databaseService.createBook({
         title: jianYuanShuJu.title,
         author: jianYuanShuJu.author,
-        coverUrl: '',
+        coverUrl: jianYuanShuJu.coverImage || '',
       } as any);
 
       if (createError || !newBook) throw new Error(createError?.message || '创建书籍失败');

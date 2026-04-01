@@ -122,7 +122,7 @@ class DatabaseService {
           userId: this.userId,
           title: book.title,
           author: book.author,
-          coverUrl: book.coverUrl,
+          cover_url: book.coverUrl,
         }),
       });
 
@@ -148,7 +148,7 @@ class DatabaseService {
         body: JSON.stringify({
           title: updates.title,
           author: updates.author,
-          coverUrl: updates.coverUrl,
+          cover_url: updates.coverUrl,
         }),
       });
 

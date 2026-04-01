@@ -4,11 +4,10 @@
 import { useEffect, useCallback } from 'react';
 import type { Chapter, Paragraph } from '@infrastructure/types';
 import { useDuanLuoGuanLi } from '../hooks/useDuanLuoGuanLi';
-import { useHuaCiChuangJian } from '../hooks/useHuaCiChuangJian';
 import { useZhangJieBianJi } from '../hooks/useZhangJieBianJi';
 import { DuanLuoXiangQingTanChuang } from './DuanLuoXiangQingTanChuang';
 import { DuanLuoBianJiTanChuang } from './DuanLuoBianJiTanChuang';
-import { HuaCiChuangJianDiLan } from './HuaCiChuangJianDiLan';
+// import { HuaCiChuangJianDiLan } from './HuaCiChuangJianDiLan';
 import { ZhangJieXiangQingZhuShiTu } from './ZhangJieXiangQingZhuShiTu';
 import { ZhangJieBianJiTanChuang } from './ZhangJieBianJiTanChuang';
 import { TouBuDaoHang } from './TouBuDaoHang';
@@ -44,17 +43,7 @@ export function ChapterDetail({ chapter, onBack, onStartConceptLearning, onStart
     cancelDelete,
   } = useDuanLuoGuanLi(chapter.id);
 
-  const {
-    selectedText,
-    showSelectionBar,
-    creating,
-    enabled: huaCiEnabled,
-    setEnabled: setHuaCiEnabled,
-    setTargetElement,
-    setShowSelectionBar,
-    setSelectedText,
-    handleCreateParagraph,
-  } = useHuaCiChuangJian(chapter.id, (p) => setParagraphs(prev => [...prev, p]));
+
 
   const {
     showEditModal: showZhangJieEditModal,
@@ -73,17 +62,15 @@ export function ChapterDetail({ chapter, onBack, onStartConceptLearning, onStart
     loadParagraphs();
   }, [loadParagraphs]);
 
-  useEffect(() => {
-    setHuaCiEnabled(!showViewModal && !showEditModal && !showShanChuModal);
-  }, [showViewModal, showEditModal, showShanChuModal, setHuaCiEnabled]);
+
 
   const handleParagraphCreated = useCallback((paragraph: Paragraph) => {
     setParagraphs(prev => [...prev, paragraph]);
   }, [setParagraphs]);
 
   const handleContentRef = useCallback((element: HTMLDivElement | null) => {
-    setTargetElement(element);
-  }, [setTargetElement]);
+    // Content ref placeholder
+  }, []);
 
   const handleEditChapter = useCallback(() => {
     openEditModal(chapter);
@@ -108,15 +95,6 @@ export function ChapterDetail({ chapter, onBack, onStartConceptLearning, onStart
         deleting={deleting}
         onContentRef={handleContentRef}
       />
-
-      {showSelectionBar && selectedText && huaCiEnabled && (
-        <HuaCiChuangJianDiLan
-          selectedText={selectedText}
-          onCancel={() => { setShowSelectionBar(false); setSelectedText(''); }}
-          onCreate={handleCreateParagraph}
-          creating={creating}
-        />
-      )}
 
       {showViewModal && currentParagraph && (
         <DuanLuoXiangQingTanChuang

@@ -127,7 +127,7 @@ function ZhangJieGuanLi({ bookId, onStartConceptLearning, onStartIntentionLearni
         bookId={bookId}
         onStartConceptLearning={onStartConceptLearning}
         onStartIntentionLearning={onStartIntentionLearning}
-        onQuestionsChange={() => {}}
+        darkMode={darkMode}
       />
     </div>
   );

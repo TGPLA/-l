@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS books (
     user_id CHAR(36) NOT NULL COMMENT '所属用户 ID',
     title VARCHAR(255) NOT NULL COMMENT '书名',
     author VARCHAR(255) NOT NULL COMMENT '作者',
-    cover_url VARCHAR(512) COMMENT '封面图片 URL',
+    cover_url TEXT COMMENT '封面图片 URL 或 base64 数据',
     description TEXT COMMENT '书籍简介',
     chapter_count INT DEFAULT 0 COMMENT '章节数量',
     question_count INT DEFAULT 0 COMMENT '题目总数',

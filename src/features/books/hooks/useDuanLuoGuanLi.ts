@@ -53,14 +53,6 @@ export function useDuanLuoGuanLi(chapterId: string) {
       setCurrentParagraph(updatedParagraph);
       setShowEditModal(false);
       setShowViewModal(true);
-
-      const { data, error: aiError } = await aiService.generateQuestionsForParagraph(updatedParagraph.id, '标准题', 3);
-      if (aiError) {
-        console.error('AI 重新生成题目失败:', aiError.message);
-        showError('段落已更新，但 AI 重新生成题目失败：' + aiError.message);
-      } else {
-        showSuccess(`AI 已基于新内容重新生成 ${data?.questions.length || 0} 道题目`);
-      }
     } finally {
       setSaving(false);
     }

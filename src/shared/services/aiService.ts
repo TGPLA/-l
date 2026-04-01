@@ -82,13 +82,14 @@ class AIService {
     return false;
   }
 
-  async generateQuestions(chapterId: string, questionType: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
+  async generateFromSelection(chapterId: string, selectedText: string, questionType: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
     try {
-      const response = await fetch(`${API_BASE}/ai/generate-questions`, {
+      const response = await fetch(`${API_BASE}/ai/generate-from-selection`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
           chapter_id: chapterId,
+          selected_text: selectedText,
           question_type: questionType,
           count,
         }),
@@ -170,38 +171,6 @@ class AIService {
         return { error: error.message };
       }
       return { error: error instanceof Error ? error.message : '记录练习失败' };
-    }
-  }
-
-  async generateQuestionsForParagraph(paragraphId: string, questionType: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: { message: string } | null }> {
-    try {
-      const response = await fetch(`${API_BASE}/ai/generate-questions-paragraph`, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          paragraph_id: paragraphId,
-          question_type: questionType,
-          count,
-        }),
-      });
-
-      if (await this.handle401(response)) {
-        return { data: null, error: { message: '登录已过期' } };
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
-      }
-
-      const responseData = await response.json() as RawGeneratedQuestionsResponse;
-      const questions = (responseData?.questions || []).map(zhuanHuanTiMu);
-      return { data: { questions }, error: null };
-    } catch (error) {
-      if (error instanceof YingYongCuoWu) {
-        return { data: null, error: { message: error.message } };
-      }
-      return { data: null, error: { message: error instanceof Error ? error.message : 'AI 生成题目失败' } };
     }
   }
 

@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "shop": {
+    "url": "https://skillhub-1388575217.cos.ap-guangzhou.myqcloud.com/skills/",
+    "offline": false
+  }
+}

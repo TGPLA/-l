@@ -11,9 +11,10 @@ interface ChapterViewProps {
   bookId: string;
   onStartConceptLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: Chapter) => void;
   onStartIntentionLearning: (source: { chapterId?: string; paragraphId?: string; content: string }, chapter: Chapter) => void;
+  darkMode: boolean;
 }
 
-export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLearning }: ChapterViewProps) {
+export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLearning, darkMode }: ChapterViewProps) {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLe
   }
 
   if (loading) {
-    return <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>加载中...</div>;
+    return <div style={{ textAlign: 'center', padding: '2rem', color: darkMode ? '#9ca3af' : '#6b7280' }}>加载中...</div>;
   }
 
   return (
@@ -50,6 +51,7 @@ export function ChapterView({ bookId, onStartConceptLearning, onStartIntentionLe
       chapters={chapters}
       onChaptersChange={loadChapters}
       onSelectChapter={setSelectedChapter}
+      darkMode={darkMode}
     />
   );
 }

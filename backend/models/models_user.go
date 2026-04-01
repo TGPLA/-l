@@ -33,7 +33,7 @@ type Book struct {
 	UserId        string    `gorm:"type:char(36);not null;index" json:"user_id"`
 	Title         string    `gorm:"type:varchar(255);not null" json:"title"`
 	Author        string    `gorm:"type:varchar(255);not null" json:"author"`
-	CoverUrl      string    `gorm:"type:varchar(512)" json:"cover_url"`
+	CoverUrl      string    `gorm:"type:mediumtext" json:"cover_url"`
 	EpubFilePath  string    `gorm:"type:varchar(512)" json:"epub_file_path"`
 	ChapterCount  int       `gorm:"default:0" json:"chapter_count"`
 	QuestionCount int       `gorm:"default:0" json:"question_count"`
