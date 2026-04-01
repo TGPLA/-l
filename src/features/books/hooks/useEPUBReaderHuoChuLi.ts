@@ -35,16 +35,10 @@ export function useEPUBReaderHuoChuLi({
     chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
     tiaoDaoShangYiGe: jiChu.tiaoDaoShangYiGe,
     tiaoDaoXiaYiGe: jiChu.tiaoDaoXiaYiGe,
-    selectedText: jiChu.selectedText,
-    showMenu: jiChu.showMenu,
-    selectionRect: jiChu.selectionRect,
-    generating: jiChu.generating,
     huaCiKaiQi: jiChu.huaCiKaiQi,
-    setHuaCiKaiQi: jiChu.setHuaCiKaiQi,
-    handleCancel: jiChu.handleCancel,
-    handleGenerateQuestion: jiChu.handleGenerateQuestion,
-    handleHighlight: jiChu.handleHighlight,
-    handleCopy: jiChu.handleCopy,
+    setSelectedText: jiChu.setSelectedText,
+    setShowMenu: jiChu.setShowMenu,
+    setSelectionRect: jiChu.setSelectionRect,
   });
 
   return {

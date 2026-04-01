@@ -14,28 +14,36 @@ interface UseEPUBReaderShiJianProps {
   chuLiSouSuoJieGuo: (jieGuo: any[], rendition?: Rendition) => void;
   tiaoDaoShangYiGe: () => string | undefined;
   tiaoDaoXiaYiGe: () => string | undefined;
-  enabled: boolean;
+  huaCiKaiQi: boolean;
   setSelectedText: (text: string) => void;
-  setShowSelectionBar: (show: boolean) => void;
+  setShowMenu: (show: boolean) => void;
+  setSelectionRect: (rect: DOMRect | null) => void;
 }
 
 export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
-  chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, enabled,
-  setSelectedText, setShowSelectionBar,
+  chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
+  setSelectedText, setShowMenu, setSelectionRect,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
   });
 
   const handleTextSelected = useCallback((cfiRange: string, contents: Contents) => {
-    if (!fanYeHeYeMa.renditionRef.current || !enabled) return;
+    const rendition = fanYeHeYeMa.renditionRef.current;
+    if (!rendition || !huaCiKaiQi) return;
     try {
-      const text = fanYeHeYeMa.renditionRef.current.getRange(cfiRange).toString().trim();
-      if (text) { setSelectedText(text); setShowSelectionBar(true); }
+      const text = rendition.getRange(cfiRange).toString().trim();
+      if (text) {
+        setSelectedText(text);
+        setShowMenu(true);
+        const range = rendition.getRange(cfiRange);
+        const rect = range.getBoundingClientRect();
+        setSelectionRect(rect);
+      }
       contents.window.getSelection()?.removeAllRanges();
     } catch (error) { console.error('处理选中文本时出错:', error); }
-  }, [enabled, setSelectedText, setShowSelectionBar, fanYeHeYeMa.renditionRef]);
+  }, [huaCiKaiQi, setSelectedText, setShowMenu, setSelectionRect]);
 
   const handleRendition = useCallback((rendition: Rendition) => {
     fanYeHeYeMa.renditionRef.current = rendition;
@@ -61,8 +69,13 @@ export function useEPUBReaderShiJian({
     rendition.themes.fontSize(`${ziTiDaXiao}%`);
   }, [zhuTi, ziTiDaXiao, yingYongZhuTi, fanYeHeYeMa.renditionRef]);
 
-  useEffect(() => () => {
-    fanYeHeYeMa.renditionRef.current?.off('selected', handleTextSelected);
+  useEffect(() => {
+    return () => {
+      const rendition = fanYeHeYeMa.renditionRef.current;
+      if (rendition) {
+        rendition.off('selected', handleTextSelected);
+      }
+    };
   }, [handleTextSelected, fanYeHeYeMa.renditionRef]);
 
   const handleSouSuoJieGuo = useCallback((jieGuo: any[]) => {

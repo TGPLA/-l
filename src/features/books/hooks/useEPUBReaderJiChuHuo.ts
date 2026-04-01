@@ -43,6 +43,9 @@ export function useEPUBReaderJiChuHuo({
     selectedText,
     showMenu,
     selectionRect,
+    setSelectedText,
+    setShowMenu,
+    setSelectionRect,
     handleCancel,
   } = useHuaCiJiaoHu(huaCiKaiQi);
 
@@ -76,6 +79,9 @@ export function useEPUBReaderJiChuHuo({
     generating,
     huaCiKaiQi,
     setHuaCiKaiQi,
+    setSelectedText,
+    setShowMenu,
+    setSelectionRect,
     handleCancel,
     handleGenerateQuestion,
     handleHighlight,

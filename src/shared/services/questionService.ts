@@ -15,6 +15,11 @@ const apiClient = new ApiClient({
 });
 
 export const questionService = {
+  async getQuestionsByChapter(chapterId: string): Promise<{ questions: Question[]; error: string | null }> {
+    const { data, error } = await apiClient.request<{ questions: Question[] }>(`/questions/chapter/${chapterId}`);
+    return { questions: data?.questions || [], error };
+  },
+
   async getQuestionsByParagraph(paragraphId: string): Promise<{ questions: Question[]; error: string | null }> {
     const { data, error } = await apiClient.request<{ questions: Question[] }>(`/paragraphs/${paragraphId}/questions`);
     return { questions: data?.questions || [], error };
