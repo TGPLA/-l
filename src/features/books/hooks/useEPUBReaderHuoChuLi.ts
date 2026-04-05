@@ -107,6 +107,7 @@ export function useEPUBReaderHuoChuLi({
     handleCancel: jiChu.handleCancel,
     handleGenerateQuestion: jiChu.handleGenerateQuestion,
     handleHighlight: jiChu.handleHuaXian,
+    handleMarker: jiChu.handleMaKeBi,
     handleDeleteHighlight: jiChu.handleDeleteHuaXian,
     handleCopy: jiChu.handleCopy,
     renditionRef,

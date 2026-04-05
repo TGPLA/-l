@@ -275,13 +275,16 @@ export function useEPUBReaderShiJian({
         html, body { background-color: ${beiJingSe} !important; background: ${beiJingSe} !important; color: ${wenZiSe} !important; }
         ::selection { background-color: rgba(64, 158, 255, 0.3) !important; }
         ::-moz-selection { background-color: rgba(64, 158, 255, 0.3) !important; }
-        .epub-container svg.epubjs-hl { fill: transparent !important; }
-        .epub-container svg.epubjs-hl rect { fill: transparent !important; stroke-width: 1px !important; }
-        .hl-yellow { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
-        .hl-green { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
-        .hl-blue { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
-        .hl-pink { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
-        .temp-hl { border-bottom: 1px dashed #000000 !important; padding-bottom: 2px !important; background: none !important; }
+        .epub-container svg.epubjs-hl { fill-opacity: 0.1 !important; }
+        .epub-container svg.epubjs-hl rect { fill-opacity: 0.1 !important; stroke-width: 0 !important; }
+        span.hl-underline-blue, .hl-underline-blue { background: linear-gradient(to right, #5E94FF 0%, #5E94FF 100%) no-repeat !important; background-size: 100% 2px !important; background-position: 0 100% !important; padding-bottom: 4px !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; border: none !important; display: inline !important; transition: opacity 0.2s ease, background-size 0.25s ease !important; }
+        span.hl-underline-yellow, .hl-underline-yellow { background: linear-gradient(to right, #F5C842 0%, #F5C842 100%) no-repeat !important; background-size: 100% 2px !important; background-position: 0 100% !important; padding-bottom: 4px !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; border: none !important; display: inline !important; transition: opacity 0.2s ease, background-size 0.25s ease !important; }
+        span.hl-underline-green, .hl-underline-green { background: linear-gradient(to right, #4ADE80 0%, #4ADE80 100%) no-repeat !important; background-size: 100% 2px !important; background-position: 0 100% !important; padding-bottom: 4px !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; border: none !important; display: inline !important; transition: opacity 0.2s ease, background-size 0.25s ease !important; }
+        span.hl-underline-pink, .hl-underline-pink { background: linear-gradient(to right, #F472B6 0%, #F472B6 100%) no-repeat !important; background-size: 100% 2px !important; background-position: 0 100% !important; padding-bottom: 4px !important; box-decoration-break: clone !important; -webkit-box-decoration-break: clone !important; border: none !important; display: inline !important; transition: opacity 0.2s ease, background-size 0.25s ease !important; }
+        span.mk-marker-yellow, .mk-marker-yellow { background-color: rgba(245,200,66,0.3) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
+        span.mk-marker-green, .mk-marker-green { background-color: rgba(74,222,128,0.3) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
+        span.mk-marker-blue, .mk-marker-blue { background-color: rgba(94,148,255,0.25) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
+        span.mk-marker-pink, .mk-marker-pink { background-color: rgba(244,114,182,0.3) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
       `;
       contents.window.document.head.insertBefore(baseStyle, contents.window.document.head.firstChild);
 

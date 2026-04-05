@@ -45,11 +45,15 @@ export function useZhuTi({ userId, bookId }: UseZhuTiProps) {
         'color': `${peizhi.textColor} !important`,
         'max-width': 'none !important',
       },
-      '.epubjs-hl': { 'fill-opacity': '0.3', 'mix-blend-mode': 'multiply' },
-      '.hl-yellow': { 'fill': '#fef08a' },
-      '.hl-green': { 'fill': '#86efac' },
-      '.hl-blue': { 'fill': '#93c5fd' },
-      '.hl-pink': { 'fill': '#f9a8d4' },
+      '.epubjs-hl': { 'fill-opacity': '0.1' },
+      '.hl-underline-blue': { 'fill-opacity': '0.08', 'background': 'linear-gradient(to right, #5E94FF 0%, #5E94FF 100%) no-repeat', 'background-size': '100% 2px', 'background-position': '0 100%', 'padding-bottom': '4px', 'border': 'none', 'display': 'inline' },
+      '.hl-underline-yellow': { 'fill-opacity': '0.08', 'background': 'linear-gradient(to right, #F5C842 0%, #F5C842 100%) no-repeat', 'background-size': '100% 2px', 'background-position': '0 100%', 'padding-bottom': '4px', 'border': 'none', 'display': 'inline' },
+      '.hl-underline-green': { 'fill-opacity': '0.08', 'background': 'linear-gradient(to right, #4ADE80 0%, #4ADE80 100%) no-repeat', 'background-size': '100% 2px', 'background-position': '0 100%', 'padding-bottom': '4px', 'border': 'none', 'display': 'inline' },
+      '.hl-underline-pink': { 'fill-opacity': '0.08', 'background': 'linear-gradient(to right, #F472B6 0%, #F472B6 100%) no-repeat', 'background-size': '100% 2px', 'background-position': '0 100%', 'padding-bottom': '4px', 'border': 'none', 'display': 'inline' },
+      '.mk-marker-yellow': { 'fill-opacity': '0.25', 'background-color': 'rgba(245,200,66,0.3)', 'padding': '0 2px', 'border-radius': '2px', 'display': 'inline' },
+      '.mk-marker-green': { 'fill-opacity': '0.25', 'background-color': 'rgba(74,222,128,0.3)', 'padding': '0 2px', 'border-radius': '2px', 'display': 'inline' },
+      '.mk-marker-blue': { 'fill-opacity': '0.25', 'background-color': 'rgba(94,148,255,0.25)', 'padding': '0 2px', 'border-radius': '2px', 'display': 'inline' },
+      '.mk-marker-pink': { 'fill-opacity': '0.25', 'background-color': 'rgba(244,114,182,0.3)', 'padding': '0 2px', 'border-radius': '2px', 'display': 'inline' },
     });
   };
 

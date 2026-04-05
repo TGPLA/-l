@@ -45,7 +45,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           onGetRendition={p.handleRendition} souSuoCi={p.souSuoCi} onSouSuoJieGuo={p.handleSouSuoJieGuo}
           selectedText={p.selectedText} showMenu={p.showMenu} selectionRect={p.selectionRect}
           generating={p.generating} onCancel={p.handleCancel} onGenerateQuestion={p.handleGenerateQuestion}
-          onHighlight={p.handleHighlight} onCopy={p.handleCopy}
+          onHighlight={p.handleHighlight} onMaKeBi={p.handleMarker} onCopy={p.handleCopy}
           onShangYiYe={p.handlePrevPage} onXiaYiYe={p.handleNextPage} keJian={p.renditionJiuXu}
           darkMode={isDarkMode} />
       </div>

@@ -58,18 +58,24 @@ export function useEPUBReaderJiChuHuo({
 
   const huaCiJiaoHu = useHuaCiJiaoHu(huaCiKaiQi);
 
+  const guanBiCaiDan = useCallback(() => {
+    huaCiJiaoHu.handleCancel();
+    externalSetShowMenu?.(false);
+  }, [huaCiJiaoHu.handleCancel, externalSetShowMenu]);
+
   const {
     generating,
     huaXianList,
     handleGenerateQuestion,
     handleHuaXian,
+    handleMaKeBi,
     handleDeleteHuaXian,
     handleCopy,
   } = useHuaXianChuTi({
     userId,
     bookId,
     chapterId,
-    onClose: huaCiJiaoHu.handleCancel,
+    onClose: guanBiCaiDan,
     renditionRef,
     bookRef,
     huaCiJiaoHuRef: {
@@ -107,9 +113,10 @@ export function useEPUBReaderJiChuHuo({
     setShowMenu: externalSetShowMenu || huaCiJiaoHu.setShowMenu,
     setSelectionRect: externalSetSelectionRect || huaCiJiaoHu.setSelectionRect,
     setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
-    handleCancel: huaCiJiaoHu.handleCancel,
+    handleCancel: guanBiCaiDan,
     handleGenerateQuestion,
     handleHuaXian,
+    handleMaKeBi,
     handleDeleteHuaXian,
     handleCopy,
   };
