@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Rendition, Contents } from 'epubjs';
 import { useEPUBReaderFanYeHeYeMa } from './useEPUBReaderFanYeHeYeMa';
 
-const XUAN_ZE_YAN_CHI_MS = 300;
+const XUAN_ZE_YAN_CHI_MS = 100;
 const ZUI_XIAO_WEN_ZI_SHU = 2;
 
 interface UseEPUBReaderShiJianProps {
@@ -23,20 +23,24 @@ interface UseEPUBReaderShiJianProps {
   setShowMenu: (show: boolean) => void;
   setSelectionRect: (rect: DOMRect | null) => void;
   setCurrentCfiRange: (cfiRange: string | null) => void;
+  externalRenditionRef?: React.RefObject<Rendition | undefined>;
+  externalBookRef?: React.RefObject<any>;
 }
 
 export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
+  externalRenditionRef, externalBookRef,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
+    externalRenditionRef,
   });
 
   const cfiRangeRef = useRef<string | null>(null);
   const contentsRef = useRef<Contents | null>(null);
-  const bookRef = useRef<any>(null);
+  const bookRef = externalBookRef || useRef<any>(null);
   const xuanZeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const huaCiKaiQiRef = useRef(huaCiKaiQi);
   const linshiBiaoZhuCfiRef = useRef<string | null>(null);
@@ -199,21 +203,38 @@ export function useEPUBReaderShiJian({
       }
       
       const rect = range.getBoundingClientRect();
-      const iframe = contents.window.frameElement;
-      if (iframe) {
-        const iframeRect = iframe.getBoundingClientRect();
-        const correctedRect = {
-          top: rect.top + iframeRect.top,
-          left: rect.left + iframeRect.left,
-          width: rect.width,
-          height: rect.height,
-          right: rect.right + iframeRect.left,
-          bottom: rect.bottom + iframeRect.top,
-        };
-        setSelectionRect(correctedRect);
-      } else {
-        setSelectionRect(rect);
+      let totalTop = 0;
+      let totalLeft = 0;
+      let currentWindow = contents.window;
+      while (currentWindow) {
+        const frameElement = currentWindow.frameElement;
+        if (frameElement) {
+          const frameRect = frameElement.getBoundingClientRect();
+          totalTop += frameRect.top;
+          totalLeft += frameRect.left;
+          try {
+            const parentWindow = frameElement.ownerDocument?.defaultView?.parent;
+            if (parentWindow && parentWindow !== currentWindow) {
+              currentWindow = parentWindow as Window;
+            } else {
+              break;
+            }
+          } catch {
+            break;
+          }
+        } else {
+          break;
+        }
       }
+      const correctedRect = {
+        top: rect.top + totalTop,
+        left: rect.left + totalLeft,
+        width: rect.width,
+        height: rect.height,
+        right: rect.right + totalLeft,
+        bottom: rect.bottom + totalTop,
+      };
+      setSelectionRect(correctedRect);
       
       setCurrentCfiRange(accurateCfiRange);
       console.log('selected 事件 - 选中文本:', selectedText);

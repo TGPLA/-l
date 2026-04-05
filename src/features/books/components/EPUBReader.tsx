@@ -22,17 +22,17 @@ interface EPUBReaderProps {
 
 export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagraphCreated }: EPUBReaderProps) {
   const p = useEPUBReaderHuoChuLi({ bookId, chapterId, onParagraphCreated });
-  const buju = useYueDuQiBuJu({ bookRef: p.bookRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
+  const buju = useYueDuQiBuJu({ bookRef: p.bookRef, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
 
   const handleTiaoZhuanCfi = useCallback((cfiRange: string) => {
-    if (p.renditionRef.current) p.renditionRef.current.display(cfiRange);
+    p.renditionRef?.current?.display(cfiRange);
     buju.setDaKaiDeChouTi(null);
-  }, [p.renditionRef.current, buju.setDaKaiDeChouTi]);
+  }, [buju.setDaKaiDeChouTi]);
 
   const handleZhangJieDianJi = useCallback((href: string) => {
-    if (p.renditionRef.current) p.renditionRef.current.display(href);
+    p.renditionRef?.current?.display(href);
     buju.setDaKaiDeChouTi(null);
-  }, [p.renditionRef.current, buju.setDaKaiDeChouTi]);
+  }, [buju.setDaKaiDeChouTi]);
 
   const isDarkMode = p.zhuTi === 'dark';
 

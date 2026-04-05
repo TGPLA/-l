@@ -9,6 +9,7 @@ interface UseEPUBReaderFanYeHeYeMaProps {
   setLocation: (loc: string | number) => void;
   tiaoDaoShangYiGe: () => string | undefined;
   tiaoDaoXiaYiGe: () => string | undefined;
+  externalRenditionRef?: React.RefObject<Rendition | undefined>;
 }
 
 export function useEPUBReaderFanYeHeYeMa({
@@ -16,8 +17,9 @@ export function useEPUBReaderFanYeHeYeMa({
   setLocation,
   tiaoDaoShangYiGe,
   tiaoDaoXiaYiGe,
+  externalRenditionRef,
 }: UseEPUBReaderFanYeHeYeMaProps) {
-  const renditionRef = useRef<Rendition | undefined>(undefined);
+  const renditionRef = externalRenditionRef || useRef<Rendition | undefined>(undefined);
   const tocRef = useRef<NavItem[]>([]);
   const [renditionJiuXu, setRenditionJiuXu] = useState(false);
 

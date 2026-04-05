@@ -145,16 +145,72 @@ export function EPUBYueDuQuYu({
             </div>
           )}
           {showMenu && selectedText && selectionRect && (
-            <HuaXianCaiDan
-              selectedText={selectedText}
-              position={{ top: selectionRect.top - 8, left: selectionRect.left + selectionRect.width / 2 }}
-              generating={generating}
-              darkMode={darkMode}
-              onGenerateQuestion={onGenerateQuestion}
-              onHighlight={onHighlight}
-              onCopy={onCopy}
-              onCancel={onCancel}
-            />
+            (() => {
+              const rect = selectionRect;
+              const menuWidth = 200;
+              const menuHeight = 250;
+              const safeMargin = 20;
+              
+              const selectionCenterY = rect.top + rect.height / 2;
+              const selectionCenterX = rect.left + rect.width / 2;
+              
+              // 四象限定位算法
+              // 1. 初始尝试放选区上方
+              let menuTop = selectionCenterY - menuHeight / 2 - 15;
+              let showCaretUp = true;
+              
+              // 2. 选区太大则放到下方
+              if (rect.height > menuHeight / 2) {
+                menuTop = rect.bottom + 20;
+                showCaretUp = true;
+              }
+              
+              // 3. 上方空间检测
+              const menuBottomAfterTop = menuTop + menuHeight;
+              const canShowAbove = menuTop >= safeMargin && 
+                                   menuBottomAfterTop <= window.innerHeight - safeMargin;
+              
+              if (canShowAbove) {
+                // 上方空间充足，直接显示
+              } else {
+                // 4. 切换到下方尝试
+                menuTop = selectionCenterY + 15;
+                showCaretUp = false;
+                
+                const menuBottomAfterBottom = menuTop + menuHeight;
+                const canShowBelow = menuTop >= safeMargin &&
+                                     menuBottomAfterBottom <= window.innerHeight - safeMargin;
+                
+                if (!canShowBelow) {
+                  // 5. 边界约束：贴边 + 判断箭头方向
+                  menuTop = Math.max(safeMargin, window.innerHeight - safeMargin - menuHeight);
+                  showCaretUp = selectionCenterY > menuTop + menuHeight / 2;
+                }
+              }
+              
+              // 6. 左右边界检测
+              let menuLeft = selectionCenterX;
+              if (menuLeft - menuWidth / 2 < safeMargin) {
+                menuLeft = safeMargin + menuWidth / 2;
+              } else if (menuLeft + menuWidth / 2 > window.innerWidth - safeMargin) {
+                menuLeft = window.innerWidth - safeMargin - menuWidth / 2;
+              }
+              
+              return (
+                <HuaXianCaiDan
+                  selectedText={selectedText}
+                  showMenu={showMenu}
+                  position={{ top: menuTop, left: menuLeft }}
+                  showCaretUp={showCaretUp}
+                  generating={generating}
+                  darkMode={darkMode}
+                  onGenerateQuestion={onGenerateQuestion}
+                  onHuaXian={onHighlight}
+                  onCopy={onCopy}
+                  onCancel={onCancel}
+                />
+              );
+            })()
           )}
         </div>
 

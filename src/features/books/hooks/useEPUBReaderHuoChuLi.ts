@@ -1,7 +1,8 @@
 // @审计已完成
 // EPUB 阅读器 Hooks 初始化 Hook
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import type { Rendition } from 'epubjs';
 import { useEPUBReaderJiChuHuo } from './useEPUBReaderJiChuHuo';
 import { useEPUBReaderShiJian } from './useEPUBReaderShiJian';
 
@@ -16,6 +17,9 @@ export function useEPUBReaderHuoChuLi({
   chapterId, 
   onParagraphCreated 
 }: UseEPUBReaderHuoChuLiProps) {
+  const renditionRef = useRef<Rendition | undefined>(undefined);
+  const bookRef = useRef<any>(null);
+
   const [showMenu, setShowMenu] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
@@ -25,10 +29,6 @@ export function useEPUBReaderHuoChuLi({
   const handleShowMenu = useCallback((show: boolean) => {
     setShowMenu(show);
     if (!show) {
-      const rendition = renditionRef.current;
-      if (rendition && currentCfiRange) {
-        try { rendition.annotations.remove(currentCfiRange, 'temp-selection'); } catch {}
-      }
       setSelectedText('');
       setSelectionRect(null);
       setCurrentCfiRange(null);
@@ -43,8 +43,8 @@ export function useEPUBReaderHuoChuLi({
     bookId, 
     chapterId, 
     onParagraphCreated, 
-    renditionRef: undefined as any, 
-    bookRef: undefined as any,
+    renditionRef,
+    bookRef,
     showMenu,
     setSelectedText,
     setShowMenu: handleShowMenu,
@@ -54,7 +54,6 @@ export function useEPUBReaderHuoChuLi({
   });
 
   const {
-    renditionRef,
     renditionJiuXu,
     handleRendition,
     handleNextPage,
@@ -63,7 +62,6 @@ export function useEPUBReaderHuoChuLi({
     handleXiaYiGeSouSuoJieGuo,
     handleLocationChanged,
     handleSouSuoJieGuo,
-    bookRef,
   } = useEPUBReaderShiJian({
     yingYongZhuTi: jiChu.yingYongZhuTi,
     zhuTi: jiChu.zhuTi,
@@ -79,6 +77,8 @@ export function useEPUBReaderHuoChuLi({
     setShowMenu: handleShowMenu,
     setSelectionRect: setSelectionRect,
     setCurrentCfiRange: setCurrentCfiRange,
+    externalRenditionRef: renditionRef,
+    externalBookRef: bookRef,
   });
 
   return {
