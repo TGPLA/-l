@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
 import { HuaXianCaiDan } from './HuaXianCaiDan';
+import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 
 interface EPUBYueDuQuYuProps {
   url: string;
@@ -26,6 +27,13 @@ interface EPUBYueDuQuYuProps {
   onXiaYiYe?: () => void;
   keJian?: boolean;
   darkMode?: boolean;
+  showEditMenu?: boolean;
+  editPosition?: { top: number; left: number } | null;
+  activeHuaXian?: HuaXianXinXi | null;
+  onCloseEdit?: () => void;
+  onDeleteHuaXian?: (id: string) => void;
+  onChangeYanSe?: (id: string, yanSe: HuaXianYanSe) => void;
+  onCopyText?: (text: string) => void;
 }
 
 const BAO_CHI_QI_YANG_SHI: React.CSSProperties = {
@@ -85,6 +93,8 @@ export function EPUBYueDuQuYu({
   souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
   selectionRect, generating, onCancel, onGenerateQuestion,
   onHighlight, onMaKeBi, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
+  showEditMenu, editPosition, activeHuaXian, onCloseEdit,
+  onDeleteHuaXian, onChangeYanSe, onCopyText,
 }: EPUBYueDuQuYuProps) {
   const renditionRef = useRef<Rendition>();
   const rongQiRef = useRef<HTMLDivElement>(null);

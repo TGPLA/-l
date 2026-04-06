@@ -61,7 +61,7 @@ const MK_CLASS_MAP: Record<HuaXianYanSe, string> = {
   pink: 'mk-marker-pink',
 };
 
-function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string) {
+function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string, id?: string) {
   try {
     const range = rendition.getRange(cfiRange);
     if (!range || range.collapsed) return;
@@ -69,6 +69,8 @@ function baoGuaSpan(rendition: Rendition, cfiRange: string, className: string) {
     const span = doc.createElement('span');
     span.className = className;
     span.setAttribute('data-biaoji', 'true');
+    span.setAttribute('data-cfi', cfiRange);
+    if (id) span.setAttribute('data-huaxian-id', id);
     range.surroundContents(span);
   } catch (e) {
     console.warn('DOM 包裹失败（跨元素边界时正常）:', e);
@@ -88,7 +90,7 @@ export function useHuaXianChuTi({
   const storageKey = `huaxian_${userId}_${bookId}_${chapterId}`;
   const [huaXianList, setHuaXianList] = useLocalStorageState<HuaXianXinXi[]>(storageKey, { defaultValue: [] });
 
-  const yingYongBiaoJi = useCallback(async (cfiRange: string, qingChuJiu: boolean = false, yanSe: HuaXianYanSe = 'blue', leiXing: BiaoJiLeiXing = 'underline') => {
+  const yingYongBiaoJi = useCallback(async (cfiRange: string, qingChuJiu: boolean = false, yanSe: HuaXianYanSe = 'blue', leiXing: BiaoJiLeiXing = 'underline', id?: string) => {
     const rendition = renditionRef?.current;
     if (!rendition) {
       console.error('应用标记失败: rendition 不存在');
@@ -102,7 +104,7 @@ export function useHuaXianChuTi({
       const cls = leiXing === 'marker' ? MK_CLASS_MAP[yanSe] : HL_CLASS_MAP[yanSe];
       const svgStyle = { fill: se, 'fill-opacity': leiXing === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
       rendition.annotations.add('highlight', cfiRange, {}, () => {}, cls, svgStyle);
-      baoGuaSpan(rendition, cfiRange, cls);
+      baoGuaSpan(rendition, cfiRange, cls, id);
       console.log('标记应用成功:', leiXing, yanSe, cfiRange);
     } catch (error) {
       console.error('应用标记失败:', error);
@@ -141,7 +143,7 @@ export function useHuaXianChuTi({
             const cls = lx === 'marker' ? (MK_CLASS_MAP[h.yanSe] || MK_CLASS_MAP.yellow) : (HL_CLASS_MAP[h.yanSe] || HL_CLASS_MAP.blue);
             const svgStyle = { fill: se, 'fill-opacity': lx === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
             currentRendition.annotations.add('highlight', h.cfiRange, {}, () => {}, cls, svgStyle);
-            baoGuaSpan(currentRendition, h.cfiRange, cls);
+            baoGuaSpan(currentRendition, h.cfiRange, cls, h.id);
           } catch (error) {
             console.error('渲染标记失败:', error);
           }
@@ -178,7 +180,7 @@ export function useHuaXianChuTi({
     }
     const xinXi: HuaXianXinXi = { id: Date.now().toString(), text: selectedText, cfiRange: cfiRange || '', yanSe, leiXing: 'underline', beiZhu, createdAt: Date.now() };
     setHuaXianList(prev => [...prev, xinXi]);
-    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'underline');
+    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'underline', xinXi.id);
     huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
     showSuccess('已添加划线');
     onClose();
@@ -193,7 +195,7 @@ export function useHuaXianChuTi({
     }
     const xinXi: HuaXianXinXi = { id: Date.now().toString(), text: selectedText, cfiRange: cfiRange || '', yanSe, leiXing: 'marker', beiZhu, createdAt: Date.now() };
     setHuaXianList(prev => [...prev, xinXi]);
-    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'marker');
+    if (cfiRange) yingYongBiaoJi(cfiRange, false, yanSe, 'marker', xinXi.id);
     huaCiJiaoHuRef?.setCurrentCfiRange?.(null);
     showSuccess('已添加马克笔');
     onClose();
@@ -217,6 +219,22 @@ export function useHuaXianChuTi({
     }, 150);
   }, [huaXianList, renditionRef]);
 
+  const handleChangeYanSe = useCallback((id: string, yanSe: HuaXianYanSe) => {
+    const target = huaXianList.find(h => h.id === id);
+    if (!target) return;
+    const rendition = renditionRef?.current;
+    if (rendition && target.cfiRange) {
+      try { rendition.annotations.remove(target.cfiRange, 'highlight'); } catch {}
+      const se = YAN_SE_PEI_ZHI[yanSe];
+      const cls = target.leiXing === 'marker' ? MK_CLASS_MAP[yanSe] : HL_CLASS_MAP[yanSe];
+      const svgStyle = { fill: se, 'fill-opacity': target.leiXing === 'marker' ? '0.25' : '0', stroke: se, 'stroke-width': '0', 'stroke-dasharray': 'none' };
+      rendition.annotations.add('highlight', target.cfiRange, {}, () => {}, cls, svgStyle);
+      const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
+      if (span) { span.className = cls; span.setAttribute('data-biaoji', 'true'); }
+    }
+    setHuaXianList(prev => prev.map(h => h.id === id ? { ...h, yanSe } : h));
+  }, [huaXianList, renditionRef]);
+
   const handleCopy = useCallback(async (selectedText: string) => {
     try {
       await navigator.clipboard.writeText(selectedText);
@@ -234,6 +252,7 @@ export function useHuaXianChuTi({
     handleHuaXian,
     handleMaKeBi,
     handleDeleteHuaXian,
+    handleChangeYanSe,
     handleCopy,
   };
 }

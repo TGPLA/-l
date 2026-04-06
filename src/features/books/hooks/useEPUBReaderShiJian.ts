@@ -25,13 +25,14 @@ interface UseEPUBReaderShiJianProps {
   setCurrentCfiRange: (cfiRange: string | null) => void;
   externalRenditionRef?: React.RefObject<Rendition | undefined>;
   externalBookRef?: React.RefObject<any>;
+  onHuaXianDianJi?: (xinXi: { cfi: string; id: string; className: string; rect: { top: number; left: number; width: number; height: number }; text: string }) => void;
 }
 
 export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
-  externalRenditionRef, externalBookRef,
+  externalRenditionRef, externalBookRef, onHuaXianDianJi,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
@@ -285,10 +286,64 @@ export function useEPUBReaderShiJian({
         span.mk-marker-green, .mk-marker-green { background-color: rgba(74,222,128,0.3) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
         span.mk-marker-blue, .mk-marker-blue { background-color: rgba(94,148,255,0.25) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
         span.mk-marker-pink, .mk-marker-pink { background-color: rgba(244,114,182,0.3) !important; padding: 0 2px !important; border-radius: 2px !important; display: inline !important; transition: opacity 0.2s ease !important; }
+        span.hl-active.hl-underline-blue, .hl-active.hl-underline-blue { background-size: 100% 4px !important; opacity: 1 !important; }
+        span.hl-active.hl-underline-yellow, .hl-active.hl-underline-yellow { background-size: 100% 4px !important; opacity: 1 !important; }
+        span.hl-active.hl-underline-green, .hl-active.hl-underline-green { background-size: 100% 4px !important; opacity: 1 !important; }
+        span.hl-active.hl-underline-pink, .hl-active.hl-underline-pink { background-size: 100% 4px !important; opacity: 1 !important; }
+        span.hl-active.mk-marker-yellow { background-color: rgba(245,200,66,0.5) !important; }
+        span.hl-active.mk-marker-green { background-color: rgba(74,222,128,0.5) !important; }
+        span.hl-active.mk-marker-blue { background-color: rgba(94,148,255,0.45) !important; }
+        span.hl-active.mk-marker-pink { background-color: rgba(244,114,182,0.5) !important; }
       `;
       contents.window.document.head.insertBefore(baseStyle, contents.window.document.head.firstChild);
 
-      function handleIframeClick() {
+      const huaXianProxyScript = contents.window.document.createElement('script');
+      huaXianProxyScript.textContent = `(function(){
+        var activeId=null;
+        function setActive(id){
+          if(activeId){
+            var p=document.querySelector('[data-huaxian-id="'+activeId+'"]');
+            if(p)p.classList.remove('hl-active')
+          }
+          activeId=id;
+          if(id){
+            var e=document.querySelector('[data-huaxian-id="'+id+'"]');
+            if(e)e.classList.add('hl-active')
+          }
+        }
+        function handleClick(e){
+          var t=e.target.closest('[data-biaoji]');
+          if(!t)return;
+          e.preventDefault();
+          e.stopPropagation();
+          var cfi=t.getAttribute('data-cfi')||'',id=t.getAttribute('data-huaxian-id')||'',cls=t.className||'',txt=t.textContent||'',r=t.getBoundingClientRect();
+          window.parent.postMessage({type:'huaxian-click',cfi:cfi,id:id,className:cls,rect:{top:r.top,left:r.left,width:r.width,height:r.height},text:txt},'*')
+        }
+        document.addEventListener('click',handleClick,true);
+        window.addEventListener('message',function(e){
+          if(e.data&&e.data.type==='set-hl-active')setActive(e.data.id)
+        });
+        var obs=new MutationObserver(function(ms){
+          ms.forEach(function(m){
+            m.addedNodes.forEach(function(n){
+              if(n.nodeType===1){
+                var s=n.querySelectorAll?n.querySelectorAll('[data-biaoji]'):[];
+                if(n.hasAttribute&&n.hasAttribute('data-biaoji')){
+                  s=Array.prototype.slice.call(s||[]);
+                  s.unshift(n)
+                }
+                s.forEach(function(){})
+              }
+            })
+          })
+        });
+        obs.observe(document.body||document.documentElement,{childList:true,subtree:true})
+      })()`;
+      contents.window.document.head.appendChild(huaXianProxyScript);
+
+      function handleIframeClick(e: Event) {
+        var target = (e as any).target;
+        if (target && target.closest && target.closest('[data-biaoji]')) return;
         if (!showMenuRef.current) return;
         const rend = fanYeHeYeMa.renditionRef.current;
         if (rend && linshiBiaoZhuCfiRef.current) {
@@ -303,10 +358,66 @@ export function useEPUBReaderShiJian({
 
       contents.window.addEventListener('click', handleIframeClick);
 
+      const handleMessage = (msg: MessageEvent) => {
+        if (!msg.data || msg.data.type !== 'huaxian-click') return;
+        const frameElement = contents.window.frameElement;
+        let totalTop = 0, totalLeft = 0;
+        let currentWindow = contents.window;
+        while (currentWindow) {
+          const fe = currentWindow.frameElement;
+          if (fe) {
+            const fr = fe.getBoundingClientRect();
+            totalTop += fr.top;
+            totalLeft += fr.left;
+            try {
+              const pw = fe.ownerDocument?.defaultView?.parent;
+              if (pw && pw !== currentWindow) { currentWindow = pw as Window; } else { break; }
+            } catch { break; }
+          } else { break; }
+        }
+        onHuaXianDianJi?.({
+          cfi: msg.data.cfi,
+          id: msg.data.id,
+          className: msg.data.className,
+          rect: { top: msg.data.rect.top + totalTop, left: msg.data.rect.left + totalLeft, width: msg.data.rect.width, height: msg.data.rect.height },
+          text: msg.data.text,
+        });
+      };
+      contents.window.addEventListener('message', handleMessage);
+
+      window.addEventListener('message', (msg: MessageEvent) => {
+        if (!msg.data || msg.data.type !== 'huaxian-click') return;
+        const frameElement = contents.window.frameElement;
+        let totalTop = 0, totalLeft = 0;
+        let currentWindow = contents.window;
+        while (currentWindow) {
+          const fe = currentWindow.frameElement;
+          if (fe) {
+            const fr = fe.getBoundingClientRect();
+            totalTop += fr.top;
+            totalLeft += fr.left;
+            try {
+              const pw = fe.ownerDocument?.defaultView?.parent;
+              if (pw && pw !== currentWindow) { currentWindow = pw as Window; } else { break; }
+            } catch { break; }
+          } else { break; }
+        }
+        onHuaXianDianJi?.({
+          cfi: msg.data.cfi,
+          id: msg.data.id,
+          className: msg.data.className,
+          rect: { top: msg.data.rect.top + totalTop, left: msg.data.rect.left + totalLeft, width: msg.data.rect.width, height: msg.data.rect.height },
+          text: msg.data.text,
+        });
+      });
+
       return () => {
         contents.window.removeEventListener('click', handleIframeClick);
+        contents.window.removeEventListener('message', handleMessage);
         const oldBase = contents.window.document.querySelector('style[data-epub-base-bg]');
         if (oldBase) oldBase.remove();
+        const oldProxy = contents.window.document.querySelector('script');
+        if (oldProxy && oldProxy.parentNode === contents.window.document.head) oldProxy.remove();
       };
     });
     rendition.on('rendered', () => {

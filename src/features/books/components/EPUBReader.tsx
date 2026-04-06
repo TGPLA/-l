@@ -5,6 +5,7 @@ import React, { useCallback } from 'react';
 import { YueDuQiDingBuDaoHang } from './YueDuQiDingBuDaoHang';
 import { EPUBYueDuQuYu } from './EPUBYueDuQuYu';
 import { YouCeGongJuTiao } from './YouCeGongJuTiao';
+import { HuaXianBianJiCaiDan } from './HuaXianBianJiCaiDan';
 import { MuLuChouTi } from './MuLuChouTi';
 import { BiJiChouTi } from './BiJiChouTi';
 import { useEPUBReaderHuoChuLi } from '../hooks/useEPUBReaderHuoChuLi';
@@ -47,7 +48,20 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           generating={p.generating} onCancel={p.handleCancel} onGenerateQuestion={p.handleGenerateQuestion}
           onHighlight={p.handleHighlight} onMaKeBi={p.handleMarker} onCopy={p.handleCopy}
           onShangYiYe={p.handlePrevPage} onXiaYiYe={p.handleNextPage} keJian={p.renditionJiuXu}
-          darkMode={isDarkMode} />
+          darkMode={isDarkMode}
+          showEditMenu={p.showEditMenu} editPosition={p.editPosition}
+          activeHuaXian={p.activeHuaXian} onCloseEdit={p.handleCloseEdit}
+          onDeleteHuaXian={p.handleDeleteHuaXian} onChangeYanSe={p.handleChangeYanSe}
+          onCopyText={p.handleCopyText}
+        />
+        {p.showEditMenu && p.editPosition && p.activeHuaXian && (
+          <HuaXianBianJiCaiDan
+            show={p.showEditMenu} position={p.editPosition}
+            currentYanSe={p.activeHuaXian.yanSe}
+            onDelete={p.handleDeleteHuaXian} onCopy={p.handleCopyText}
+            onChangeYanSe={p.handleChangeYanSe} onClose={p.handleCloseEdit}
+          />
+        )}
       </div>
       <YouCeGongJuTiao dangQianDaKai={buju.daKaiDeChouTi} onAnNiuDianJi={buju.qieHuanChouTi}
         huaXianShuLiang={p.huaXianList.length} isDarkMode={isDarkMode} onQieHuanZhuTi={p.qieHuanZhuTi} />

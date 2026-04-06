@@ -5,6 +5,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { Rendition } from 'epubjs';
 import { useEPUBReaderJiChuHuo } from './useEPUBReaderJiChuHuo';
 import { useEPUBReaderShiJian } from './useEPUBReaderShiJian';
+import { useHuaXianDianJi } from './useHuaXianDianJi';
 
 interface UseEPUBReaderHuoChuLiProps {
   bookId: string;
@@ -53,6 +54,13 @@ export function useEPUBReaderHuoChuLi({
     getCurrentCfiRange,
   });
 
+  const editMenu = useHuaXianDianJi({
+    huaXianList: jiChu.huaXianList,
+    onDelete: jiChu.handleDeleteHuaXian,
+    onChangeYanSe: jiChu.handleChangeYanSe,
+    onCloseEdit: () => { handleShowMenu(false); },
+  });
+
   const {
     renditionJiuXu,
     handleRendition,
@@ -79,6 +87,7 @@ export function useEPUBReaderHuoChuLi({
     setCurrentCfiRange: setCurrentCfiRange,
     externalRenditionRef: renditionRef,
     externalBookRef: bookRef,
+    onHuaXianDianJi: editMenu.handleHuaXianDianJi,
   });
 
   return {
@@ -120,5 +129,12 @@ export function useEPUBReaderHuoChuLi({
     handleLocationChanged,
     handleSouSuoJieGuo,
     bookRef,
+    showEditMenu: editMenu.showEditMenu,
+    editPosition: editMenu.editPosition,
+    activeHuaXian: editMenu.activeHuaXian,
+    handleCloseEdit: editMenu.handleCloseEdit,
+    handleDeleteHuaXian: editMenu.handleDelete,
+    handleChangeYanSe: editMenu.handleChangeYanSe,
+    handleCopyText: editMenu.handleCopyText,
   };
 }
