@@ -58,6 +58,7 @@ export function useEPUBReaderHuoChuLi({
     huaXianList: jiChu.huaXianList,
     onDelete: jiChu.handleDeleteHuaXian,
     onChangeYanSe: jiChu.handleChangeYanSe,
+    onChangeLeiXing: jiChu.handleChangeLeiXing,
     onCloseEdit: () => { handleShowMenu(false); },
   });
 
@@ -132,9 +133,12 @@ export function useEPUBReaderHuoChuLi({
     showEditMenu: editMenu.showEditMenu,
     editPosition: editMenu.editPosition,
     activeHuaXian: editMenu.activeHuaXian,
+    activeHuaXianList: editMenu.activeHuaXianList,
     handleCloseEdit: editMenu.handleCloseEdit,
     handleDeleteHuaXian: editMenu.handleDelete,
+    handleDeleteSingleHuaXian: editMenu.handleDeleteSingle,
     handleChangeYanSe: editMenu.handleChangeYanSe,
+    handleChangeLeiXing: editMenu.handleChangeLeiXing,
     handleCopyText: editMenu.handleCopyText,
   };
 }

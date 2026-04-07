@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Trash2, Copy } from 'lucide-react';
-import type { HuaXianYanSe } from '../hooks/useHuaXianChuTi';
+import type { HuaXianYanSe, HuaXianXinXi } from '../hooks/useHuaXianChuTi';
 
 const YAN_SE_XUAN_XIANG: { value: HuaXianYanSe; color: string }[] = [
   { value: 'yellow', color: '#F5C842' },
@@ -16,14 +16,18 @@ interface HuaXianBianJiCaiDanProps {
   show: boolean;
   position: { top: number; left: number } | null;
   currentYanSe: HuaXianYanSe;
+  currentLeiXing: 'underline' | 'marker';
+  activeHuaXianList: HuaXianXinXi[];
   onDelete: () => void;
+  onDeleteSingle: (id: string) => void;
   onCopy: () => void;
   onChangeYanSe: (yanSe: HuaXianYanSe) => void;
+  onChangeLeiXing: (leiXing: 'underline' | 'marker') => void;
   onClose: () => void;
 }
 
 export function HuaXianBianJiCaiDan({
-  show, position, currentYanSe, onDelete, onCopy, onChangeYanSe, onClose,
+  show, position, currentYanSe, currentLeiXing, activeHuaXianList, onDelete, onDeleteSingle, onCopy, onChangeYanSe, onChangeLeiXing, onClose,
 }: HuaXianBianJiCaiDanProps) {
   const [visible, setVisible] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -91,19 +95,39 @@ export function HuaXianBianJiCaiDan({
   return (
     <div ref={menuRef} style={menuStyle}>
       <div style={containerStyle}>
-        <div style={rowStyle}>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="删除划线"
-            style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='#ef4444'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
-            <Trash2 size={14} /><span>删除</span>
-          </button>
-          <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
-          <button onClick={(e) => { e.stopPropagation(); onCopy(); }} title="复制文字"
-            style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(96,165,250,0.25)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
-            <Copy size={14} /><span>复制</span>
-          </button>
-        </div>
+        {activeHuaXianList.length > 1 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.25rem' }}>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textAlign: 'center', marginBottom: '0.15rem' }}>
+              同时选中 {activeHuaXianList.length} 个标记
+            </div>
+            {activeHuaXianList.map(h => (
+              <button key={h.id}
+                onClick={(e) => { e.stopPropagation(); onDeleteSingle(h.id); }}
+                style={{ ...btnStyle, justifyContent: 'flex-start' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor='#ef4444'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+                <Trash2 size={12} />
+                <span style={{ fontSize: '0.72rem' }}>
+                  删除{h.leiXing === 'marker' ? '高亮' : '划线'}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div style={rowStyle}>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} title="删除划线"
+              style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='#ef4444'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+              <Trash2 size={14} /><span>删除</span>
+            </button>
+            <div style={{ width: '1px', height: '1.2rem', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+            <button onClick={(e) => { e.stopPropagation(); onCopy(); }} title="复制文字"
+              style={btnStyle} onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(96,165,250,0.25)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor='transparent'}>
+              <Copy size={14} /><span>复制</span>
+            </button>
+          </div>
+        )}
         <div style={{ height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }} />
         <div style={{ ...rowStyle, justifyContent: 'center', paddingTop: '0.2rem' }}>
           {YAN_SE_XUAN_XIANG.map(opt => (
@@ -115,6 +139,21 @@ export function HuaXianBianJiCaiDan({
             />
           ))}
         </div>
+        {activeHuaXianList.length === 1 && (
+          <div style={{ ...rowStyle, justifyContent: 'center', paddingTop: '0.15rem' }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onChangeLeiXing(currentLeiXing === 'underline' ? 'marker' : 'underline'); }}
+              style={{
+                ...btnStyle, padding: '0.35rem 0.55rem', fontSize: '0.7rem',
+                backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '0.35rem',
+              }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor='rgba(255,255,255,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor='rgba(255,255,255,0.1)'}
+            >
+              转为{currentLeiXing === 'underline' ? '高亮' : '划线'}
+            </button>
+          </div>
+        )}
         <div style={{
           position: 'absolute', left: '50%', bottom: '-10px', transform: 'translateX(-50%)',
           width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent',

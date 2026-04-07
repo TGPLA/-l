@@ -51,15 +51,18 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           darkMode={isDarkMode}
           showEditMenu={p.showEditMenu} editPosition={p.editPosition}
           activeHuaXian={p.activeHuaXian} onCloseEdit={p.handleCloseEdit}
-          onDeleteHuaXian={p.handleDeleteHuaXian} onChangeYanSe={p.handleChangeYanSe}
-          onCopyText={p.handleCopyText}
+          onDeleteHuaXian={p.handleDeleteHuaXian} onDeleteSingleHuaXian={p.handleDeleteSingleHuaXian}
+          onChangeYanSe={p.handleChangeYanSe} onCopyText={p.handleCopyText}
         />
         {p.showEditMenu && p.editPosition && p.activeHuaXian && (
           <HuaXianBianJiCaiDan
             show={p.showEditMenu} position={p.editPosition}
             currentYanSe={p.activeHuaXian.yanSe}
-            onDelete={p.handleDeleteHuaXian} onCopy={p.handleCopyText}
-            onChangeYanSe={p.handleChangeYanSe} onClose={p.handleCloseEdit}
+            currentLeiXing={p.activeHuaXian.leiXing || 'underline'}
+            activeHuaXianList={p.activeHuaXianList}
+            onDelete={p.handleDeleteHuaXian} onDeleteSingle={p.handleDeleteSingleHuaXian}
+            onCopy={p.handleCopyText} onChangeYanSe={p.handleChangeYanSe}
+            onChangeLeiXing={p.handleChangeLeiXing} onClose={p.handleCloseEdit}
           />
         )}
       </div>

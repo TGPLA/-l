@@ -46,6 +46,7 @@ export function useEPUBReaderShiJian({
   const huaCiKaiQiRef = useRef(huaCiKaiQi);
   const linshiBiaoZhuCfiRef = useRef<string | null>(null);
   const showMenuRef = useRef(showMenu);
+  const yiZhiXiaYiGeClickRef = useRef(false);
 
   useEffect(() => {
     huaCiKaiQiRef.current = huaCiKaiQi;
@@ -258,7 +259,6 @@ export function useEPUBReaderShiJian({
             linshiBiaoZhuCfiRef.current = accurateCfiRange;
           } catch (e) { console.log('临时标注创建失败:', e); }
         }
-        setShowMenu(true);
         xuanZeTimerRef.current = null;
       }, XUAN_ZE_YAN_CHI_MS);
     });
@@ -347,6 +347,7 @@ export function useEPUBReaderShiJian({
       function handleIframeClick(e: Event) {
         var target = (e as any).target;
         if (target && target.closest && target.closest('[data-biaoji]')) return;
+        if (yiZhiXiaYiGeClickRef.current) { yiZhiXiaYiGeClickRef.current = false; return; }
         if (!showMenuRef.current) return;
         const rend = fanYeHeYeMa.renditionRef.current;
         if (rend && linshiBiaoZhuCfiRef.current) {
@@ -360,6 +361,20 @@ export function useEPUBReaderShiJian({
       }
 
       contents.window.addEventListener('click', handleIframeClick);
+
+      function handleIframeMouseUp() {
+        if (!huaCiKaiQiRef.current) return;
+        const selection = contents.window.getSelection();
+        if (!selection || selection.isCollapsed) return;
+        const text = selection.toString().trim();
+        if (!text || text.length < ZUI_XIAO_WEN_ZI_SHU) return;
+        if (showMenuRef.current) return;
+        showMenuRef.current = true;
+        yiZhiXiaYiGeClickRef.current = true;
+        setShowMenu(true);
+      }
+
+      contents.window.addEventListener('mouseup', handleIframeMouseUp);
 
       const handleMessage = (msg: MessageEvent) => {
         if (!msg.data || msg.data.type !== 'huaxian-click') return;
@@ -416,6 +431,7 @@ export function useEPUBReaderShiJian({
 
       return () => {
         contents.window.removeEventListener('click', handleIframeClick);
+        contents.window.removeEventListener('mouseup', handleIframeMouseUp);
         contents.window.removeEventListener('message', handleMessage);
         const oldBase = contents.window.document.querySelector('style[data-epub-base-bg]');
         if (oldBase) oldBase.remove();

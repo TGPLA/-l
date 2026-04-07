@@ -16,6 +16,7 @@ export interface HuaXianBianJiZhuangTai {
   showEditMenu: boolean;
   editPosition: { top: number; left: number } | null;
   activeHuaXian: HuaXianXinXi | null;
+  activeHuaXianList: HuaXianXinXi[];
   activeId: string | null;
 }
 
@@ -23,20 +24,44 @@ interface UseHuaXianDianJiProps {
   huaXianList: HuaXianXinXi[];
   onDelete: (id: string) => void;
   onChangeYanSe: (id: string, yanSe: HuaXianYanSe) => void;
+  onChangeLeiXing: (id: string, leiXing: 'underline' | 'marker') => void;
   onCopy?: (text: string) => void;
   onCloseEdit?: () => void;
+}
+
+function tiQuCfiLuJing(cfi: string): string {
+  const m = cfi.match(/epubcfi\(([^,!]+(?:![^,]*)?)/);
+  return m ? m[1] : '';
+}
+
+function quYiCeng(path: string): string {
+  const idx = path.lastIndexOf('/');
+  return idx > 0 ? path.slice(0, idx) : '';
+}
+
+function cfiPiPei(cfi1: string, cfi2: string): boolean {
+  if (!cfi1 || !cfi2) return false;
+  if (cfi1 === cfi2) return true;
+  const p1 = tiQuCfiLuJing(cfi1);
+  const p2 = tiQuCfiLuJing(cfi2);
+  if (!p1 || !p2) return false;
+  if (p1 === p2) return true;
+  if (quYiCeng(p1) === p2 || quYiCeng(p2) === p1) return true;
+  return false;
 }
 
 export function useHuaXianDianJi({
   huaXianList,
   onDelete,
   onChangeYanSe,
+  onChangeLeiXing,
   onCopy,
   onCloseEdit,
 }: UseHuaXianDianJiProps) {
   const [showEditMenu, setShowEditMenu] = useState(false);
   const [editPosition, setEditPosition] = useState<{ top: number; left: number } | null>(null);
   const [activeHuaXian, setActiveHuaXian] = useState<HuaXianXinXi | null>(null);
+  const [activeHuaXianList, setActiveHuaXianList] = useState<HuaXianXinXi[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const huaXianListRef = useRef(huaXianList);
 
@@ -46,11 +71,11 @@ export function useHuaXianDianJi({
 
   const handleHuaXianDianJi = useCallback((xinXi: HuaXianDianJiXinXi) => {
     const list = huaXianListRef.current;
-    let matched = list.find(h => String(h.id) === String(xinXi.id));
-    if (!matched) matched = list.find(h => String(h.cfiRange) === String(xinXi.cfi));
-    if (!matched) matched = list.find(h => String(xinXi.cfi).includes(String(h.cfiRange)) || String(h.cfiRange).includes(String(xinXi.cfi)));
-    if (!matched) return;
+    let matchedList = list.filter(h => cfiPiPei(h.cfiRange, xinXi.cfi));
+    matchedList = matchedList.filter((h, i, self) => i === self.findIndex(x => x.leiXing === h.leiXing && cfiPiPei(x.cfiRange, h.cfiRange)));
+    if (matchedList.length === 0) return;
 
+    const matched = matchedList[0];
     const rect = xinXi.rect;
     const menuWidth = 220;
     const menuHeight = 120;
@@ -64,6 +89,7 @@ export function useHuaXianDianJi({
     else if (menuLeft + menuWidth / 2 > window.innerWidth - safeMargin) menuLeft = window.innerWidth - safeMargin - menuWidth / 2;
 
     setActiveHuaXian(matched);
+    setActiveHuaXianList(matchedList);
     setActiveId(matched.id);
     setEditPosition({ top: menuTop, left: menuLeft });
     setShowEditMenu(true);
@@ -73,6 +99,7 @@ export function useHuaXianDianJi({
     setShowEditMenu(false);
     setEditPosition(null);
     setActiveHuaXian(null);
+    setActiveHuaXianList([]);
     setActiveId(null);
     if (window.parent !== window) window.parent.postMessage({ type: 'set-hl-active', id: null }, '*');
     else window.postMessage({ type: 'set-hl-active', id: null }, '*');
@@ -80,16 +107,31 @@ export function useHuaXianDianJi({
   }, [onCloseEdit]);
 
   const handleDelete = useCallback(() => {
-    if (!activeHuaXian) return;
-    onDelete(activeHuaXian.id);
+    if (!activeHuaXianList.length) return;
+    activeHuaXianList.forEach(h => onDelete(h.id));
     handleCloseEdit();
-  }, [activeHuaXian, onDelete, handleCloseEdit]);
+  }, [activeHuaXianList, onDelete, handleCloseEdit]);
+
+  const handleDeleteSingle = useCallback((id: string) => {
+    onDelete(id);
+    if (activeHuaXianList.length <= 1) {
+      handleCloseEdit();
+    } else {
+      setActiveHuaXianList(prev => prev.filter(h => h.id !== id));
+    }
+  }, [activeHuaXianList, onDelete, handleCloseEdit]);
 
   const handleChangeYanSe = useCallback((yanSe: HuaXianYanSe) => {
     if (!activeHuaXian) return;
     onChangeYanSe(activeHuaXian.id, yanSe);
     setActiveHuaXian(prev => prev ? { ...prev, yanSe } : null);
   }, [activeHuaXian, onChangeYanSe]);
+
+  const handleChangeLeiXing = useCallback((leiXing: 'underline' | 'marker') => {
+    if (!activeHuaXian) return;
+    onChangeLeiXing(activeHuaXian.id, leiXing);
+    setActiveHuaXian(prev => prev ? { ...prev, leiXing } : null);
+  }, [activeHuaXian, onChangeLeiXing]);
 
   const handleCopyText = useCallback(async () => {
     if (!activeHuaXian) return;
@@ -110,7 +152,7 @@ export function useHuaXianDianJi({
   }, [showEditMenu, handleCloseEdit]);
 
   return {
-    showEditMenu, editPosition, activeHuaXian, activeId,
-    handleHuaXianDianJi, handleCloseEdit, handleDelete, handleChangeYanSe, handleCopyText,
+    showEditMenu, editPosition, activeHuaXian, activeHuaXianList, activeId,
+    handleHuaXianDianJi, handleCloseEdit, handleDelete, handleDeleteSingle, handleChangeYanSe, handleChangeLeiXing, handleCopyText,
   };
 }

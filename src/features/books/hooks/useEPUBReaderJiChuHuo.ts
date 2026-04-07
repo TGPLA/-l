@@ -71,6 +71,7 @@ export function useEPUBReaderJiChuHuo({
     handleMaKeBi,
     handleDeleteHuaXian,
     handleChangeYanSe,
+    handleChangeLeiXing,
     handleCopy,
   } = useHuaXianChuTi({
     userId,
@@ -120,6 +121,7 @@ export function useEPUBReaderJiChuHuo({
     handleMaKeBi,
     handleDeleteHuaXian,
     handleChangeYanSe,
+    handleChangeLeiXing,
     handleCopy,
   };
 }
