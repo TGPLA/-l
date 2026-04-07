@@ -216,14 +216,28 @@ export function useHuaXianChuTi({
     const deleted = huaXianList.find(h => h.id === id);
     const rendition = renditionRef?.current;
     if (rendition && deleted?.cfiRange) {
-      try { rendition.annotations.remove(deleted.cfiRange, 'highlight'); } catch (error) { console.error('清除标记失败:', error); }
-      const span = rendition.getContents()?.[0]?.window?.document?.querySelector(`[data-huaxian-id="${id}"]`);
-      if (span) {
-        const parent = span.parentNode;
-        if (parent) {
-          while (span.firstChild) parent.insertBefore(span.firstChild, span);
-          parent.removeChild(span);
+      try {
+        rendition.annotations.remove(deleted.cfiRange, 'highlight');
+      } catch (error) {
+        console.warn('清除标记失败:', error);
+      }
+      try {
+        const contents = rendition.getContents();
+        if (contents && contents[0]) {
+          const doc = contents[0].window?.document;
+          if (doc) {
+            const span = doc.querySelector(`[data-huaxian-id="${id}"]`);
+            if (span && span.parentNode) {
+              const parent = span.parentNode;
+              while (span.firstChild) {
+                parent.insertBefore(span.firstChild, span);
+              }
+              parent.removeChild(span);
+            }
+          }
         }
+      } catch (error) {
+        console.warn('移除 DOM 标记失败:', error);
       }
     }
     setHuaXianList(prev => prev.filter(h => h.id !== id));

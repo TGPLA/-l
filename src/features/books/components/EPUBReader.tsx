@@ -8,6 +8,7 @@ import { YouCeGongJuTiao } from './YouCeGongJuTiao';
 import { HuaXianBianJiCaiDan } from './HuaXianBianJiCaiDan';
 import { MuLuChouTi } from './MuLuChouTi';
 import { BiJiChouTi } from './BiJiChouTi';
+import { ZhangJieHuaXianJiLu } from './ZhangJieHuaXianJiLu';
 import { useEPUBReaderHuoChuLi } from '../hooks/useEPUBReaderHuoChuLi';
 import { useYueDuQiBuJu } from '../hooks/useYueDuQiBuJu';
 import '../styles/YueDuSeCai.css';
@@ -26,7 +27,11 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
   const buju = useYueDuQiBuJu({ bookRef: p.bookRef, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
 
   const handleTiaoZhuanCfi = useCallback((cfiRange: string) => {
-    p.renditionRef?.current?.display(cfiRange);
+    try {
+      p.renditionRef?.current?.display(cfiRange);
+    } catch (e) {
+      console.warn('跳转到划线位置失败:', e);
+    }
     buju.setDaKaiDeChouTi(null);
   }, [buju.setDaKaiDeChouTi]);
 
@@ -77,6 +82,9 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           dangQianCfi={typeof p.location === 'string' ? p.location : ''} onZhangJieDianJi={handleZhangJieDianJi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
       {buju.daKaiDeChouTi === 'biji' && (
+        <BiJiChouTi highlights={p.highlights} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
+      )}
+      {buju.daKaiDeChouTi === 'huaxian' && (
         <BiJiChouTi highlights={p.highlights} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
     </div>

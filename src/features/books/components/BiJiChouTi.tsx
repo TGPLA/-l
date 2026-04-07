@@ -32,7 +32,7 @@ export function BiJiChouTi({ highlights, onDelete, onJump, onGuanBi }: BiJiChouT
       position: 'fixed',
       right: 0,
       top: 0,
-      zIndex: 300,
+      zIndex: 10001,
       animation: 'slideInRight 0.25s ease-out',
     }}>
       <style>{`@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
