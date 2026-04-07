@@ -24,6 +24,7 @@ export function useEPUBReaderHuoChuLi({
   const [showMenu, setShowMenu] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
+  const [firstLineRect, setFirstLineRect] = useState<DOMRect | null>(null);
   const [currentCfiRange, setCurrentCfiRange] = useState<string | null>(null);
   const [huaCiKaiQi, setHuaCiKaiQi] = useState(true);
 
@@ -86,6 +87,7 @@ export function useEPUBReaderHuoChuLi({
     setShowMenu: handleShowMenu,
     setSelectionRect: setSelectionRect,
     setCurrentCfiRange: setCurrentCfiRange,
+    setFirstLineRect: setFirstLineRect,
     externalRenditionRef: renditionRef,
     externalBookRef: bookRef,
     onHuaXianDianJi: editMenu.handleHuaXianDianJi,
@@ -109,6 +111,7 @@ export function useEPUBReaderHuoChuLi({
     selectedText: selectedText,
     showMenu: showMenu,
     selectionRect: selectionRect,
+    firstLineRect: firstLineRect,
     generating: jiChu.generating,
     highlights: jiChu.huaXianList,
     huaXianList: jiChu.huaXianList,

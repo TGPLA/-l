@@ -23,6 +23,7 @@ interface UseEPUBReaderShiJianProps {
   setShowMenu: (show: boolean) => void;
   setSelectionRect: (rect: DOMRect | null) => void;
   setCurrentCfiRange: (cfiRange: string | null) => void;
+  setFirstLineRect?: (rect: DOMRect | null) => void;
   externalRenditionRef?: React.RefObject<Rendition | undefined>;
   externalBookRef?: React.RefObject<any>;
   onHuaXianDianJi?: (xinXi: { cfi: string; id: string; className: string; rect: { top: number; left: number; width: number; height: number }; text: string }) => void;
@@ -32,6 +33,7 @@ export function useEPUBReaderShiJian({
   yingYongZhuTi, zhuTi, ziTiDaXiao, setYeMaXinXi, setLocation,
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
+  setFirstLineRect,
   externalRenditionRef, externalBookRef, onHuaXianDianJi,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
@@ -47,6 +49,8 @@ export function useEPUBReaderShiJian({
   const linshiBiaoZhuCfiRef = useRef<string | null>(null);
   const showMenuRef = useRef(showMenu);
   const yiZhiXiaYiGeClickRef = useRef(false);
+
+  const firstLineRectRef = useRef<DOMRect | null>(null);
 
   useEffect(() => {
     huaCiKaiQiRef.current = huaCiKaiQi;
@@ -74,8 +78,9 @@ export function useEPUBReaderShiJian({
       setSelectedText('');
       setSelectionRect(null);
       setCurrentCfiRange(null);
+      if (setFirstLineRect) setFirstLineRect(null);
     }
-  }, [setShowMenu, setSelectedText, setSelectionRect, setCurrentCfiRange]);
+  }, [setShowMenu, setSelectedText, setSelectionRect, setCurrentCfiRange, setFirstLineRect]);
 
   const handleRendition = useCallback((rendition: Rendition) => {
     fanYeHeYeMa.renditionRef.current = rendition;
@@ -238,6 +243,23 @@ export function useEPUBReaderShiJian({
       };
       setSelectionRect(correctedRect);
       
+      if (setFirstLineRect) {
+        const clientRects = range.getClientRects();
+        if (clientRects && clientRects.length > 0) {
+          const firstRect = clientRects[0];
+          const firstLineRect = {
+            top: firstRect.top + totalTop,
+            left: firstRect.left + totalLeft,
+            width: firstRect.width,
+            height: firstRect.height,
+            right: firstRect.right + totalLeft,
+            bottom: firstRect.bottom + totalTop,
+          };
+          firstLineRectRef.current = firstLineRect;
+          setFirstLineRect(firstLineRect);
+        }
+      }
+      
       setCurrentCfiRange(accurateCfiRange);
       console.log('selected 事件 - 选中文本:', selectedText);
       console.log('selected 事件 - CFI:', accurateCfiRange);
@@ -358,6 +380,7 @@ export function useEPUBReaderShiJian({
         setSelectedText('');
         setSelectionRect(null);
         setCurrentCfiRange(null);
+        if (setFirstLineRect) setFirstLineRect(null);
       }
 
       contents.window.addEventListener('click', handleIframeClick);

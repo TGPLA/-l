@@ -17,6 +17,7 @@ interface EPUBYueDuQuYuProps {
   selectedText: string;
   showMenu: boolean;
   selectionRect: DOMRect | null;
+  firstLineRect?: DOMRect | null;
   generating: boolean;
   onCancel: () => void;
   onGenerateQuestion: (text: string, type: '名词解释' | '意图理解' | '生活应用') => void;
@@ -91,7 +92,7 @@ function QingChuKuNeiBuBianJu({ containerRef }: { containerRef: React.RefObject<
 export function EPUBYueDuQuYu({
   url, location, onLocationChanged, onGetRendition,
   souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
-  selectionRect, generating, onCancel, onGenerateQuestion,
+  selectionRect, firstLineRect, generating, onCancel, onGenerateQuestion,
   onHighlight, onMaKeBi, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
   showEditMenu, editPosition, activeHuaXian, onCloseEdit,
   onDeleteHuaXian, onChangeYanSe, onCopyText,
@@ -158,49 +159,41 @@ export function EPUBYueDuQuYu({
           {showMenu && selectedText && selectionRect && (
             (() => {
               const rect = selectionRect;
+              const firstLine = firstLineRect;
+              const menuDistance = -202;
+              
               const menuWidth = 200;
               const menuHeight = 250;
               const safeMargin = 20;
               
-              const selectionCenterY = rect.top + rect.height / 2;
-              const selectionCenterX = rect.left + rect.width / 2;
+              const referenceX = firstLine ? firstLine.left + firstLine.width / 2 : rect.left + rect.width / 2;
+              const firstLineTop = firstLine ? firstLine.top : rect.top;
+              const firstLineBottom = firstLine ? firstLine.bottom : rect.bottom;
               
-              // 四象限定位算法
-              // 1. 初始尝试放选区上方
-              let menuTop = selectionCenterY - menuHeight / 2 - 15;
-              let showCaretUp = true;
+              // 尝试放在第一行上方
+              let menuTop = firstLineTop - menuHeight - menuDistance;
+              let showCaretUp = false;
               
-              // 2. 选区太大则放到下方
-              if (rect.height > menuHeight / 2) {
-                menuTop = rect.bottom + 20;
+              // 检查上方空间是否足够
+              const canShowAbove = menuTop >= safeMargin;
+              
+              if (!canShowAbove) {
+                // 放在第一行下方
+                menuTop = firstLineBottom + menuDistance;
                 showCaretUp = true;
-              }
-              
-              // 3. 上方空间检测
-              const menuBottomAfterTop = menuTop + menuHeight;
-              const canShowAbove = menuTop >= safeMargin && 
-                                   menuBottomAfterTop <= window.innerHeight - safeMargin;
-              
-              if (canShowAbove) {
-                // 上方空间充足，直接显示
-              } else {
-                // 4. 切换到下方尝试
-                menuTop = selectionCenterY + 15;
-                showCaretUp = false;
                 
-                const menuBottomAfterBottom = menuTop + menuHeight;
-                const canShowBelow = menuTop >= safeMargin &&
-                                     menuBottomAfterBottom <= window.innerHeight - safeMargin;
+                // 检查下方空间
+                const menuBottom = menuTop + menuHeight;
+                const canShowBelow = menuBottom <= window.innerHeight - safeMargin;
                 
                 if (!canShowBelow) {
-                  // 5. 边界约束：贴边 + 判断箭头方向
+                  // 贴边显示
                   menuTop = Math.max(safeMargin, window.innerHeight - safeMargin - menuHeight);
-                  showCaretUp = selectionCenterY > menuTop + menuHeight / 2;
+                  showCaretUp = firstLineTop > menuTop + menuHeight / 2;
                 }
               }
               
-              // 6. 左右边界检测
-              let menuLeft = selectionCenterX;
+              let menuLeft = referenceX;
               if (menuLeft - menuWidth / 2 < safeMargin) {
                 menuLeft = safeMargin + menuWidth / 2;
               } else if (menuLeft + menuWidth / 2 > window.innerWidth - safeMargin) {
