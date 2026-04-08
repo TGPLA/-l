@@ -4,9 +4,7 @@ import type { Book, Question, Settings } from '@infrastructure/types';
 import { storage } from '@infrastructure/store';
 import { authService } from '@shared/services/auth';
 import { databaseService } from '@shared/services/database';
-import { chapterService } from '@shared/services/chapterService';
 import { promptService } from '@shared/services/promptService';
-import { paragraphService } from '@shared/services/paragraphService';
 import { AppContext } from './context';
 
 function getInitialSettings(): Settings {
@@ -29,16 +27,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (user) {
         setIsAuthenticated(true);
         databaseService.setUserId(user.id);
-        chapterService.setUserId(user.id);
         promptService.setUserId(user.id);
-        paragraphService.setUserId(user.id);
         loadUserData();
       } else {
         setIsAuthenticated(false);
         databaseService.setUserId('');
-        chapterService.setUserId('');
         promptService.setUserId('');
-        paragraphService.setUserId('');
         setBooks([]);
         setQuestions([]);
       }

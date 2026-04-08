@@ -4,17 +4,14 @@
 
 ## 项目简介
 
-阅读回响是一款帮助用户深度阅读和知识巩固的应用。通过 AI 技术，自动从书籍章节中生成题目，支持多种练习模式，帮助用户更好地理解和记忆书籍内容。
+阅读回响是一款帮助用户深度阅读和知识巩固的应用。通过 AI 技术，自动从阅读内容中生成题目，支持多种练习模式，帮助用户更好地理解和记忆书籍内容。
 
 ## 功能特性
 
 - 📚 **书籍管理**：添加、编辑、删除书籍，支持封面和描述
-- 📖 **EPUB 导入**：导入 EPUB 电子书，自动解析书名、作者、章节，支持选择性导入
+- 📖 **EPUB 导入**：导入 EPUB 电子书，自动解析书名、作者、目录
 - 📖 **EPUB 阅读器**：全屏 EPUB 阅读器，支持阅读进度持久化、全文搜索、页码显示、主题切换（日间/夜间/护眼）、字体大小调整、按钮翻页、高亮标注
-- 📖 **章节管理**：书籍章节的增删改查，支持排序
-- 📃 **段落管理**：划词创建段落，选中章节内容即可创建段落；支持查看详情、编辑、删除段落
 - 📝 **提示词模板管理**：系统预设模板（全局共享）+ 用户自定义模板，支持名词解释、意图理解、生活应用三种题型
-- 🤖 **AI 出题**：基于章节或段落内容，使用提示词模板自动生成三类题目
 - 🎯 **名词解释学习**：AI 提取重要概念→用户学习专业解释→用自己的话复述→AI 点评表达清晰度（循环）
 - 🎯 **意图理解学习**：用户阅读段落→用自己的话讲述作者意图→AI 评价对/错/不到位
 - 🎯 **练习模式**：显示段落 + 问题 + 作答，AI 评价答案
@@ -70,9 +67,8 @@
 │  - assets/*.js                │   │  路由:                                 │
 │  - assets/*.css               │   │  /api/auth/*      - 认证                │
 │                               │   │  /api/books       - 书籍 CRUD           │
-│  技术栈: React + TypeScript   │   │  /api/chapters    - 章节 CRUD           │
-│          + Vite               │   │  /api/paragraphs  - 段落 CRUD           │
-│                               │   │  /api/prompts     - 提示词模板 CRUD     │
+│  技术栈: React + TypeScript   │   │  /api/books       - 书籍 CRUD           │
+│          + Vite               │   │  /api/prompts     - 提示词模板 CRUD     │
 │                               │   │  /api/questions   - 题目 CRUD           │
 │                               │   │  /api/settings    - 用户设置            │
 │                               │   │  /api/ai/*        - AI 功能             │
@@ -88,7 +84,6 @@
                                     │                                        │
                                     │  表:                                   │
                                     │  - books         (书籍)                │
-                                    │  - chapters      (章节)                │
                                     │  - questions     (题目)                │
                                     │  - users         (用户)                │
                                     │  - user_settings (用户设置)            │
@@ -137,9 +132,6 @@ src/
 │   │       ├── BookDetail.tsx      # 书籍详情
 │   │       ├── GuidedTour.tsx      # 新手引导
 │   │       ├── QuestionManagementModal.tsx
-│   │       ├── ChapterManager.tsx  # 章节管理
-│   │       ├── ChapterDetail.tsx   # 章节详情（含划词创建段落）
-│   │       ├── ChapterView.tsx     # 章节视图
 │   │       ├── EPUBDaoRuTanChuang.tsx # EPUB 导入弹窗
 │   ├── practice/                   # 练习系统
 │   │   └── components/
@@ -164,7 +156,6 @@ src/
     ├── services/                   # 服务层
     │   ├── database.ts             # 数据库服务
     │   ├── auth.ts                 # 认证服务
-    │   ├── chapterService.ts       # 章节服务
     │   ├── aiService.ts            # AI 服务
     │   ├── practiceRecordService.ts # 练习记录服务
     │   └── userCloudStorage.ts     # 云存储服务
@@ -223,10 +214,8 @@ src/
 | 表名 | 用途 | 关键字段 |
 |------|------|----------|
 | `books` | 书籍 | id, user_id, title, author, cover_url, question_count, mastered_count |
-| `chapters` | 章节 | id, user_id, book_id, title, content, order_index, paragraph_count |
-| `paragraphs` | 段落 | id, user_id, chapter_id, content, order_index, question_count |
 | `prompt_templates` | 提示词模板 | id, user_id（NULL=系统模板）, name, question_type, content, is_default, is_system |
-| `questions` | 题目 | id, user_id, book_id, chapter_id, paragraph_id, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
+| `questions` | 题目 | id, user_id, book_id, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
 | `users` | 用户 | id, username, password_hash, created_at |
 | `user_settings` | 用户设置 | user_id, dark_mode, zhipu_api_key, zhipu_model |
 | `practice_records` | 练习记录 | id, user_id, question_id, practiced_at, result |

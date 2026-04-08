@@ -10,7 +10,6 @@ import { JiaZaiZhuangTai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { BookCard } from './BookCard';
 import { AddBookModal } from './AddBookModal';
 import { EPUBDaoRuTanChuang } from './EPUBDaoRuTanChuang';
-import { chapterService } from '@shared/services/chapterService';
 import type { EPUBMetadata, EPUBChapter } from '@shared/utils/epubParser';
 import { BookShelfCaoZuo } from './BookShelfCaoZuo';
 import { BookShieKongZhi } from './BookShieKongZhi';
@@ -42,13 +41,7 @@ export function BookShelf({ onSelectBook, onOpenSettings }: BookShelfProps) {
     try {
       const newBook = await addBook({ title: data.metadata.title || '未命名书籍', author: data.metadata.author || '未知作者' });
       if (!newBook) throw new Error('创建书籍失败');
-      let successCount = 0, skipCount = 0;
-      for (const chapter of data.chapters) {
-        if (!chapter.content || chapter.content.trim() === '') { skipCount++; continue; }
-        const result = await chapterService.createChapter({ bookId: newBook.id, title: chapter.title, content: chapter.content, orderIndex: chapter.orderIndex });
-        if (!result.error) successCount++;
-      }
-      showSuccess(skipCount > 0 ? `导入成功！创建书籍《${newBook.title}》，包含 ${successCount} 个章节（跳过 ${skipCount} 个空章节）` : `导入成功！创建书籍《${newBook.title}》，包含 ${successCount} 个章节`);
+      showSuccess(`导入成功！创建书籍《${newBook.title}》`);
       setShowEPUBModal(false);
     } catch (error) { showError(error instanceof Error ? error.message : '导入失败'); }
     finally { setImporting(false); }

@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@infrastructure/hooks';
 import { BookShelf } from '@features/books/components/BookShelf';
 import { EPUBReaderPage } from '@features/books/components/EPUBReaderPage';
-import { ChapterDetail } from '@features/books/components/ChapterDetail';
 import { DaTiZhu } from '@features/practice/DaTiZhu';
 import { GaiNianXueXi } from '@features/practice/GaiNianXueXi';
 import { YiTuLiJie } from '@features/practice/YiTuLiJie';
@@ -18,9 +17,9 @@ import { checkBackendHealth } from '@shared/services/healthCheck';
 import { ToastContainer } from '@shared/utils/common/ToastTiShi';
 import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
-import type { Book, Paragraph, Question, Chapter } from '@infrastructure/types';
+import type { Book, Question } from '@infrastructure/types';
 
-type Page = 'shelf' | 'reader' | 'chapter-detail' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
+type Page = 'shelf' | 'reader' | 'practice' | 'answer' | 'settings' | 'prompts' | 'concept-learning' | 'intention-learning';
 
 interface LearningSource {
   chapterId?: string;
@@ -32,8 +31,7 @@ function AppContent() {
   const { settings } = useApp();
   const [currentPage, setCurrentPage] = useState<Page>('shelf');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-  const [selectedParagraph, setSelectedParagraph] = useState<Paragraph | null>(null);
+  const [selectedParagraph, setSelectedParagraph] = useState<{ id: string; content: string } | null>(null);
   const [learningSource, setLearningSource] = useState<LearningSource | null>(null);
   const [practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -96,39 +94,25 @@ function AppContent() {
     setPracticeQuestions([]);
   };
 
-  const handleStartConceptLearning = (source: LearningSource, chapter?: Chapter) => {
+  const handleStartConceptLearning = (source: LearningSource) => {
     setLearningSource(source);
-    if (chapter) {
-      setSelectedChapter(chapter);
-    }
     setCurrentPage('concept-learning');
   };
 
-  const handleStartIntentionLearning = (source: LearningSource, chapter?: Chapter) => {
+  const handleStartIntentionLearning = (source: LearningSource) => {
     setLearningSource(source);
-    if (chapter) {
-      setSelectedChapter(chapter);
-    }
     setCurrentPage('intention-learning');
   };
 
   const handleBackToDetail = () => {
-    if (selectedChapter) {
-      setCurrentPage('chapter-detail');
-    } else {
-      setCurrentPage('shelf');
-    }
+    setCurrentPage('shelf');
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
   };
 
   const handleComplete = () => {
-    if (selectedChapter) {
-      setCurrentPage('chapter-detail');
-    } else {
-      setCurrentPage('shelf');
-    }
+    setCurrentPage('shelf');
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
@@ -155,14 +139,6 @@ function AppContent() {
         <EPUBReaderPage
           book={selectedBook}
           onClose={handleCloseReader}
-        />
-      )}
-      {currentPage === 'chapter-detail' && selectedChapter && (
-        <ChapterDetail
-          chapter={selectedChapter}
-          onBack={() => { setSelectedChapter(null); setCurrentPage('shelf'); }}
-          onStartConceptLearning={(source) => handleStartConceptLearning(source, selectedChapter)}
-          onStartIntentionLearning={(source) => handleStartIntentionLearning(source, selectedChapter)}
         />
       )}
       {currentPage === 'answer' && selectedParagraph && practiceQuestions.length > 0 && (

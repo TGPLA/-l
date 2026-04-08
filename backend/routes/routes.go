@@ -45,28 +45,6 @@ func InitRoutes() *gin.Engine {
 			books.GET("/:id/epub", controllers.DownloadEPUB)
 		}
 
-		chapters := api.Group("/chapters")
-		chapters.Use(middleware.AuthMiddleware())
-		{
-			chapters.GET("/book/:book_id", controllers.GetChaptersByBook)
-			chapters.POST("", controllers.CreateChapter)
-			chapters.GET("/:id", controllers.GetChapterDetail)
-			chapters.PUT("/:id", controllers.UpdateChapter)
-			chapters.DELETE("/:id", controllers.DeleteChapter)
-			chapters.PUT("/:id/order", controllers.UpdateChapterOrder)
-		}
-
-		paragraphs := api.Group("/paragraphs")
-		paragraphs.Use(middleware.AuthMiddleware())
-		{
-			paragraphs.GET("/chapter/:chapter_id", controllers.GetParagraphsByChapter)
-			paragraphs.POST("", controllers.CreateParagraph)
-			paragraphs.POST("/batch", controllers.BatchCreateParagraphs)
-			paragraphs.GET("/:id", controllers.GetParagraphDetail)
-			paragraphs.PUT("/:id", controllers.UpdateParagraph)
-			paragraphs.DELETE("/:id", controllers.DeleteParagraph)
-		}
-
 		prompts := api.Group("/prompts")
 		prompts.Use(middleware.AuthMiddleware())
 		{
@@ -82,7 +60,6 @@ func InitRoutes() *gin.Engine {
 		questions := api.Group("/questions")
 		questions.Use(middleware.AuthMiddleware())
 		{
-			questions.GET("/chapter/:chapter_id", controllers.GetQuestionsByChapter)
 			questions.GET("/book/:book_id", controllers.GetQuestionsByBook)
 			questions.POST("", controllers.CreateQuestion)
 			questions.GET("/:id", controllers.GetQuestionDetail)
