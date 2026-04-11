@@ -1,7 +1,7 @@
 // @审计已完成
 // 阅读器主容器 - 微信读书风格：纯深色沉浸式背景 + 超大圆角卡片
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { YueDuQiDingBuDaoHang } from './YueDuQiDingBuDaoHang';
 import { EPUBYueDuQuYu } from './EPUBYueDuQuYu';
 import { YouCeGongJuTiao } from './YouCeGongJuTiao';
@@ -11,13 +11,17 @@ import { MuLuChouTi } from './MuLuChouTi';
 import { BiJiChouTi } from './BiJiChouTi';
 import { ChaZhaoChouTi } from './ChaZhaoChouTi';
 import { FuShu } from '@features/practice/FuShu';
+import { LianXiMianBan } from './LianXiMianBan';
 import { useEPUBReaderHuoChuLi } from '../hooks/useEPUBReaderHuoChuLi';
 import { useYueDuQiBuJu } from '../hooks/useYueDuQiBuJu';
 import type { HuaXianXinXi } from '../hooks/useHuaXianChuTi';
+import type { Book, Question } from '@infrastructure/types';
 import { showWarning, showInfo } from '../../../shared/utils/common/ToastGongJu';
 import '../styles/YueDuSeCai.css';
 import { aiService } from '@shared/services/aiService';
 import { showSuccess } from '@shared/utils/common/ToastTiShi';
+import { questionService } from '@shared/services/questionService';
+import { paraphraseService } from '@shared/services/paraphraseService';
 
 interface EPUBReaderProps {
   url: string;
@@ -31,14 +35,34 @@ interface EPUBReaderProps {
 }
 
 export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagraphCreated, onFuShuXueXi, onGaiNianJieShi }: EPUBReaderProps) {
-  const p = useEPUBReaderHuoChuLi({ bookId, chapterId, onParagraphCreated });
-  const buju = useYueDuQiBuJu({ bookRef: p.bookRef, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
-  
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [showLianXiMianBan, setShowLianXiMianBan] = useState(false);
+  const [bookInfo, setBookInfo] = useState<Partial<Book>>({ id: bookId, title: '' });
   const [showXueXiCaiDan, setShowXueXiCaiDan] = useState(false);
   const [xueXiCaiDanWeiZhi, setXueXiCaiDanWeiZhi] = useState({ top: 0, left: 0 });
   const [dangQianWenBen, setDangQianWenBen] = useState('');
   const [showFuShu, setShowFuShu] = useState(false);
   const [fuShuWenBen, setFuShuWenBen] = useState('');
+
+  const loadQuestions = useCallback(async () => {
+    try {
+      console.log('[DEBUG loadQuestions] 开始加载题目, bookId:', bookId);
+      const { questions: loadedQuestions, error } = await questionService.getQuestionsByBook(bookId);
+      console.log('[DEBUG loadQuestions] 加载结果:', loadedQuestions, 'error:', error);
+      console.log('[DEBUG loadQuestions] 每道题的 bookId:', loadedQuestions.map(q => q.bookId));
+      if (error) {
+        showWarning('加载题目失败：' + error);
+        return;
+      }
+      console.log('[DEBUG loadQuestions] 更新 questions 状态, 数量:', loadedQuestions.length);
+      setQuestions(loadedQuestions);
+    } catch (e) {
+      console.error('加载题目异常:', e);
+    }
+  }, [bookId]);
+
+  const p = useEPUBReaderHuoChuLi({ bookId, chapterId, onParagraphCreated, onQuestionGenerated: loadQuestions });
+  const buju = useYueDuQiBuJu({ bookRef: p.bookRef, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
 
   const handleTiaoZhuanCfi = useCallback((huaXian: HuaXianXinXi) => {
     buju.setDaKaiDeChouTi(null);
@@ -83,17 +107,23 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
   }, [buju.setDaKaiDeChouTi]);
 
   const handleXueXi = useCallback((text: string) => {
+    console.log('[DEBUG handleXueXi] 被调用, text:', text?.substring(0, 20));
     setDangQianWenBen(text);
     
     if (p.selectionRect) {
+      console.log('[DEBUG handleXueXi] selectionRect 存在');
       const menuTop = p.selectionRect.top - 10;
       const menuLeft = p.selectionRect.left + p.selectionRect.width / 2;
       setXueXiCaiDanWeiZhi({ top: menuTop, left: menuLeft });
+    } else {
+      console.log('[DEBUG handleXueXi] selectionRect 不存在，使用默认位置');
+      setXueXiCaiDanWeiZhi({ top: 200, left: window.innerWidth / 2 });
     }
     
     setShowXueXiCaiDan(true);
+    console.log('[DEBUG handleXueXi] setShowXueXiCaiDan(true) 完成');
     p.handleCancel();
-  }, [p]);
+  }, [p.handleCancel, p.selectionRect]);
 
   const handleExplain = useCallback((text: string) => {
     if (onGaiNianJieShi) {
@@ -110,16 +140,35 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
   const handleQuiz = useCallback(async (text: string) => {
     try {
-      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', text, 1);
+      const annotationId = p.activeHuaXian?.id;
+      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, text, 1, annotationId);
       if (error) {
         showWarning('AI 出题失败：' + error);
         return;
       }
       showSuccess(`已生成 1 道${data?.questionType || ''}题目`);
+      loadQuestions();
     } finally {
       setShowXueXiCaiDan(false);
     }
-  }, [chapterId]);
+  }, [chapterId, bookId, loadQuestions, p.activeHuaXian]);
+
+  const handleUpdateQuestion = useCallback((questionId: string, updates: Partial<Question>) => {
+    setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, ...updates } : q));
+  }, []);
+
+  const handleDeleteQuestion = useCallback((questionId: string, questionText: string) => {
+    setQuestions(prev => prev.filter(q => q.id !== questionId));
+  }, []);
+
+  const handleGongJuTiaoDianJi = useCallback((anniu: any) => {
+    if (anniu === 'lianxi') {
+      loadQuestions();
+      setShowLianXiMianBan(true);
+    } else {
+      buju.qieHuanChouTi(anniu);
+    }
+  }, [loadQuestions, buju]);
 
   const handleChaZhaoTiaoZhuan = useCallback((cfiOrHref: string, keyword?: string, onlyOne: boolean = false, weiZhi?: number) => {
     const rendition = p.renditionRef?.current;
@@ -249,6 +298,16 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
   const isDarkMode = p.zhuTi === 'dark';
 
+  useEffect(() => {
+    if (buju.shuMing) {
+      setBookInfo(prev => ({ ...prev, title: buju.shuMing }));
+    }
+  }, [buju.shuMing]);
+
+  useEffect(() => {
+    loadQuestions();
+  }, [loadQuestions]);
+
   return (
     <div className="yue-du-qi" data-theme={isDarkMode ? 'dark' : 'light'}
       style={{ height: '100vh', width: '100vw', backgroundColor: 'var(--ye-du-bei-jing)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
@@ -297,12 +356,14 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
         {showFuShu && (
           <FuShu
             text={fuShuWenBen}
+            bookId={bookId}
+            chapterId={chapterId}
             onClose={() => setShowFuShu(false)}
           />
         )}
       </div>
-      <YouCeGongJuTiao dangQianDaKai={buju.daKaiDeChouTi} onAnNiuDianJi={buju.qieHuanChouTi}
-        huaXianShuLiang={p.huaXianList.length} isDarkMode={isDarkMode} onQieHuanZhuTi={p.qieHuanZhuTi} />
+      <YouCeGongJuTiao dangQianDaKai={buju.daKaiDeChouTi} onAnNiuDianJi={handleGongJuTiaoDianJi}
+        huaXianShuLiang={p.huaXianList.length} tiMuShuLiang={questions.length} isDarkMode={isDarkMode} onQieHuanZhuTi={p.qieHuanZhuTi} />
       {buju.daKaiDeChouTi !== null && (
         <div onClick={() => buju.setDaKaiDeChouTi(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 250, cursor: 'pointer' }} />
       )}
@@ -311,11 +372,19 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           dangQianCfi={typeof p.location === 'string' ? p.location : ''} onZhangJieDianJi={handleZhangJieDianJi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
       {buju.daKaiDeChouTi === 'huaxian' && (
-        <BiJiChouTi highlights={p.highlights} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
+        <BiJiChouTi highlights={p.highlights} bookId={bookId} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
       {buju.daKaiDeChouTi === 'chazhao' && (
         <ChaZhaoChouTi bookRef={p.bookRef} renditionRef={p.renditionRef} zhangJieLieBiao={buju.zhangJieLieBiao} onJump={handleChaZhaoTiaoZhuan} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
+      <LianXiMianBan
+        isOpen={showLianXiMianBan}
+        onClose={() => setShowLianXiMianBan(false)}
+        book={bookInfo as Book}
+        questions={questions}
+        onUpdate={handleUpdateQuestion}
+        onDelete={handleDeleteQuestion}
+      />
     </div>
   );
 }

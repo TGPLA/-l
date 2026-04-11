@@ -33,11 +33,19 @@ func AIGenerateFromSelection(c *gin.Context) {
 
 	db := config.GetDB()
 
-	var chapter models.Chapter
-	result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
-	if result.Error == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "章节不存在"})
-		return
+	var bookId string
+	if req.BookId != "" {
+		bookId = req.BookId
+	} else if req.ChapterId != "" {
+		var chapter models.Chapter
+		result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
+		if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库查询失败"})
+			return
+		}
+		if result.Error == nil {
+			bookId = chapter.BookId
+		}
 	}
 
 	var userSettings models.Settings
@@ -63,22 +71,38 @@ func AIGenerateFromSelection(c *gin.Context) {
 
 	var savedQuestions []models.Question
 	for _, q := range generatedQuestions.Questions {
+		var chapterId *string
+		if req.ChapterId != "" {
+			chapterId = &req.ChapterId
+		}
+		var annotationId *string
+		if req.AnnotationId != "" {
+			annotationId = &req.AnnotationId
+		}
 		newQuestion := models.Question{
 			UserId:         userId,
-			BookId:         chapter.BookId,
-			ChapterId:      req.ChapterId,
-			Question:       q.Question,
-			QuestionType:   req.QuestionType,
-			Answer:         q.Answer,
-			Difficulty:     "中等",
+			BookId:        bookId,
+			ChapterId:      chapterId,
+			AnnotationId:   annotationId,
+			Question:      q.Question,
+			QuestionType:  req.QuestionType,
+			Category:     "其他",
+			Answer:       q.Answer,
+			Difficulty:    "中等",
 			KnowledgePoint: q.KnowledgePoint,
-			MasteryLevel:   "未掌握",
+			MasteryLevel:  "未掌握",
 		}
 		db.Create(&newQuestion)
 		savedQuestions = append(savedQuestions, newQuestion)
 	}
 
-	db.Model(&chapter).UpdateColumn("question_count", gorm.Expr("question_count + ?", len(savedQuestions)))
+	if req.ChapterId != "" {
+		var chapter models.Chapter
+		result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
+		if result.Error == nil {
+			db.Model(&chapter).UpdateColumn("question_count", gorm.Expr("question_count + ?", len(savedQuestions)))
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -108,11 +132,19 @@ func AIGenerateFromSelectionAuto(c *gin.Context) {
 
 	db := config.GetDB()
 
-	var chapter models.Chapter
-	result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
-	if result.Error == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "章节不存在"})
-		return
+	var bookId string
+	if req.BookId != "" {
+		bookId = req.BookId
+	} else if req.ChapterId != "" {
+		var chapter models.Chapter
+		result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
+		if result.Error != nil && result.Error != gorm.ErrRecordNotFound {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库查询失败"})
+			return
+		}
+		if result.Error == nil {
+			bookId = chapter.BookId
+		}
 	}
 
 	var userSettings models.Settings
@@ -138,22 +170,41 @@ func AIGenerateFromSelectionAuto(c *gin.Context) {
 
 	var savedQuestions []models.Question
 	for _, q := range generatedQuestions.Questions {
+		var chapterId *string
+		if req.ChapterId != "" {
+			chapterId = &req.ChapterId
+		}
+		var annotationId *string
+		if req.AnnotationId != "" {
+			annotationId = &req.AnnotationId
+		}
 		newQuestion := models.Question{
 			UserId:         userId,
-			BookId:         chapter.BookId,
-			ChapterId:      req.ChapterId,
-			Question:       q.Question,
-			QuestionType:   questionType,
-			Answer:         q.Answer,
-			Difficulty:     "中等",
+			BookId:         bookId,
+			ChapterId:     chapterId,
+			AnnotationId:  annotationId,
+			Question:      q.Question,
+			QuestionType:  questionType,
+			Category:     "其他",
+			Answer:       q.Answer,
+			Difficulty:   "中等",
 			KnowledgePoint: q.KnowledgePoint,
-			MasteryLevel:   "未掌握",
+			MasteryLevel: "未掌握",
 		}
-		db.Create(&newQuestion)
+		if err := db.Create(&newQuestion).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "保存题目失败：" + err.Error()})
+			return
+		}
 		savedQuestions = append(savedQuestions, newQuestion)
 	}
 
-	db.Model(&chapter).UpdateColumn("question_count", gorm.Expr("question_count + ?", len(savedQuestions)))
+	if req.ChapterId != "" {
+		var chapter models.Chapter
+		result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
+		if result.Error == nil {
+			db.Model(&chapter).UpdateColumn("question_count", gorm.Expr("question_count + ?", len(savedQuestions)))
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

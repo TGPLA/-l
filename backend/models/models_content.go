@@ -92,8 +92,9 @@ type Question struct {
 	ID              string     `gorm:"type:char(36);primaryKey" json:"id"`
 	UserId          string     `gorm:"type:char(36);not null;index" json:"user_id"`
 	BookId          string     `gorm:"type:char(36);not null;index" json:"book_id"`
-	ChapterId       string     `gorm:"type:char(36);not null;index" json:"chapter_id"`
+	ChapterId       *string    `gorm:"type:char(36);index" json:"chapter_id"`
 	ParagraphId     *string    `gorm:"type:char(36);index" json:"paragraph_id"`
+	AnnotationId    *string    `gorm:"type:char(36);index" json:"annotation_id"`
 	Question        string     `gorm:"type:text;not null" json:"question"`
 	QuestionType    string     `gorm:"type:varchar(50);not null" json:"question_type"`
 	Category        string     `gorm:"type:varchar(50);not null" json:"category"`
@@ -110,11 +111,29 @@ type Question struct {
 	UpdatedAt       time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
 	Chapter         *Chapter   `gorm:"foreignKey:ChapterId" json:"chapter,omitempty"`
 	Paragraph       *Paragraph `gorm:"foreignKey:ParagraphId" json:"paragraph,omitempty"`
+	Annotation      *Annotation `gorm:"foreignKey:AnnotationId" json:"annotation,omitempty"`
 }
 
 func (q *Question) BeforeCreate(tx *gorm.DB) error {
 	if q.ID == "" {
 		q.ID = uuid.New().String()
+	}
+	return nil
+}
+
+type ParaphraseRecord struct {
+	ID          string    `gorm:"type:char(36);primaryKey" json:"id"`
+	UserId      string    `gorm:"type:char(36);not null;index" json:"user_id"`
+	BookId      string    `gorm:"type:char(36);not null;index" json:"book_id"`
+	ChapterId   string    `gorm:"type:char(36);index" json:"chapter_id"`
+	OriginalText string   `gorm:"type:text;not null" json:"original_text"`
+	ParaphrasedText string `gorm:"type:text;not null" json:"paraphrased_text"`
+	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
+}
+
+func (p *ParaphraseRecord) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == "" {
+		p.ID = uuid.New().String()
 	}
 	return nil
 }

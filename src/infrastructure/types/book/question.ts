@@ -4,8 +4,9 @@ export interface Question {
   id: string;
   userId: string;
   bookId: string;
-  chapterId: string;
+  chapterId?: string;
   paragraphId?: string;
+  annotationId?: string;
   question: string;
   answer: string;
   questionType: QuestionType;

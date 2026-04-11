@@ -108,16 +108,18 @@ class AIService {
     return false;
   }
 
-  async generateFromSelection(chapterId: string, selectedText: string, questionType: string, count: number): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
+  async generateFromSelection(chapterId: string, bookId: string, selectedText: string, questionType: string, count: number, annotationId?: string): Promise<{ data: GenerateQuestionsResult | null; error: string | null }> {
     try {
       const response = await fetch(`${API_BASE}/ai/generate-from-selection`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
+          book_id: bookId,
           chapter_id: chapterId,
           selected_text: selectedText,
           question_type: questionType,
           count,
+          annotation_id: annotationId,
         }),
       });
 
@@ -141,15 +143,17 @@ class AIService {
     }
   }
 
-  async generateFromSelectionAuto(chapterId: string, selectedText: string, count: number): Promise<{ data: GenerateQuestionsAutoResult | null; error: string | null }> {
+  async generateFromSelectionAuto(chapterId: string, bookId: string, selectedText: string, count: number, annotationId?: string): Promise<{ data: GenerateQuestionsAutoResult | null; error: string | null }> {
     try {
       const response = await fetch(`${API_BASE}/ai/generate-from-selection-auto`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify({
+          book_id: bookId,
           chapter_id: chapterId,
           selected_text: selectedText,
           count,
+          annotation_id: annotationId,
         }),
       });
 

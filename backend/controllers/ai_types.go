@@ -14,16 +14,20 @@ type AIEvaluateRequest struct {
 }
 
 type AIGenerateSelectionRequest struct {
-	ChapterId    string `json:"chapter_id" binding:"required"`
+	BookId       string `json:"book_id"`
+	ChapterId    string `json:"chapter_id"`
 	SelectedText string `json:"selected_text" binding:"required"`
 	QuestionType  string `json:"question_type" binding:"required"`
 	Count         int    `json:"count"`
+	AnnotationId  string `json:"annotation_id"`
 }
 
 type AIGenerateSelectionAutoRequest struct {
-	ChapterId    string `json:"chapter_id" binding:"required"`
+	BookId       string `json:"book_id"`
+	ChapterId    string `json:"chapter_id"`
 	SelectedText string `json:"selected_text" binding:"required"`
 	Count         int    `json:"count"`
+	AnnotationId  string `json:"annotation_id"`
 }
 
 type AIAnalyzeTextRequest struct {
