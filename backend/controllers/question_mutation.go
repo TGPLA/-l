@@ -23,28 +23,39 @@ func CreateQuestion(c *gin.Context) {
 
 	db := config.GetDB()
 
-	var chapter models.Chapter
-	result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
-	if result.Error == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "章节不存在"})
-		return
+	var chapter *models.Chapter
+	if req.ChapterId != "" {
+		result := db.Where("id = ? AND user_id = ?", req.ChapterId, userId).First(&chapter)
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"success": false, "error": "章节不存在"})
+			return
+		}
+	}
+
+	var chapterId *string
+	if req.ChapterId != "" {
+		chapterId = &req.ChapterId
+	}
+	var paragraphId *string
+	if req.ParagraphId != nil && *req.ParagraphId != "" {
+		paragraphId = req.ParagraphId
 	}
 
 	newQuestion := models.Question{
 		UserId:         userId,
-		BookId:         req.BookId,
-		ChapterId:      req.ChapterId,
-		ParagraphId:    req.ParagraphId,
-		Question:       req.Question,
-		QuestionType:   req.QuestionType,
-		Category:       req.Category,
-		Answer:         req.Answer,
-		Options:        req.Options,
+		BookId:        req.BookId,
+		ChapterId:     chapterId,
+		ParagraphId:   paragraphId,
+		Question:      req.Question,
+		QuestionType:  req.QuestionType,
+		Category:      req.Category,
+		Answer:        req.Answer,
+		Options:       req.Options,
 		CorrectIndex:   req.CorrectIndex,
-		Explanation:    req.Explanation,
+		Explanation:   req.Explanation,
 		Difficulty:     req.Difficulty,
 		KnowledgePoint: req.KnowledgePoint,
-		MasteryLevel:   "未掌握",
+		MasteryLevel:  "未掌握",
 	}
 
 	if err := db.Create(&newQuestion).Error; err != nil {

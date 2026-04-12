@@ -57,8 +57,10 @@ export class ApiClient {
       ...options.headers as Record<string, string>,
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    const currentToken = this.token || authService.getToken();
+    if (currentToken) {
+      headers['Authorization'] = `Bearer ${currentToken}`;
+      console.log('ApiClient 使用 token:', currentToken.substring(0, 20) + '...');
     }
 
     try {
@@ -103,9 +105,14 @@ export class ApiClient {
           };
         }
 
+        const extractedData = data.data;
+        const finalData = Array.isArray(extractedData) 
+          ? extractedData 
+          : (extractedData?.questions ?? extractedData);
+        
         return {
           success: true,
-          data,
+          data: finalData,
         };
       } catch (parseError) {
         return {

@@ -368,9 +368,12 @@ export function useEPUBReaderShiJian({
 
       function handleIframeClick(e: Event) {
         var target = (e as any).target;
-        if (target && target.closest && target.closest('[data-biaoji]')) return;
-        if (yiZhiXiaYiGeClickRef.current) { yiZhiXiaYiGeClickRef.current = false; return; }
-        if (!showMenuRef.current) return;
+        console.log('[DEBUG handleIframeClick] target:', target?.className || target?.tagName);
+        if (target && target.closest && target.closest('[data-biaoji]')) { console.log('[DEBUG handleIframeClick] 命中 data-biaoji，直接返回'); return; }
+        if (yiZhiXiaYiGeClickRef.current) { console.log('[DEBUG handleIframeClick] yiZhiXiaYiGeClick，直接返回'); yiZhiXiaYiGeClickRef.current = false; return; }
+        console.log('[DEBUG handleIframeClick] showMenuRef.current:', showMenuRef.current);
+        if (!showMenuRef.current) { console.log('[DEBUG handleIframeClick] 菜单未显示，直接返回'); return; }
+        console.log('[DEBUG handleIframeClick] 准备关闭菜单');
         const rend = fanYeHeYeMa.renditionRef.current;
         if (rend && linshiBiaoZhuCfiRef.current) {
           try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}

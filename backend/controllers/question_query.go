@@ -51,7 +51,7 @@ func GetQuestionsByBook(c *gin.Context) {
 	db := config.GetDB()
 
 	var questions []models.Question
-	result := db.Where("book_id = ? AND user_id = ?", bookId, userId).Order("created_at DESC").Find(&questions)
+	result := db.Preload("Annotation").Where("book_id = ? AND user_id = ?", bookId, userId).Order("created_at DESC").Find(&questions)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "获取题目列表失败"})
 		return

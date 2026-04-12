@@ -4,14 +4,17 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { aiService } from '@shared/services/aiService';
+import { paraphraseService } from '@shared/services/paraphraseService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 
 interface FuShuProps {
   text: string;
+  bookId: string;
+  chapterId?: string;
   onClose: () => void;
 }
 
-export function FuShu({ text, onClose }: FuShuProps) {
+export function FuShu({ text, bookId, chapterId, onClose }: FuShuProps) {
   const [loading, setLoading] = useState(false);
   const [paraphrase, setParaphrase] = useState('');
 
@@ -39,7 +42,19 @@ export function FuShu({ text, onClose }: FuShuProps) {
     huoQuFuShu();
   };
 
-  const handleWanCheng = () => {
+  const handleWanCheng = async () => {
+    if (paraphrase) {
+      try {
+        await paraphraseService.createParaphrase({
+          book_id: bookId,
+          chapter_id: chapterId,
+          original_text: text,
+          paraphrased_text: paraphrase,
+        });
+      } catch (e) {
+        console.error('保存复述记录失败:', e);
+      }
+    }
     showSuccess('复述学习完成！');
     onClose();
   };

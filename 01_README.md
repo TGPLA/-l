@@ -215,7 +215,7 @@ src/
 |------|------|----------|
 | `books` | 书籍 | id, user_id, title, author, cover_url, question_count, mastered_count |
 | `prompt_templates` | 提示词模板 | id, user_id（NULL=系统模板）, name, question_type, content, is_default, is_system |
-| `questions` | 题目 | id, user_id, book_id, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
+| `questions` | 题目 | id, user_id, book_id, chapter_id（可空）, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
 | `users` | 用户 | id, username, password_hash, created_at |
 | `user_settings` | 用户设置 | user_id, dark_mode, zhipu_api_key, zhipu_model |
 | `practice_records` | 练习记录 | id, user_id, question_id, practiced_at, result |

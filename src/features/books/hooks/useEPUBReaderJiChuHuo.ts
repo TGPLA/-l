@@ -14,6 +14,7 @@ interface UseEPUBReaderJiChuHuoProps {
   bookId: string;
   chapterId?: string;
   onParagraphCreated?: () => void;
+  onQuestionGenerated?: () => void;
   renditionRef?: React.RefObject<Rendition | undefined>;
   bookRef?: React.RefObject<any>;
   showMenu?: boolean;
@@ -22,12 +23,14 @@ interface UseEPUBReaderJiChuHuoProps {
   setSelectionRect?: (rect: DOMRect | null) => void;
   setCurrentCfiRange?: (cfiRange: string | null) => void;
   getCurrentCfiRange?: () => string | null;
+  activeHuaXian?: import('@shared/services/annotationService').HuaXianXinXi | null;
 }
 
 export function useEPUBReaderJiChuHuo({ 
   bookId, 
   chapterId, 
   onParagraphCreated,
+  onQuestionGenerated,
   renditionRef,
   bookRef,
   showMenu: externalShowMenu,
@@ -36,6 +39,7 @@ export function useEPUBReaderJiChuHuo({
   setSelectionRect: externalSetSelectionRect,
   setCurrentCfiRange: externalSetCurrentCfiRange,
   getCurrentCfiRange: externalGetCurrentCfiRange,
+  activeHuaXian,
 }: UseEPUBReaderJiChuHuoProps) {
   const currentUser = authService.getCurrentUser();
   const userId = currentUser?.id || 'guest';
@@ -78,12 +82,14 @@ export function useEPUBReaderJiChuHuo({
     bookId,
     chapterId,
     onClose: guanBiCaiDan,
+    onQuestionGenerated,
     renditionRef,
     bookRef,
     huaCiJiaoHuRef: {
       getCurrentCfiRange: externalGetCurrentCfiRange || huaCiJiaoHu.getCurrentCfiRange,
       setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
     },
+    activeHuaXian,
   });
 
   return {

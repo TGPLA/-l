@@ -156,6 +156,7 @@ func InitDB() {
 	log.Println("🔍 检查并执行数据库迁移...")
 	if DB != nil {
 		migrateV5()
+		migrateV6()
 		AutoMigrate()
 	} else {
 		log.Println("⚠️  数据库未连接，跳过迁移")
@@ -178,6 +179,11 @@ func migrateV5() {
 	} else {
 		log.Println("✅ epub_file_path 字段已存在，跳过迁移")
 	}
+}
+
+func migrateV6() {
+	DB.Exec("ALTER TABLE questions MODIFY COLUMN chapter_id CHAR(36) NULL")
+	log.Println("✅ questions.chapter_id 已设为可空")
 }
 
 func AutoMigrate() {

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 
-type GongJuTiaoAnNiu = 'mulu' | 'chazhao' | 'zhuti' | 'huaxian';
+type GongJuTiaoAnNiu = 'mulu' | 'chazhao' | 'zhuti' | 'huaxian' | 'lianxi';
 
 const KE_PING_KUAN_DU = 1320;
 const GU_DING_PIAN_YI = -64;
@@ -12,6 +12,7 @@ interface YouCeGongJuTiaoProps {
   dangQianDaKai: string | null;
   onAnNiuDianJi: (anniu: GongJuTiaoAnNiu) => void;
   huaXianShuLiang: number;
+  tiMuShuLiang: number;
   isDarkMode: boolean;
   onQieHuanZhuTi: () => void;
 }
@@ -21,9 +22,10 @@ const TU_BIAO: Record<GongJuTiaoAnNiu, { path: string; viewBox: string; title: s
   chazhao: { path: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', viewBox: '0 0 24 24', title: '查找' },
   zhuti: { path: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707-.707M16 12a4 4 0 11-8 0 4 4 0 018 0z', viewBox: '0 0 24 24', title: '主题' },
   huaxian: { path: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z', viewBox: '0 0 24 24', title: `划线` },
+  lianxi: { path: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', viewBox: '0 0 24 24', title: '练习' },
 };
 
-export function YouCeGongJuTiao({ dangQianDaKai, onAnNiuDianJi, huaXianShuLiang, isDarkMode, onQieHuanZhuTi }: YouCeGongJuTiaoProps) {
+export function YouCeGongJuTiao({ dangQianDaKai, onAnNiuDianJi, huaXianShuLiang, tiMuShuLiang, isDarkMode, onQieHuanZhuTi }: YouCeGongJuTiaoProps) {
   const [shiJiRight, setShiJiRight] = useState(0);
   const rafRef = useRef<number>(0);
 
@@ -47,7 +49,7 @@ export function YouCeGongJuTiao({ dangQianDaKai, onAnNiuDianJi, huaXianShuLiang,
   }, [jiSuanWeiZhi]);
 
   const anNiuLieBiao: { key: GongJuTiaoAnNiu; badge?: number }[] = [
-    { key: 'mulu' }, { key: 'chazhao' }, { key: 'zhuti' }, { key: 'huaxian', badge: huaXianShuLiang },
+    { key: 'mulu' }, { key: 'chazhao' }, { key: 'zhuti' }, { key: 'huaxian', badge: huaXianShuLiang }, { key: 'lianxi', badge: tiMuShuLiang },
   ];
 
   return (

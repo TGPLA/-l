@@ -49,7 +49,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
       console.log('[DEBUG loadQuestions] 开始加载题目, bookId:', bookId);
       const { questions: loadedQuestions, error } = await questionService.getQuestionsByBook(bookId);
       console.log('[DEBUG loadQuestions] 加载结果:', loadedQuestions, 'error:', error);
-      console.log('[DEBUG loadQuestions] 每道题的 bookId:', loadedQuestions.map(q => q.bookId));
+      console.log('[DEBUG loadQuestions] 每道题的完整数据:', loadedQuestions.map(q => ({ id: q.id, annotationId: q.annotationId, annotation: q.annotation })));
       if (error) {
         showWarning('加载题目失败：' + error);
         return;
@@ -108,6 +108,8 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
   const handleXueXi = useCallback((text: string) => {
     console.log('[DEBUG handleXueXi] 被调用, text:', text?.substring(0, 20));
+    console.log('[DEBUG handleXueXi] p.activeHuaXian:', p.activeHuaXian);
+    console.log('[DEBUG handleXueXi] p.activeHuaXianList:', p.activeHuaXianList);
     setDangQianWenBen(text);
     
     if (p.selectionRect) {
@@ -140,8 +142,19 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
   const handleQuiz = useCallback(async (text: string) => {
     try {
-      const annotationId = p.activeHuaXian?.id;
+      console.log('[DEBUG handleQuiz] 开始生成题目');
+      console.log('[DEBUG handleQuiz] p.activeHuaXian:', p.activeHuaXian);
+      let annotationId = p.activeHuaXian?.id;
+      if (!annotationId && text) {
+        const matched = p.huaXianList.find(h => h.text === text);
+        if (matched) {
+          annotationId = matched.id;
+          console.log('[DEBUG handleQuiz] 通过文本匹配到划线 annotationId:', annotationId);
+        }
+      }
+      console.log('[DEBUG handleQuiz] 最终 annotationId:', annotationId);
       const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, text, 1, annotationId);
+      console.log('[DEBUG handleQuiz] 生成结果:', { data, error });
       if (error) {
         showWarning('AI 出题失败：' + error);
         return;
@@ -151,14 +164,61 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     } finally {
       setShowXueXiCaiDan(false);
     }
-  }, [chapterId, bookId, loadQuestions, p.activeHuaXian]);
+  }, [chapterId, bookId, loadQuestions, p.activeHuaXian, p.huaXianList]);
 
-  const handleUpdateQuestion = useCallback((questionId: string, updates: Partial<Question>) => {
-    setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, ...updates } : q));
+  const handleUpdateQuestion = useCallback(async (questionId: string, updates: Partial<Question>) => {
+    try {
+      const { error } = await questionService.updateQuestion(questionId, updates);
+      if (error) {
+        showWarning('更新题目失败：' + error);
+        return;
+      }
+      setQuestions(prev => prev.map(q => q.id === questionId ? { ...q, ...updates } : q));
+    } catch (e) {
+      console.error('更新题目异常:', e);
+      showWarning('更新题目失败');
+    }
   }, []);
 
-  const handleDeleteQuestion = useCallback((questionId: string, questionText: string) => {
-    setQuestions(prev => prev.filter(q => q.id !== questionId));
+  const handleDeleteQuestion = useCallback(async (questionId: string, questionText: string, skipConfirm?: boolean) => {
+    if (!skipConfirm) {
+      const confirmed = confirm(`确定要删除这个问题吗？\n"${questionText.substring(0, 50)}..."`);
+      if (!confirmed) return;
+    }
+    
+    try {
+      const { error } = await questionService.deleteQuestion(questionId);
+      if (error) {
+        showWarning('删除题目失败：' + error);
+        return;
+      }
+      setQuestions(prev => prev.filter(q => q.id !== questionId));
+    } catch (e) {
+      console.error('删除题目异常:', e);
+      showWarning('删除题目失败');
+    }
+  }, []);
+
+  const handleBatchDeleteQuestions = useCallback(async (questionIds: string[]) => {
+    if (questionIds.length === 0) return;
+    
+    const confirmed = confirm(`确定要删除选中的 ${questionIds.length} 个题目吗？`);
+    if (!confirmed) return;
+    
+    try {
+      const deletePromises = questionIds.map(id => questionService.deleteQuestion(id));
+      const results = await Promise.all(deletePromises);
+      
+      const hasError = results.some(result => result.error);
+      if (hasError) {
+        showWarning('部分题目删除失败');
+      }
+      
+      setQuestions(prev => prev.filter(q => !questionIds.includes(q.id)));
+    } catch (e) {
+      console.error('批量删除题目异常:', e);
+      showWarning('批量删除题目失败');
+    }
   }, []);
 
   const handleGongJuTiaoDianJi = useCallback((anniu: any) => {
@@ -384,6 +444,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
         questions={questions}
         onUpdate={handleUpdateQuestion}
         onDelete={handleDeleteQuestion}
+        onBatchDelete={handleBatchDeleteQuestions}
       />
     </div>
   );

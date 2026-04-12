@@ -25,9 +25,11 @@ interface UseHuaXianChuTiProps {
   bookId: string;
   chapterId?: string;
   onClose: () => void;
+  onQuestionGenerated?: () => void;
   renditionRef?: React.RefObject<Rendition | undefined>;
   bookRef?: React.RefObject<any>;
   huaCiJiaoHuRef?: HuaCiJiaoHuWenJian;
+  activeHuaXian?: HuaXianXinXi | null;
 }
 
 const YAN_SE_PEI_ZHI: Record<HuaXianYanSe, string> = {
@@ -79,9 +81,11 @@ export function useHuaXianChuTi({
   bookId,
   chapterId,
   onClose,
+  onQuestionGenerated,
   renditionRef,
   bookRef,
   huaCiJiaoHuRef,
+  activeHuaXian,
 }: UseHuaXianChuTiProps) {
   const [generating, setGenerating] = useState(false);
   const [huaXianList, setHuaXianList] = useState<HuaXianXinXi[]>([]);
@@ -264,17 +268,24 @@ export function useHuaXianChuTi({
     if (!selectedText.trim()) return;
     setGenerating(true);
     try {
-      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', selectedText, 1);
+      console.log('[DEBUG handleGenerateQuestion] 开始生成题目, selectedText:', selectedText.substring(0, 30));
+      console.log('[DEBUG handleGenerateQuestion] 传入参数 chapterId:', chapterId, 'bookId:', bookId);
+      console.log('[DEBUG handleGenerateQuestion] activeHuaXian:', activeHuaXian);
+      const annotationId = activeHuaXian?.id;
+      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, selectedText, 1, annotationId);
+      console.log('[DEBUG handleGenerateQuestion] 生成结果:', { data, error });
       if (error) {
         showError('AI 出题失败：' + error);
         return;
       }
       showSuccess(`已生成 1 道${data?.questionType || ''}题目`);
+      console.log('[DEBUG handleGenerateQuestion] 调用 onQuestionGenerated');
+      onQuestionGenerated?.();
       onClose();
     } finally {
       setGenerating(false);
     }
-  }, [chapterId, onClose]);
+  }, [chapterId, bookId, onClose, onQuestionGenerated, activeHuaXian]);
 
   const handleHuaXian = useCallback(async (selectedText: string, yanSe: HuaXianYanSe = 'blue', beiZhu: string = '') => {
     console.log('handleHuaXian 被调用', { selectedText, yanSe, beiZhu });

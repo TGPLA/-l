@@ -4,6 +4,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"reading-reflection/config"
 	"reading-reflection/middleware"
@@ -126,6 +127,8 @@ func AIGenerateFromSelectionAuto(c *gin.Context) {
 		return
 	}
 
+	log.Printf("[DEBUG AIGenerateFromSelectionAuto] 接收到的请求: book_id=%s, chapter_id=%s, annotation_id=%s", req.BookId, req.ChapterId, req.AnnotationId)
+
 	if req.Count <= 0 {
 		req.Count = 1
 	}
@@ -195,6 +198,7 @@ func AIGenerateFromSelectionAuto(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "保存题目失败：" + err.Error()})
 			return
 		}
+		log.Printf("[DEBUG AIGenerateFromSelectionAuto] 保存的题目: id=%s, annotation_id=%v", newQuestion.ID, newQuestion.AnnotationId)
 		savedQuestions = append(savedQuestions, newQuestion)
 	}
 

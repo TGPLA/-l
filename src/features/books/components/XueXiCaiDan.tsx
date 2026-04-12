@@ -2,7 +2,7 @@
 // 智能学习菜单组件 - 根据文本类型显示相关学习选项
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, BookOpen, Lightbulb } from 'lucide-react';
+import { Brain, BookOpen, Lightbulb, X } from 'lucide-react';
 import { aiService, type TextAnalysisResult } from '@shared/services/aiService';
 import { showError } from '@shared/utils/common/ToastTiShi';
 
@@ -54,6 +54,9 @@ export function XueXiCaiDan({
     }
     return () => document.removeEventListener('click', handleClickOutside);
   }, [show, onClose]);
+
+  if (!show) return null;
+  console.log('[DEBUG XueXiCaiDan] 组件渲染成功');
 
   const huoQuFenXi = async () => {
     setLoading(true);
@@ -108,6 +111,7 @@ export function XueXiCaiDan({
     boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
     padding: '0.5rem',
     minWidth: '200px',
+    position: 'relative',
   };
 
   const titleStyle: React.CSSProperties = {
@@ -141,9 +145,50 @@ export function XueXiCaiDan({
     textAlign: 'left' as const,
   };
 
+  const closeButtonStyle: React.CSSProperties = {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    background: '#ff4444',
+    border: '2px solid white',
+    color: '#ffffff',
+    cursor: 'pointer',
+    padding: '4px 12px',
+    borderRadius: '4px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    zIndex: 10000,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+  };
+
+  const bottomCloseButtonStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem 1rem',
+    marginTop: '0.5rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.3)',
+    borderRadius: '0.5rem',
+    color: '#ffffff',
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+    width: '100%',
+  };
+
   return (
     <div ref={menuRef} style={menuStyle}>
       <div style={containerStyle}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          style={closeButtonStyle}
+        >
+          ✕
+        </button>
         {loading ? (
           <div style={{ padding: '1rem', color: '#ffffff', textAlign: 'center', fontSize: '0.8rem' }}>
             分析中...
@@ -155,7 +200,7 @@ export function XueXiCaiDan({
             {analysis.options.map(option => (
               <button
                 key={option}
-                onClick={() => handleXuanXiang(option)}
+                onClick={(e) => { e.stopPropagation(); handleXuanXiang(option); }}
                 style={optionStyle}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(96, 165, 250, 0.2)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
@@ -164,6 +209,15 @@ export function XueXiCaiDan({
                 {XUAN_XIANG_BIAO_TI[option]}
               </button>
             ))}
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              style={bottomCloseButtonStyle}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.2)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }}
+            >
+              <X size={14} />
+              关闭
+            </button>
           </>
         ) : null}
       </div>

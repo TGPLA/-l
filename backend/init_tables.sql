@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS questions (
     id CHAR(36) PRIMARY KEY COMMENT '题目唯一标识 UUID',
     user_id CHAR(36) NOT NULL COMMENT '所属用户 ID',
     book_id CHAR(36) NOT NULL COMMENT '所属书籍 ID（冗余字段，便于查询）',
-    chapter_id CHAR(36) NOT NULL COMMENT '所属章节 ID',
+    chapter_id CHAR(36) COMMENT '所属章节 ID',
     question TEXT NOT NULL COMMENT '题目内容',
     question_type VARCHAR(50) NOT NULL COMMENT '题目类型：名词解释/作者意图/生活应用',
     category VARCHAR(50) NOT NULL COMMENT '题目分类',

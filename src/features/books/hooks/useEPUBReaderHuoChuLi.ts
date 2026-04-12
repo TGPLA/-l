@@ -11,12 +11,16 @@ interface UseEPUBReaderHuoChuLiProps {
   bookId: string;
   chapterId?: string;
   onParagraphCreated?: () => void;
+  onQuestionGenerated?: () => void;
+  activeHuaXian?: import('@shared/services/annotationService').HuaXianXinXi | null;
 }
 
 export function useEPUBReaderHuoChuLi({ 
   bookId, 
   chapterId, 
-  onParagraphCreated 
+  onParagraphCreated,
+  onQuestionGenerated,
+  activeHuaXian,
 }: UseEPUBReaderHuoChuLiProps) {
   const renditionRef = useRef<Rendition | undefined>(undefined);
   const bookRef = useRef<any>(null);
@@ -45,6 +49,7 @@ export function useEPUBReaderHuoChuLi({
     bookId, 
     chapterId, 
     onParagraphCreated, 
+    onQuestionGenerated,
     renditionRef,
     bookRef,
     showMenu,
@@ -53,6 +58,7 @@ export function useEPUBReaderHuoChuLi({
     setSelectionRect,
     setCurrentCfiRange,
     getCurrentCfiRange,
+    activeHuaXian,
   });
 
   const editMenu = useHuaXianDianJi({

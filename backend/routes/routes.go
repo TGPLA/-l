@@ -112,6 +112,14 @@ func InitRoutes() *gin.Engine {
 		{
 			statistics.GET("", controllers.GetStatistics)
 		}
+
+		paraphrases := api.Group("/paraphrases")
+		paraphrases.Use(middleware.AuthMiddleware())
+		{
+			paraphrases.POST("", controllers.CreateParaphrase)
+			paraphrases.GET("", controllers.GetParaphrasesByBook)
+			paraphrases.DELETE("/:id", controllers.DeleteParaphrase)
+		}
 	}
 
 	router.GET("/health", func(c *gin.Context) {

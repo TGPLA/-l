@@ -8,7 +8,8 @@ interface QuestionManagementModalProps {
   book: Book;
   questions: Question[];
   onUpdate: (questionId: string, updates: Partial<Question>) => void;
-  onDelete: (questionId: string, questionText: string) => void;
+  onDelete: (questionId: string, questionText: string, skipConfirm?: boolean) => void;
+  onBatchDelete?: (questionIds: string[]) => void;
   onAddQuestion: () => void;
   onAIGenerate: () => void;
 }
@@ -20,6 +21,7 @@ export function QuestionManagementModal({
   questions, 
   onUpdate, 
   onDelete,
+  onBatchDelete,
   onAddQuestion,
   onAIGenerate 
 }: QuestionManagementModalProps) {
@@ -32,26 +34,24 @@ export function QuestionManagementModal({
   const currentQuestions = activeTab === 'standard' ? standardQuestions : conceptQuestions;
 
   const handleDeleteQuestion = (questionId: string, questionText: string) => {
-    const confirmed = confirm(`确定要删除这个问题吗？\n"${questionText.substring(0, 50)}..."`);
-    if (confirmed) {
-      onDelete(questionId, questionText);
-    }
+    onDelete(questionId, questionText);
   };
 
   const handleBatchDelete = () => {
     if (selectedQuestionIds.size === 0) return;
     
-    const confirmed = confirm(`确定要删除选中的 ${selectedQuestionIds.size} 个题目吗？`);
-    if (confirmed) {
+    if (onBatchDelete) {
+      onBatchDelete(Array.from(selectedQuestionIds));
+    } else {
       selectedQuestionIds.forEach(id => {
         const question = questions.find(q => q.id === id);
         if (question) {
-          onDelete(id, question.question);
+          onDelete(id, question.question, true);
         }
       });
-      setSelectedQuestionIds(new Set());
-      setIsBatchMode(false);
     }
+    setSelectedQuestionIds(new Set());
+    setIsBatchMode(false);
   };
 
   const toggleQuestionSelection = (questionId: string) => {

@@ -34,11 +34,19 @@ func Register(c *gin.Context) {
 	}
 
 	db := config.GetDB()
+	if db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库未连接"})
+		return
+	}
 
 	var existingUser models.User
 	result := db.Where("username = ?", req.Username).First(&existingUser)
 	if result.Error == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "该用户名已被注册"})
+		return
+	}
+	if result.Error != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库查询失败"})
 		return
 	}
 
@@ -90,11 +98,19 @@ func Login(c *gin.Context) {
 	}
 
 	db := config.GetDB()
+	if db == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库未连接"})
+		return
+	}
 
 	var user models.User
 	result := db.Where("username = ?", req.Username).First(&user)
-	if result.Error == gorm.ErrRecordNotFound {
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库查询失败"})
+		}
 		return
 	}
 

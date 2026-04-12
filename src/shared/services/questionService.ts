@@ -5,6 +5,62 @@ import { ApiClient } from '@shared/utils/common/apiRequest';
 import { authService } from './auth';
 import type { Question } from '@infrastructure/types';
 
+interface RawQuestion {
+  id: string;
+  user_id: string;
+  book_id: string;
+  chapter_id?: string;
+  paragraph_id?: string;
+  annotation_id?: string;
+  annotation?: {
+    id: string;
+    text: string;
+    cfi_range: string;
+    yan_se: string;
+    lei_xing: string;
+    bei_zhu: string;
+  };
+  question: string;
+  answer: string;
+  question_type: string;
+  difficulty: string;
+  knowledge_point?: string;
+  mastery_level: string;
+  practice_count: number;
+  last_practiced_at?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+function zhuanHuanTiMu(raw: RawQuestion): Question {
+  return {
+    id: raw.id,
+    userId: raw.user_id,
+    bookId: raw.book_id,
+    chapterId: raw.chapter_id,
+    paragraphId: raw.paragraph_id,
+    annotationId: raw.annotation_id,
+    annotation: raw.annotation ? {
+      id: raw.annotation.id,
+      text: raw.annotation.text,
+      cfiRange: raw.annotation.cfi_range,
+      yanSe: raw.annotation.yan_se as any,
+      leiXing: raw.annotation.lei_xing as any,
+      beiZhu: raw.annotation.bei_zhu,
+    } : undefined,
+    question: raw.question,
+    answer: raw.answer,
+    questionType: raw.question_type as any,
+    difficulty: raw.difficulty as any,
+    knowledgePoint: raw.knowledge_point,
+    masteryLevel: raw.mastery_level as any,
+    practiceCount: raw.practice_count,
+    lastPracticedAt: raw.last_practiced_at ? new Date(raw.last_practiced_at).getTime() : undefined,
+    createdAt: new Date(raw.created_at).getTime(),
+    updatedAt: raw.updated_at ? new Date(raw.updated_at).getTime() : undefined,
+  };
+}
+
 const apiClient = new ApiClient({ 
   baseUrl: '',
   token: authService.getToken(),
@@ -15,18 +71,27 @@ const apiClient = new ApiClient({
 });
 
 export const questionService = {
+  async getQuestionsByBook(bookId: string): Promise<{ questions: Question[]; error: string | null }> {
+    console.log('[DEBUG questionService] 开始请求题目, bookId:', bookId);
+    const { data, error } = await apiClient.request<RawQuestion[]>(`/api/questions/book/${bookId}`);
+    console.log('[DEBUG questionService] 后端原始数据:', JSON.stringify(data, null, 2));
+    const questions = (data || []).map(zhuanHuanTiMu);
+    console.log('[DEBUG questionService] 转换后数据:', questions);
+    return { questions, error };
+  },
+
   async getQuestionsByChapter(chapterId: string): Promise<{ questions: Question[]; error: string | null }> {
-    const { data, error } = await apiClient.request<{ questions: Question[] }>(`/questions/chapter/${chapterId}`);
-    return { questions: data?.questions || [], error };
+    const { data, error } = await apiClient.request<Question[]>(`/api/questions/chapter/${chapterId}`);
+    return { questions: data || [], error };
   },
 
   async getQuestionsByParagraph(paragraphId: string): Promise<{ questions: Question[]; error: string | null }> {
-    const { data, error } = await apiClient.request<{ questions: Question[] }>(`/paragraphs/${paragraphId}/questions`);
-    return { questions: data?.questions || [], error };
+    const { data, error } = await apiClient.request<Question[]>(`/api/paragraphs/${paragraphId}/questions`);
+    return { questions: data || [], error };
   },
 
   async createQuestion(question: Partial<Question>): Promise<{ question: Question | null; error: string | null }> {
-    const { data, error } = await apiClient.request<Question>('/questions', {
+    const { data, error } = await apiClient.request<Question>('/api/questions', {
       method: 'POST',
       body: JSON.stringify(question),
     });
@@ -34,7 +99,7 @@ export const questionService = {
   },
 
   async updateQuestion(id: string, updates: Partial<Question>): Promise<{ error: string | null }> {
-    const { error } = await apiClient.request(`/questions/${id}`, {
+    const { error } = await apiClient.request(`/api/questions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
@@ -42,7 +107,7 @@ export const questionService = {
   },
 
   async deleteQuestion(id: string): Promise<{ error: string | null }> {
-    const { error } = await apiClient.request(`/questions/${id}`, {
+    const { error } = await apiClient.request(`/api/questions/${id}`, {
       method: 'DELETE',
     });
     return { error };

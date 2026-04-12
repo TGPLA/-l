@@ -1,5 +1,14 @@
 import type { QuestionType, Difficulty, MasteryLevel, AnswerStatus } from '../base/enums';
 
+export interface QuestionAnnotation {
+  id: string;
+  text: string;
+  cfiRange: string;
+  yanSe: 'yellow' | 'green' | 'blue' | 'pink';
+  leiXing: 'underline' | 'marker';
+  beiZhu: string;
+}
+
 export interface Question {
   id: string;
   userId: string;
@@ -7,6 +16,7 @@ export interface Question {
   chapterId?: string;
   paragraphId?: string;
   annotationId?: string;
+  annotation?: QuestionAnnotation;
   question: string;
   answer: string;
   questionType: QuestionType;
