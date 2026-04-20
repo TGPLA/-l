@@ -86,6 +86,7 @@ export function useEPUBReaderHuoChuLi({
     ziTiDaXiao: 100,
     setYeMaXinXi: jiChu.setYeMaXinXi,
     setLocation: jiChu.setLocation,
+    saveImmediately: jiChu.saveImmediately,
     chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
     tiaoDaoShangYiGe: jiChu.tiaoDaoShangYiGe,
     tiaoDaoXiaYiGe: jiChu.tiaoDaoXiaYiGe,
@@ -103,6 +104,7 @@ export function useEPUBReaderHuoChuLi({
 
   return {
     location: jiChu.location,
+    saveImmediately: jiChu.saveImmediately,
     zhuTi: jiChu.zhuTi,
     setZhuTi: jiChu.setZhuTi,
     qieHuanZhuTi: jiChu.qieHuanZhuTi,

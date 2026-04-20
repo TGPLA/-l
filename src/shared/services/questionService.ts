@@ -72,11 +72,8 @@ const apiClient = new ApiClient({
 
 export const questionService = {
   async getQuestionsByBook(bookId: string): Promise<{ questions: Question[]; error: string | null }> {
-    console.log('[DEBUG questionService] 开始请求题目, bookId:', bookId);
     const { data, error } = await apiClient.request<RawQuestion[]>(`/api/questions/book/${bookId}`);
-    console.log('[DEBUG questionService] 后端原始数据:', JSON.stringify(data, null, 2));
     const questions = (data || []).map(zhuanHuanTiMu);
-    console.log('[DEBUG questionService] 转换后数据:', questions);
     return { questions, error };
   },
 

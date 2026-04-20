@@ -113,6 +113,7 @@ export function useEPUBReaderShiJian({
 
     rendition.on("selected", (cfiRange: string, contents: Contents) => {
       if (!huaCiKaiQiRef.current) return;
+      console.log('[selected事件] 原始CFI:', cfiRange);
       const selection = contents.window.getSelection();
       if (!selection || selection.isCollapsed) return;
       const selectedText = selection.toString().trim();
@@ -134,81 +135,19 @@ export function useEPUBReaderShiJian({
       let accurateCfiRange = cfiRange;
       try {
         const doc = contents.document;
-        const startContainer = range.startContainer;
-        const endContainer = range.endContainer;
-        let startOffset = range.startOffset;
-        let endOffset = range.endOffset;
         
-        if (startContainer === endContainer && startContainer.nodeType === Node.TEXT_NODE) {
-          console.log('同文本节点选择 - startOffset:', startOffset, 'endOffset:', endOffset);
-        }
+        // 使用 epubjs 的 cfiFromRange 获取准确的 CFI
+        let computedCfi = contents.cfiFromRange(range) || '';
         
-        function getTextNodePath(node: Node, doc: Document): string {
-          if (node.nodeType === Node.TEXT_NODE) {
-            let path = '';
-            let current = node.parentElement;
-            while (current && current !== doc.body) {
-              const siblings = Array.from(current.parentElement?.children || []);
-              const index = siblings.indexOf(current) + 1;
-              path = `/${index}${path}`;
-              current = current.parentElement;
-            }
-            return path;
-          }
-          return '';
-        }
-        
-        function getCfiTextLocation(node: Node, offset: number): string {
-          if (node.nodeType === Node.TEXT_NODE) {
-            return `:${offset}`;
-          }
-          return '';
-        }
-        
-        const startPath = getTextNodePath(startContainer, doc);
-        const endPath = getTextNodePath(endContainer, doc);
-        const startLocation = getCfiTextLocation(startContainer, startOffset);
-        const endLocation = getCfiTextLocation(endContainer, endOffset);
-        
-        const cfiBaseMatch = cfiRange.match(/epubcfi\(([^!]+)/);
-        const base = cfiBaseMatch ? cfiBaseMatch[1] : '/6/4';
-        
-        let computedCfi = '';
-        const adjustedRange = doc.createRange();
-        try {
-          adjustedRange.setStart(startContainer, startOffset);
-          adjustedRange.setEnd(endContainer, endOffset);
-          computedCfi = contents.cfiFromRange(adjustedRange) || '';
-          console.log('调整后的 range 传入 cfiFromRange');
-        } catch (e) {
-          console.log('创建 adjustedRange 失败:', e);
-          computedCfi = contents.cfiFromRange(range) || '';
-        }
-        
-        console.log('cfiFromRange input - startOffset:', startOffset, 'endOffset:', endOffset);
-        console.log('cfiFromRange input - range.toString().length:', range.toString().length);
         if (computedCfi) {
-          const pathMatch = computedCfi.match(/epubcfi\([^!]+!(.+)\)/);
-          const pathPart = pathMatch ? pathMatch[1] : `${startPath}${startLocation},${endPath}${endLocation}`;
-          accurateCfiRange = `epubcfi(${base}!${pathPart})`;
-          console.log('使用 cfiFromRange:', computedCfi);
-          console.log('替换 base 后:', accurateCfiRange, '原始:', cfiRange);
-        } else if (startPath && endPath) {
-          const manualCfi = `epubcfi(${base}!${startPath}${startLocation},${endPath}${endLocation})`;
-          console.log('手动构建 CFI:', manualCfi, '原始:', cfiRange);
-          console.log('Range 信息:', {
-            startContainer: startContainer?.nodeName,
-            startOffset,
-            endContainer: endContainer?.nodeName,
-            endOffset,
-            text: range.toString()
-          });
-          accurateCfiRange = manualCfi;
+          // 直接使用 epubjs 计算的 CFI，它是最准确的
+          accurateCfiRange = computedCfi;
+          console.log('使用 epubjs cfiFromRange:', accurateCfiRange);
         } else {
-          console.log('无法构建路径，使用原始 CFI');
+          console.log('cfiFromRange 返回空，使用原始 CFI:', cfiRange);
         }
       } catch (error) {
-        console.error('CFI 重新计算失败，使用原始值:', error);
+        console.error('CFI 计算失败，使用原始值:', error);
       }
       
       const rect = range.getBoundingClientRect();

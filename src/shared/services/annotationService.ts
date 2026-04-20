@@ -68,13 +68,9 @@ class AnnotationService {
 
   async getAnnotationsByBook(bookId: string): Promise<{ annotations: HuaXianXinXi[]; error: DatabaseError | null }> {
     try {
-      console.log('annotationService.getAnnotationsByBook 被调用, bookId:', bookId);
-      console.log('annotationService userId:', this.userId);
       this.checkAuth();
       const token = authService.getToken();
-      console.log('annotationService token:', token ? '已获取' : '未获取');
       const url = `${API_BASE}/annotations/book/${bookId}`;
-      console.log('请求 URL:', url);
       
       const response = await fetch(url, {
         headers: { 
@@ -83,20 +79,16 @@ class AnnotationService {
         },
       });
       
-      console.log('响应状态:', response.status, response.statusText);
-      
       if (await this.handle401(response)) {
         return { annotations: [], error: { message: '登录已过期' } };
       }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('错误响应数据:', errorData);
         return { annotations: [], error: { message: errorData.error || '获取标注失败' } };
       }
       
       const data = await response.json();
-      console.log('成功响应数据:', data);
       const annotations = (data.data || []).map(zhuanHuanBiaoZhu);
       return { annotations, error: null };
     } catch (error) {

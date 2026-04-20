@@ -44,7 +44,7 @@ export function useEPUBReaderJiChuHuo({
   const currentUser = authService.getCurrentUser();
   const userId = currentUser?.id || 'guest';
 
-  const { location, setLocation } = useYueDuJinDu({ userId, bookId });
+  const { location, setLocation, saveImmediately } = useYueDuJinDu({ userId, bookId });
   const { zhuTi, setZhuTi, qieHuanZhuTi, yingYongZhuTi } = useZhuTi({ userId, bookId });
   const {
     souSuoCi,
@@ -93,6 +93,7 @@ export function useEPUBReaderJiChuHuo({
   return {
     location,
     setLocation,
+    saveImmediately,
     zhuTi,
     setZhuTi,
     qieHuanZhuTi,

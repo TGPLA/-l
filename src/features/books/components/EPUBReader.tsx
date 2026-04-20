@@ -48,15 +48,11 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
   const loadQuestions = useCallback(async () => {
     try {
-      console.log('[DEBUG loadQuestions] 开始加载题目, bookId:', bookId);
       const { questions: loadedQuestions, error } = await questionService.getQuestionsByBook(bookId);
-      console.log('[DEBUG loadQuestions] 加载结果:', loadedQuestions, 'error:', error);
-      console.log('[DEBUG loadQuestions] 每道题的完整数据:', loadedQuestions.map(q => ({ id: q.id, annotationId: q.annotationId, annotation: q.annotation })));
       if (error) {
         showWarning('加载题目失败：' + error);
         return;
       }
-      console.log('[DEBUG loadQuestions] 更新 questions 状态, 数量:', loadedQuestions.length);
       setQuestions(loadedQuestions);
     } catch (e) {
       console.error('加载题目异常:', e);
@@ -79,9 +75,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
       return;
     }
 
-    console.log('准备跳转到划线:', huaXian.text.substring(0, 50));
-    console.log('CFI:', huaXian.cfiRange);
-
     if (!huaXian.cfiRange) {
       showInfo('该划线没有位置信息');
       return;
@@ -90,8 +83,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     rendition.display(huaXian.cfiRange).then(() => {
       showInfo('已跳转到划线位置');
     }).catch((e) => {
-      console.warn('CFI 跳转失败，尝试章节跳转:', e);
-      
       const spine = rendition.book.spine;
       const spineItems = (spine as any).spineItems || [];
       
@@ -99,7 +90,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
         rendition.display(spineItems[0].href).then(() => {
           showInfo('已跳转到第一章节，请手动查找');
         }).catch((e2) => {
-          console.warn('章节跳转也失败:', e2);
           showInfo('跳转失败，请通过目录查找');
         });
       } else {
@@ -114,10 +104,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
   }, [buju.setDaKaiDeChouTi]);
 
   const handleXueXi = useCallback((text: string) => {
-    console.log('[DEBUG handleXueXi] 被调用, text:', text?.substring(0, 20));
-    console.log('[DEBUG handleXueXi] p.activeHuaXian:', p.activeHuaXian);
-    console.log('[DEBUG handleXueXi] p.activeHuaXianList:', p.activeHuaXianList);
-    console.log('[DEBUG handleXueXi] p.editPosition:', p.editPosition);
     setDangQianWenBen(text);
     
     let qiShiWeiZhi: { top: number; left: number } | null = null;
@@ -138,8 +124,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     }
     
     setXueXiCaiDanWeiZhi(muDiWeiZhi);
-    console.log('[DEBUG handleXueXi] 设置完成，起始位置:', qiShiWeiZhi, '目标位置:', muDiWeiZhi);
-    
     setDengLuXueXiCaiDan(true);
   }, [p.selectionRect, p.editPosition]);
   
@@ -149,7 +133,6 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
       setTimeout(() => {
         setShowXueXiCaiDan(true);
         setDengLuXueXiCaiDan(false);
-        console.log('[DEBUG handleXueXi] setShowXueXiCaiDan(true) 完成');
       }, 50);
     } else if (dengLuXueXiCaiDan && p.showEditMenu) {
       p.handleCloseEdit();
@@ -163,27 +146,29 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     setShowXueXiCaiDan(false);
   }, [onGaiNianJieShi]);
 
-  const handleParaphrase = useCallback((text: string) => {
+  const handleAIFuShu = useCallback((text: string) => {
     setFuShuWenBen(text);
     setShowFuShu(true);
     setShowXueXiCaiDan(false);
   }, []);
 
+  const handleZiJiHuaFuShu = useCallback((text: string) => {
+    if (onFuShuXueXi) {
+      onFuShuXueXi(text);
+    }
+    setShowXueXiCaiDan(false);
+  }, [onFuShuXueXi]);
+
   const handleQuiz = useCallback(async (text: string) => {
     try {
-      console.log('[DEBUG handleQuiz] 开始生成题目');
-      console.log('[DEBUG handleQuiz] p.activeHuaXian:', p.activeHuaXian);
       let annotationId = p.activeHuaXian?.id;
       if (!annotationId && text) {
         const matched = p.huaXianList.find(h => h.text === text);
         if (matched) {
           annotationId = matched.id;
-          console.log('[DEBUG handleQuiz] 通过文本匹配到划线 annotationId:', annotationId);
         }
       }
-      console.log('[DEBUG handleQuiz] 最终 annotationId:', annotationId);
       const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, text, 1, annotationId);
-      console.log('[DEBUG handleQuiz] 生成结果:', { data, error });
       if (error) {
         showWarning('AI 出题失败：' + error);
         return;
@@ -437,7 +422,8 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
             chapterId={chapterId}
             darkMode={isDarkMode}
             onExplain={handleExplain}
-            onParaphrase={handleParaphrase}
+            onAIFuShu={handleAIFuShu}
+            onZiJiHuaFuShu={handleZiJiHuaFuShu}
             onQuiz={handleQuiz}
             onClose={() => setShowXueXiCaiDan(false)}
           />

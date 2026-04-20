@@ -15,24 +15,27 @@ interface XueXiCaiDanProps {
   darkMode?: boolean;
   onClose: () => void;
   onExplain: (text: string) => void;
-  onParaphrase: (text: string) => void;
+  onAIFuShu: (text: string) => void;
+  onZiJiHuaFuShu: (text: string) => void;
   onQuiz: (text: string) => void;
 }
 
 const XUAN_XIANG_BIAO_TI: Record<string, string> = {
   explain: '解释概念',
-  paraphrase: '用自己的话复述',
+  'ai-paraphrase': 'AI帮我复述',
+  'self-paraphrase': '用自己话复述',
   quiz: 'AI出题考我',
 };
 
 const XUAN_XIANG_TU_BIAO: Record<string, React.ReactNode> = {
   explain: <Lightbulb size={16} />,
-  paraphrase: <BookOpen size={16} />,
+  'ai-paraphrase': <BookOpen size={16} />,
+  'self-paraphrase': <BookOpen size={16} />,
   quiz: <Brain size={16} />,
 };
 
 export function XueXiCaiDan({
-  show, position, startPosition, text, chapterId, darkMode, onClose, onExplain, onParaphrase, onQuiz,
+  show, position, startPosition, text, chapterId, darkMode, onClose, onExplain, onAIFuShu, onZiJiHuaFuShu, onQuiz,
 }: XueXiCaiDanProps) {
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState<TextAnalysisResult | null>(null);
@@ -110,8 +113,8 @@ export function XueXiCaiDan({
         setAnalysis({
           type: 'other',
           title: '文本',
-          options: ['paraphrase', 'quiz'],
-          description: '这段文本可以通过复述或出题来学习',
+          options: ['ai-paraphrase', 'self-paraphrase', 'quiz'],
+          description: '这段文字可以通过复述或出题来学习',
         });
         return;
       }
@@ -126,8 +129,11 @@ export function XueXiCaiDan({
       case 'explain':
         onExplain(text);
         break;
-      case 'paraphrase':
-        onParaphrase(text);
+      case 'ai-paraphrase':
+        onAIFuShu(text);
+        break;
+      case 'self-paraphrase':
+        onZiJiHuaFuShu(text);
         break;
       case 'quiz':
         onQuiz(text);

@@ -1,22 +1,32 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-04-14T23:44:51.259Z",
+  "lastUpdated": "2026-04-15T02:54:46.323Z",
   "skills": {
     "Todo管理": {
       "triggers": [],
       "count": 0
     },
     "乔布斯视角": {
-      "triggers": [],
-      "count": 0
+      "triggers": [
+        {
+          "timestamp": "2026-04-15T03:10:00.000Z",
+          "context": "分析技能统计系统的问题"
+        }
+      ],
+      "count": 1
     },
     "任务拆解": {
       "triggers": [],
       "count": 0
     },
     "任务闭环验证": {
-      "triggers": [],
-      "count": 0
+      "triggers": [
+        {
+          "timestamp": "2026-04-15T02:54:46.322Z",
+          "context": "验证翻页和进度保存功能"
+        }
+      ],
+      "count": 1
     },
     "失败复盘存档": {
       "triggers": [],
@@ -53,6 +63,19 @@
     "项目规范守护者": {
       "triggers": [],
       "count": 0
+    },
+    "问题自救": {
+      "triggers": [],
+      "count": 0
+    },
+    "系统化调试": {
+      "triggers": [
+        {
+          "timestamp": "2026-04-15T02:54:29.220Z",
+          "context": "调试翻页按钮无反应"
+        }
+      ],
+      "count": 1
     }
   }
 }

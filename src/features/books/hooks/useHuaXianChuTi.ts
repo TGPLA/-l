@@ -43,29 +43,8 @@ const HL_CLASS_MAP: Record<HuaXianYanSe, string> = {
 };
 
 function xiuFuCfiGeShi(cfiRange: string): string {
-  if (!cfiRange || !cfiRange.startsWith('epubcfi(')) return cfiRange;
-  try {
-    const match = cfiRange.match(/epubcfi\(([^!]+)!(.+)\)/);
-    if (!match) return cfiRange;
-    const base = match[1];
-    const pathPart = match[2];
-    const commaCount = (pathPart.match(/,/g) || []).length;
-    if (commaCount >= 2) {
-      const parts = pathPart.split(',');
-      if (parts.length >= 3) {
-        const commonPath = parts[0];
-        const startRest = parts[1];
-        const endPart = parts[2];
-        const fixedStart = commonPath + startRest;
-        const fixedEnd = commonPath + endPart;
-        const fixedCfi = `epubcfi(${base}!${fixedStart},${fixedEnd})`;
-        console.log('修复CFI格式:', cfiRange, '->', fixedCfi);
-        return fixedCfi;
-      }
-    }
-  } catch (e) {
-    console.warn('CFI格式修复失败:', e);
-  }
+  // CFI格式已经是正确的，不需要修复
+  // 保持原始格式：epubcfi(/base!path,start,end)
   return cfiRange;
 }
 

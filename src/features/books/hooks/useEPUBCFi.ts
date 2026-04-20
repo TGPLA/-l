@@ -1,7 +1,7 @@
 // @审计已完成
 // EPUB CFI 计算工具
 
-export interface XuanZe XinXi {
+export interface XuanZeXinXi {
   selectedText: string;
   cfiRange: string;
   range: Range;
@@ -15,30 +15,24 @@ export function jiSuanCFi(range: Range, cfiRange: string, contents: any): string
   const startOffset = range.startOffset;
   const endOffset = range.endOffset;
 
-  function getTextNodePath(node: Node, doc: Document): string {
-    if (node.nodeType === Node.TEXT_NODE) {
-      let path = '';
-      let current = node.parentElement;
-      while (current && current !== doc.body) {
-        const siblings = Array.from(current.parentElement?.children || []);
-        const index = siblings.indexOf(current) + 1;
-        path = `/${index}${path}`;
-        current = current.parentElement;
-      }
-      return path;
+  function getNodePath(node: Node, doc: Document): string {
+    let path = '';
+    let current: Element | null = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
+    while (current && current !== doc.body) {
+      const siblings = Array.from(current.parentElement?.children || []);
+      const index = siblings.indexOf(current) + 1;
+      path = `/${index}${path}`;
+      current = current.parentElement;
     }
-    return '';
+    return path;
   }
 
   function getCfiTextLocation(node: Node, offset: number): string {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return `:${offset}`;
-    }
-    return '';
+    return `:${offset}`;
   }
 
-  const startPath = getTextNodePath(startContainer, doc);
-  const endPath = getTextNodePath(endContainer, doc);
+  const startPath = getNodePath(startContainer, doc);
+  const endPath = getNodePath(endContainer, doc);
   const startLocation = getCfiTextLocation(startContainer, startOffset);
   const endLocation = getCfiTextLocation(endContainer, endOffset);
 
@@ -65,7 +59,16 @@ export function jiSuanCFi(range: Range, cfiRange: string, contents: any): string
   return cfiRange;
 }
 
-export function jiSuanWeiZhi(rect: RangeRect, iframe: Element | null): DOMRect {
+interface WeiZhiXinXi {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  right: number;
+  bottom: number;
+}
+
+export function jiSuanWeiZhi(rect: WeiZhiXinXi, iframe: Element | null): DOMRect {
   if (iframe) {
     const iframeRect = iframe.getBoundingClientRect();
     return {

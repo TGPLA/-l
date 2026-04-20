@@ -1,7 +1,13 @@
 {
   "projectName": "ReadRecall",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "changelog": [
+    {
+      "version": "1.7.9",
+      "date": "2026-04-15",
+      "category": "[Feature]",
+      "content": "优化 EPUB 阅读器核心功能：改进划线处理逻辑、提升阅读进度跟踪精度、完善阅读事件监听机制，增强阅读体验流畅度。"
+    },
     {
       "version": "1.7.8",
       "date": "2026-04-12",
