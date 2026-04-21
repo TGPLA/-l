@@ -9,8 +9,11 @@ export interface ParaphraseRecord {
   user_id: string;
   book_id: string;
   chapter_id?: string;
+  type: 'concept' | 'understanding' | 'ai_paraphrase';
+  concept_name?: string;
   original_text: string;
   paraphrased_text: string;
+  ai_evaluation?: string;
   created_at: string;
 }
 
@@ -27,8 +30,11 @@ export const paraphraseService = {
   async createParaphrase(params: {
     book_id: string;
     chapter_id?: string;
+    type: 'concept' | 'understanding' | 'ai_paraphrase';
+    concept_name?: string;
     original_text: string;
     paraphrased_text: string;
+    ai_evaluation?: string;
   }): Promise<{ record: ParaphraseRecord | null; error: string | null }> {
     const { data, error } = await apiClient.request<ParaphraseRecord>('/api/paraphrases', {
       method: 'POST',
@@ -38,8 +44,8 @@ export const paraphraseService = {
   },
 
   async getParaphrasesByBook(bookId: string): Promise<{ records: ParaphraseRecord[]; error: string | null }> {
-    const { data, error } = await apiClient.request<{ data: ParaphraseRecord[] }>(`/api/paraphrases?book_id=${bookId}`);
-    return { records: data?.data || [], error };
+    const { data, error } = await apiClient.request<ParaphraseRecord[]>(`/api/paraphrases?book_id=${bookId}`);
+    return { records: data || [], error };
   },
 
   async deleteParaphrase(id: string): Promise<{ error: string | null }> {

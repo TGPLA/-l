@@ -6,6 +6,7 @@ import { BookOpen, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { aiService } from '@shared/services/aiService';
 import { paraphraseService } from '@shared/services/paraphraseService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
+import { JiaZaiZhuangTai } from '@shared/utils/common/JiaZaiZhuangTai';
 
 interface FuShuProps {
   text: string;
@@ -48,6 +49,7 @@ export function FuShu({ text, bookId, chapterId, onClose }: FuShuProps) {
         await paraphraseService.createParaphrase({
           book_id: bookId,
           chapter_id: chapterId,
+          type: 'ai_paraphrase',
           original_text: text,
           paraphrased_text: paraphrase,
         });
@@ -138,23 +140,8 @@ export function FuShu({ text, bookId, chapterId, onClose }: FuShuProps) {
           </div>
 
           {loading ? (
-            <div style={{
-              padding: '40px 20px',
-              textAlign: 'center',
-            }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                border: '3px solid rgba(96, 165, 250, 0.2)',
-                borderTopColor: '#60a5fa',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                margin: '0 auto 12px',
-              }} />
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-              <p style={{ margin: 0, color: 'var(--ci-yao-wen-zi)', fontSize: '14px' }}>
-                AI 正在用另一种方式表达...
-              </p>
+            <div style={{ padding: '40px 20px' }}>
+              <JiaZaiZhuangTai wenAn="AI 正在用另一种方式表达..." chiCun="medium" />
             </div>
           ) : paraphrase ? (
             <div>

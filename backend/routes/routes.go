@@ -77,6 +77,7 @@ func InitRoutes() *gin.Engine {
 			ai.POST("/analyze-text", controllers.AIAnalyzeText)
 			ai.POST("/explain-concept", controllers.AIExplainConcept)
 			ai.POST("/paraphrase-text", controllers.AIParaphraseText)
+			ai.POST("/chapter-understanding", controllers.AIChapterUnderstanding)
 			ai.POST("/evaluate-answer", controllers.AIEvaluateAnswer)
 			ai.POST("/extract-concepts", controllers.AIExtractConcepts)
 			ai.POST("/evaluate-concept", controllers.AIEvaluateConcept)

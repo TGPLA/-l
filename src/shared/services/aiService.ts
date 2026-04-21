@@ -90,6 +90,12 @@ export interface ParaphraseResult {
   paraphrase: string;
 }
 
+export interface ChapterUnderstandingResult {
+  summary: string;
+  keyPoints: string;
+  paraphrase: string;
+}
+
 class AIService {
   private getHeaders(): Record<string, string> {
     const token = authService.getToken();
@@ -268,6 +274,33 @@ class AIService {
     }
   }
 
+  async understandChapter(content: string): Promise<{ data: ChapterUnderstandingResult | null; error: string | null }> {
+    try {
+      const response = await fetch(`${API_BASE}/ai/chapter-understanding`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify({ content }),
+      });
+
+      if (await this.handle401(response)) {
+        return { data: null, error: '登录已过期' };
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
+      }
+
+      const responseData = await response.json() as { data: ChapterUnderstandingResult };
+      return { data: responseData.data, error: null };
+    } catch (error) {
+      if (error instanceof YingYongCuoWu) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: error instanceof Error ? error.message : '章节理解失败' };
+    }
+  }
+
   async evaluateAnswer(questionId: string, userAnswer: string): Promise<{ data: ConceptEvaluation | null; error: string | null }> {
     try {
       const response = await fetch(`${API_BASE}/ai/evaluate-answer`, {
@@ -417,15 +450,25 @@ class AIService {
 
   async evaluateConcept(concept: string, explanation: string, userAnswer: string): Promise<{ data: { evaluation: string } | null; error: string | null }> {
     try {
+      console.log('[DEBUG] aiService.evaluateConcept called');
+      console.log('[DEBUG] concept:', concept);
+      console.log('[DEBUG] explanation:', explanation);
+      console.log('[DEBUG] userAnswer:', userAnswer);
+      
+      const requestBody = {
+        concept,
+        explanation,
+        user_answer: userAnswer,
+      };
+      console.log('[DEBUG] Request body:', requestBody);
+      
       const response = await fetch(`${API_BASE}/ai/evaluate-concept`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          concept,
-          explanation,
-          user_answer: userAnswer,
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('[DEBUG] Response status:', response.status, response.ok);
 
       if (await this.handle401(response)) {
         return { data: null, error: '登录已过期' };
@@ -433,12 +476,16 @@ class AIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log('[DEBUG] Error response:', errorData);
         throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
       }
 
       const responseData = await response.json();
+      console.log('[DEBUG] Success response:', responseData);
+      
       return { data: responseData.data, error: null };
     } catch (error) {
+      console.log('[DEBUG] evaluateConcept error:', error);
       if (error instanceof YingYongCuoWu) {
         return { data: null, error: error.message };
       }
@@ -448,14 +495,23 @@ class AIService {
 
   async evaluateIntention(paragraph: string, userAnswer: string): Promise<{ data: { correct: string; incorrect: string; incomplete: string } | null; error: string | null }> {
     try {
+      console.log('[DEBUG] aiService.evaluateIntention called');
+      console.log('[DEBUG] paragraph:', paragraph);
+      console.log('[DEBUG] userAnswer:', userAnswer);
+      
+      const requestBody = {
+        paragraph,
+        user_answer: userAnswer,
+      };
+      console.log('[DEBUG] Request body:', requestBody);
+      
       const response = await fetch(`${API_BASE}/ai/evaluate-intention`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify({
-          paragraph,
-          user_answer: userAnswer,
-        }),
+        body: JSON.stringify(requestBody),
       });
+
+      console.log('[DEBUG] Response status:', response.status, response.ok);
 
       if (await this.handle401(response)) {
         return { data: null, error: '登录已过期' };
@@ -463,12 +519,16 @@ class AIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log('[DEBUG] Error response:', errorData);
         throw YingYongCuoWu.yeWu(translateError(errorData.error || `请求失败：${response.status}`));
       }
 
       const responseData = await response.json();
+      console.log('[DEBUG] Success response:', responseData);
+      
       return { data: responseData.data, error: null };
     } catch (error) {
+      console.log('[DEBUG] evaluateIntention error:', error);
       if (error instanceof YingYongCuoWu) {
         return { data: null, error: error.message };
       }

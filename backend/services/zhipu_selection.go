@@ -152,13 +152,13 @@ func (s *ZhipuAIService) AnalyzeText(content string) (*TextAnalysisResult, error
 - other（其他）：不属于以上类型
 
 请返回JSON格式，包含以下字段：
-- type: 文本类型（concept/argument/story/fact/other）
-- title: 简短的类型描述（如"专业概念"、"作者观点"、"故事内容"、"事实陈述"）
-- options: 学习选项数组，推荐1-3个，可包含：
+- type：文本类型（concept/argument/story/fact/other）
+- title：简短的类型描述（如"专业概念"、"作者观点"、"故事内容"、"事实陈述"）
+- options：学习选项数组，推荐1-3个，可包含：
   - "explain" - 解释概念（当type为concept时必须包含）
   - "paraphrase" - 用自己的话复述（适合story或argument）
   - "quiz" - AI出题（适合所有类型）
-- description: 对文本的简短描述（20字以内）
+- description：对文本的简短描述（20字以内）
 
 只返回JSON，不要包含其他文字。`, content)
 
@@ -175,7 +175,7 @@ func (s *ZhipuAIService) AnalyzeText(content string) (*TextAnalysisResult, error
 			Type:        "other",
 			Title:       "文本",
 			Options:     []string{"paraphrase", "quiz"},
-			Description: "这段文本可以通过复述或出题来学习",
+			Description: "这段文字可以通过复述或出题来学习",
 		}, nil
 	}
 
@@ -186,7 +186,7 @@ func (s *ZhipuAIService) AnalyzeText(content string) (*TextAnalysisResult, error
 			Type:        "other",
 			Title:       "文本",
 			Options:     []string{"paraphrase", "quiz"},
-			Description: "这段文本可以通过复述或出题来学习",
+			Description: "这段文字可以通过复述或出题来学习",
 		}, nil
 	}
 
@@ -234,8 +234,8 @@ func (s *ZhipuAIService) ExplainConcept(content string) (*ConceptExplanationResu
 3. 让读者一看就懂
 
 请返回JSON格式，包含以下字段：
-- explanation: 详细解释
-- example: 一个简单的例子
+- explanation：详细解释
+- example：一个简单的例子
 
 只返回JSON，不要包含其他文字。`, content)
 
@@ -285,7 +285,7 @@ func (s *ZhipuAIService) ParaphraseText(content string) (*ParaphraseResult, erro
 4. 像给朋友讲解一样自然
 
 请返回JSON格式，包含以下字段：
-- paraphrase: 复述后的内容
+- paraphrase：复述后的内容
 
 只返回JSON，不要包含其他文字。`, content)
 
@@ -308,6 +308,52 @@ func (s *ZhipuAIService) ParaphraseText(content string) (*ParaphraseResult, erro
 	if err != nil {
 		return &ParaphraseResult{
 			Paraphrase: content,
+		}, nil
+	}
+
+	return &result, nil
+}
+
+func (s *ZhipuAIService) UnderstandChapter(chapterContent string) (*ChapterUnderstandingResult, error) {
+	systemPrompt := `你是一个专业的书籍内容分析师。请基于提供的章节内容，生成以下内容：
+1. 简洁明了的章节总结（200字以内）
+2. 重点提炼（分点列出，3-5个关键点）
+3. 用自己话描述（更通俗易懂的语言重述章节内容）`
+
+	userPrompt := fmt.Sprintf(`请分析以下章节内容，生成结构化的理解输出：
+
+章节内容：
+%s
+
+请按JSON格式返回，包含以下字段：
+- summary：章节总结（200字以内）
+- keyPoints：重点提炼（分点列出，3-5个关键点，用换行分隔）
+- paraphrase：用自己话描述（通俗易懂，500字以内）`, chapterContent)
+
+	responseContent, err := s.callAPI(systemPrompt, userPrompt, 2000)
+	if err != nil {
+		return nil, err
+	}
+
+	responseContent = strings.TrimSpace(responseContent)
+	
+	jsonMatch := regexp.MustCompile(`\{[\s\S]*\}`).FindString(responseContent)
+	if jsonMatch == "" {
+		// 如果没找到JSON，尝试解析
+		return &ChapterUnderstandingResult{
+			Summary:    "未生成完整总结",
+			KeyPoints:  "未生成重点",
+			Paraphrase: responseContent,
+		}, nil
+	}
+
+	var result ChapterUnderstandingResult
+	err = json.Unmarshal([]byte(jsonMatch), &result)
+	if err != nil {
+		return &ChapterUnderstandingResult{
+			Summary:    "解析失败",
+			KeyPoints:  "解析失败",
+			Paraphrase: responseContent,
 		}, nil
 	}
 

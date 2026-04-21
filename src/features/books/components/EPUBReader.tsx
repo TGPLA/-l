@@ -11,6 +11,7 @@ import { MuLuChouTi } from './MuLuChouTi';
 import { BiJiChouTi } from './BiJiChouTi';
 import { ChaZhaoChouTi } from './ChaZhaoChouTi';
 import { FuShu } from '@features/practice/FuShu';
+import { ZhangJieLiJie } from './ZhangJieLiJie';
 import { LianXiMianBan } from './LianXiMianBan';
 import { useEPUBReaderHuoChuLi } from '../hooks/useEPUBReaderHuoChuLi';
 import { useYueDuQiBuJu } from '../hooks/useYueDuQiBuJu';
@@ -45,6 +46,8 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
   const [dangQianWenBen, setDangQianWenBen] = useState('');
   const [showFuShu, setShowFuShu] = useState(false);
   const [fuShuWenBen, setFuShuWenBen] = useState('');
+  const [showZhangJieLiJie, setShowZhangJieLiJie] = useState(false);
+  const [dangQianZhangJieNeiRong, setDangQianZhangJieNeiRong] = useState('');
 
   const loadQuestions = useCallback(async () => {
     try {
@@ -102,6 +105,40 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     p.renditionRef?.current?.display(href);
     buju.setDaKaiDeChouTi(null);
   }, [buju.setDaKaiDeChouTi]);
+
+  const huoQuDangQianZhangJieNeiRong = useCallback(async () => {
+    const rendition = p.renditionRef?.current;
+    const book = p.bookRef?.current;
+    if (!rendition || !book) {
+      return '';
+    }
+    try {
+      // 获取当前显示章节的内容
+      const contents = rendition.getContents();
+      if (contents && contents[0]) {
+        const doc = contents[0].window?.document;
+        if (doc) {
+          // 获取body的文本内容
+          const bodyText = doc.body.innerText || '';
+          return bodyText;
+        }
+      }
+      return '';
+    } catch (error) {
+      console.error('获取章节内容失败:', error);
+      return '';
+    }
+  }, [p.renditionRef, p.bookRef]);
+
+  const handleZhangJieLiJie = useCallback(async () => {
+    const content = await huoQuDangQianZhangJieNeiRong();
+    if (!content || content.trim() === '') {
+      showWarning('无法获取章节内容，请尝试翻页后重试');
+      return;
+    }
+    setDangQianZhangJieNeiRong(content);
+    setShowZhangJieLiJie(true);
+  }, [huoQuDangQianZhangJieNeiRong]);
 
   const handleXueXi = useCallback((text: string) => {
     setDangQianWenBen(text);
@@ -239,10 +276,12 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     if (anniu === 'lianxi') {
       loadQuestions();
       setShowLianXiMianBan(true);
+    } else if (anniu === 'zhangjielijie') {
+      handleZhangJieLiJie();
     } else {
       buju.qieHuanChouTi(anniu);
     }
-  }, [loadQuestions, buju]);
+  }, [loadQuestions, buju, handleZhangJieLiJie]);
 
   const handleChaZhaoTiaoZhuan = useCallback((cfiOrHref: string, keyword?: string, onlyOne: boolean = false, weiZhi?: number) => {
     const rendition = p.renditionRef?.current;
@@ -422,9 +461,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
             chapterId={chapterId}
             darkMode={isDarkMode}
             onExplain={handleExplain}
-            onAIFuShu={handleAIFuShu}
             onZiJiHuaFuShu={handleZiJiHuaFuShu}
-            onQuiz={handleQuiz}
             onClose={() => setShowXueXiCaiDan(false)}
           />
         )}
@@ -434,6 +471,14 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
             bookId={bookId}
             chapterId={chapterId}
             onClose={() => setShowFuShu(false)}
+          />
+        )}
+        {showZhangJieLiJie && (
+          <ZhangJieLiJie
+            chapterContent={dangQianZhangJieNeiRong}
+            bookId={bookId}
+            chapterId={chapterId}
+            onClose={() => setShowZhangJieLiJie(false)}
           />
         )}
       </div>

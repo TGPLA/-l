@@ -24,6 +24,8 @@ interface LearningSource {
   chapterId?: string;
   paragraphId?: string;
   content: string;
+  explanation?: string;
+  isConcept?: boolean;
 }
 
 function AppContent() {
@@ -108,15 +110,28 @@ function AppContent() {
     setCurrentPage('concept-explanation');
   };
 
+  const handleStartFuShuFromJieShi = (explanation: string) => {
+    // 从概念解释页面跳转到复述学习，保存 explanation
+    console.log('[DEBUG] handleStartFuShuFromJieShi called');
+    console.log('[DEBUG] Current learningSource:', learningSource);
+    console.log('[DEBUG] Explanation to pass:', explanation);
+    
+    const newSource = learningSource ? { ...learningSource, explanation, isConcept: true } : null;
+    console.log('[DEBUG] New learningSource:', newSource);
+    
+    setLearningSource(newSource);
+    setCurrentPage('concept-learning');
+  };
+
   const handleBackToDetail = () => {
-    setCurrentPage('shelf');
+    setCurrentPage('reader');
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
   };
 
   const handleComplete = () => {
-    setCurrentPage('shelf');
+    setCurrentPage('reader');
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
@@ -135,37 +150,108 @@ function AppContent() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb' }}>
-      {currentPage === 'shelf' && (
-        <BookShelf onSelectBook={handleSelectBook} onOpenSettings={() => setCurrentPage('settings')} />
-      )}
-      {currentPage === 'reader' && selectedBook && (
-        <EPUBReaderPage
-          book={selectedBook}
-          onClose={handleCloseReader}
-          onFuShuXueXi={handleFuShuXueXi}
-          onGaiNianJieShi={handleGaiNianJieShi}
-        />
-      )}
-      {currentPage === 'concept-learning' && learningSource && (
-        <FuShuXueXi 
-          key={learningSource.chapterId ? `chapter-${learningSource.chapterId}` : `paragraph-${learningSource.paragraphId}`}
-          chapterId={learningSource.chapterId}
-          paragraphId={learningSource.paragraphId}
-          content={learningSource.content}
-          onComplete={handleComplete}
-          onBack={handleBackToDetail}
-        />
-      )}
-      {currentPage === 'concept-explanation' && learningSource && (
-        <GaiNianJieShi 
-          content={learningSource.content}
-          onComplete={handleComplete}
-          onBack={handleBackToDetail}
-        />
-      )}
-      {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} onOpenPrompts={() => setCurrentPage('prompts')} />}
-      {currentPage === 'prompts' && <TiShiCiGuanLi onBack={() => setCurrentPage('settings')} />}
+    <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb', position: 'relative', overflow: 'hidden' }}>
+      {/* 书架页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'shelf' ? 1 : 0, 
+        pointerEvents: currentPage === 'shelf' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'shelf' ? 1 : 0
+      }}>
+        {currentPage === 'shelf' && (
+          <BookShelf onSelectBook={handleSelectBook} onOpenSettings={() => setCurrentPage('settings')} />
+        )}
+      </div>
+
+      {/* 阅读器页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'reader' ? 1 : 0, 
+        pointerEvents: currentPage === 'reader' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'reader' ? 2 : 1
+      }}>
+        {selectedBook && (
+          <EPUBReaderPage
+            book={selectedBook}
+            onClose={handleCloseReader}
+            onFuShuXueXi={handleFuShuXueXi}
+            onGaiNianJieShi={handleGaiNianJieShi}
+          />
+        )}
+      </div>
+
+      {/* 复述学习页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'concept-learning' ? 1 : 0, 
+        pointerEvents: currentPage === 'concept-learning' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'concept-learning' ? 3 : 1
+      }}>
+        {currentPage === 'concept-learning' && learningSource && selectedBook && (
+          <FuShuXueXi 
+            key={learningSource.chapterId ? `chapter-${learningSource.chapterId}` : `paragraph-${learningSource.paragraphId}`}
+            bookId={selectedBook.id}
+            chapterId={learningSource.chapterId}
+            paragraphId={learningSource.paragraphId}
+            content={learningSource.content}
+            explanation={learningSource.explanation}
+            isConcept={learningSource.isConcept}
+            onComplete={handleComplete}
+            onBack={handleBackToDetail}
+          />
+        )}
+      </div>
+
+      {/* 概念解释页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'concept-explanation' ? 1 : 0, 
+        pointerEvents: currentPage === 'concept-explanation' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'concept-explanation' ? 3 : 1
+      }}>
+        {currentPage === 'concept-explanation' && learningSource && selectedBook && (
+          <GaiNianJieShi 
+            bookId={selectedBook.id}
+            content={learningSource.content}
+            onComplete={handleComplete}
+            onBack={handleBackToDetail}
+            onStartFuShu={handleStartFuShuFromJieShi}
+          />
+        )}
+      </div>
+
+      {/* 设置页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'settings' ? 1 : 0, 
+        pointerEvents: currentPage === 'settings' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'settings' ? 2 : 0,
+        overflowY: 'auto',
+      }}>
+        {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} onOpenPrompts={() => setCurrentPage('prompts')} />}
+      </div>
+
+      {/* 提示词管理页面 */}
+      <div style={{ 
+        position: 'absolute', 
+        inset: 0, 
+        opacity: currentPage === 'prompts' ? 1 : 0, 
+        pointerEvents: currentPage === 'prompts' ? 'auto' : 'none',
+        transition: 'opacity 0.3s ease-in-out',
+        zIndex: currentPage === 'prompts' ? 3 : 0
+      }}>
+        {currentPage === 'prompts' && <TiShiCiGuanLi onBack={() => setCurrentPage('settings')} />}
+      </div>
     </div>
   );
 }

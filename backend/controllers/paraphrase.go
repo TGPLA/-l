@@ -13,8 +13,11 @@ import (
 type CreateParaphraseRequest struct {
 	BookId          string `json:"book_id" binding:"required"`
 	ChapterId       string `json:"chapter_id"`
+	Type            string `json:"type" binding:"required,oneof=concept understanding ai_paraphrase"` // 类型：concept 或 understanding
+	ConceptName     string `json:"concept_name"`                                                  // 概念名称，仅 type=concept 时必填
 	OriginalText    string `json:"original_text" binding:"required"`
 	ParaphrasedText string `json:"paraphrased_text" binding:"required"`
+	AIEvaluation    string `json:"ai_evaluation"` // AI 评价内容，可选
 }
 
 type GetParaphrasesRequest struct {
@@ -44,8 +47,11 @@ func CreateParaphrase(c *gin.Context) {
 		UserId:          userId.(string),
 		BookId:          req.BookId,
 		ChapterId:       req.ChapterId,
+		Type:            req.Type,
+		ConceptName:     req.ConceptName,
 		OriginalText:    req.OriginalText,
 		ParaphrasedText: req.ParaphrasedText,
+		AIEvaluation:    req.AIEvaluation,
 	}
 
 	result := db.Create(&record)

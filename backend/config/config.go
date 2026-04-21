@@ -201,6 +201,7 @@ func AutoMigrate() {
 		&models.Concept{},
 		&models.ConceptPracticeRecord{},
 		&models.Annotation{},
+		&models.ParaphraseRecord{},
 	); err != nil {
 		log.Fatal("❌ 数据库迁移失败:", err)
 	}

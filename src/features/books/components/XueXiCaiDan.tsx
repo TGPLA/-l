@@ -1,10 +1,8 @@
 // @审计已完成
-// 智能学习菜单组件 - 根据文本类型显示相关学习选项
+// 智能学习菜单组件 - 简化版：AI智能理解选中内容
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, BookOpen, Lightbulb, X } from 'lucide-react';
-import { aiService, type TextAnalysisResult } from '@shared/services/aiService';
-import { showError } from '@shared/utils/common/ToastTiShi';
+import { Brain, X } from 'lucide-react';
 
 interface XueXiCaiDanProps {
   show: boolean;
@@ -15,30 +13,12 @@ interface XueXiCaiDanProps {
   darkMode?: boolean;
   onClose: () => void;
   onExplain: (text: string) => void;
-  onAIFuShu: (text: string) => void;
   onZiJiHuaFuShu: (text: string) => void;
-  onQuiz: (text: string) => void;
 }
 
-const XUAN_XIANG_BIAO_TI: Record<string, string> = {
-  explain: '解释概念',
-  'ai-paraphrase': 'AI帮我复述',
-  'self-paraphrase': '用自己话复述',
-  quiz: 'AI出题考我',
-};
-
-const XUAN_XIANG_TU_BIAO: Record<string, React.ReactNode> = {
-  explain: <Lightbulb size={16} />,
-  'ai-paraphrase': <BookOpen size={16} />,
-  'self-paraphrase': <BookOpen size={16} />,
-  quiz: <Brain size={16} />,
-};
-
 export function XueXiCaiDan({
-  show, position, startPosition, text, chapterId, darkMode, onClose, onExplain, onAIFuShu, onZiJiHuaFuShu, onQuiz,
+  show, position, startPosition, text, onClose, onExplain,
 }: XueXiCaiDanProps) {
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<TextAnalysisResult | null>(null);
   const [animatedPosition, setAnimatedPosition] = useState(position);
   const menuRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
@@ -84,12 +64,6 @@ export function XueXiCaiDan({
   }, [position.top, position.left]);
 
   useEffect(() => {
-    if (show && text) {
-      huoQuFenXi();
-    }
-  }, [show, text]);
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         onClose();
@@ -102,47 +76,11 @@ export function XueXiCaiDan({
   }, [show, onClose]);
 
   if (!show) return null;
-  console.log('[DEBUG XueXiCaiDan] 组件渲染成功');
 
-  const huoQuFenXi = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await aiService.analyzeText(text);
-      if (error) {
-        showError('分析失败：' + error);
-        setAnalysis({
-          type: 'other',
-          title: '文本',
-          options: ['ai-paraphrase', 'self-paraphrase', 'quiz'],
-          description: '这段文字可以通过复述或出题来学习',
-        });
-        return;
-      }
-      setAnalysis(data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleXuanXiang = (option: string) => {
-    switch (option) {
-      case 'explain':
-        onExplain(text);
-        break;
-      case 'ai-paraphrase':
-        onAIFuShu(text);
-        break;
-      case 'self-paraphrase':
-        onZiJiHuaFuShu(text);
-        break;
-      case 'quiz':
-        onQuiz(text);
-        break;
-    }
+  const handleXueXi = () => {
+    onExplain(text);
     onClose();
   };
-
-  if (!show) return null;
 
   const menuStyle: React.CSSProperties = {
     position: 'fixed',
@@ -160,75 +98,51 @@ export function XueXiCaiDan({
     WebkitBackdropFilter: 'blur(12px)',
     borderRadius: '0.75rem',
     boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
-    padding: '0.5rem',
+    padding: '0.75rem',
     minWidth: '200px',
     position: 'relative',
   };
 
   const titleStyle: React.CSSProperties = {
     color: '#ffffff',
-    fontSize: '0.8rem',
+    fontSize: '0.85rem',
     fontWeight: 600,
-    marginBottom: '0.25rem',
-    padding: '0.25rem 0.5rem',
+    marginBottom: '0.75rem',
+    textAlign: 'center' as const,
   };
 
-  const descStyle: React.CSSProperties = {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: '0.7rem',
-    marginBottom: '0.5rem',
-    padding: '0 0.5rem',
-  };
-
-  const optionStyle: React.CSSProperties = {
+  const buttonStyle: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.5rem 0.75rem',
+    justifyContent: 'center',
+    gap: '0.6rem',
+    padding: '0.75rem 1rem',
     border: 'none',
-    backgroundColor: 'transparent',
+    backgroundColor: '#8b5cf6',
     color: '#ffffff',
     cursor: 'pointer',
-    fontSize: '0.8rem',
+    fontSize: '0.9rem',
+    fontWeight: 600,
     borderRadius: '0.5rem',
-    transition: 'all 0.15s',
+    transition: 'all 0.2s',
     width: '100%',
-    textAlign: 'left' as const,
+    boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4)',
   };
 
   const closeButtonStyle: React.CSSProperties = {
     position: 'absolute',
     top: '8px',
     right: '8px',
-    background: '#ff4444',
-    border: '2px solid white',
-    color: '#ffffff',
+    background: 'transparent',
+    border: 'none',
+    color: '#9ca3af',
     cursor: 'pointer',
-    padding: '4px 12px',
+    padding: '4px',
     borderRadius: '4px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '12px',
-    fontWeight: 'bold',
     zIndex: 10000,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
-  };
-
-  const bottomCloseButtonStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '0.5rem 1rem',
-    marginTop: '0.5rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.3)',
-    borderRadius: '0.5rem',
-    color: '#ffffff',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    width: '100%',
   };
 
   return (
@@ -238,39 +152,18 @@ export function XueXiCaiDan({
           onClick={(e) => { e.stopPropagation(); onClose(); }}
           style={closeButtonStyle}
         >
-          ✕
+          <X size={16} />
         </button>
-        {loading ? (
-          <div style={{ padding: '1rem', color: '#ffffff', textAlign: 'center', fontSize: '0.8rem' }}>
-            分析中...
-          </div>
-        ) : analysis ? (
-          <>
-            <div style={titleStyle}>{analysis.title}</div>
-            <div style={descStyle}>{analysis.description}</div>
-            {analysis.options.map(option => (
-              <button
-                key={option}
-                onClick={(e) => { e.stopPropagation(); handleXuanXiang(option); }}
-                style={optionStyle}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(96, 165, 250, 0.2)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-              >
-                {XUAN_XIANG_TU_BIAO[option]}
-                {XUAN_XIANG_BIAO_TI[option]}
-              </button>
-            ))}
-            <button
-              onClick={(e) => { e.stopPropagation(); onClose(); }}
-              style={bottomCloseButtonStyle}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.2)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }}
-            >
-              <X size={14} />
-              关闭
-            </button>
-          </>
-        ) : null}
+        <div style={titleStyle}>智能学习</div>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleXueXi(); }}
+          style={buttonStyle}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#7c3aed'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#8b5cf6'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+        >
+          <Brain size={18} />
+          AI理解 & 解释
+        </button>
       </div>
     </div>
   );

@@ -59,3 +59,9 @@ type SelectionQuestionData struct {
 type GenerateSelectionQuestionsResult struct {
 	Questions []SelectionQuestionData `json:"questions"`
 }
+
+type ChapterUnderstandingResult struct {
+	Summary     string `json:"summary"`     // 章节总结
+	KeyPoints   string `json:"keyPoints"`   // 重点提炼
+	Paraphrase  string `json:"paraphrase"`  // 用自己话描述
+}

@@ -43,19 +43,21 @@ func (s *ZhipuAIService) EvaluateAnswer(content, question, userAnswer string) (*
 }
 
 func (s *ZhipuAIService) parseEvaluationJSON(content string) *EvaluateAnswerResult {
-	content = strings.TrimSpace(content)
-	content = regexp.MustCompile("```json\\s*").ReplaceAllString(content, "")
-	content = regexp.MustCompile("```\\s*").ReplaceAllString(content, "")
+	cleaned := strings.TrimSpace(content)
+	cleaned = regexp.MustCompile("```json\\s*").ReplaceAllString(cleaned, "")
+	cleaned = regexp.MustCompile("```\\s*").ReplaceAllString(cleaned, "")
 
-	match := regexp.MustCompile(`\{[\s\S]*\}`).FindString(content)
-	if match == "" {
-		return nil
+	match := regexp.MustCompile(`\{[\s\S]*\}`).FindString(cleaned)
+	if match != "" {
+		var result EvaluateAnswerResult
+		if err := json.Unmarshal([]byte(match), &result); err == nil {
+			return &result
+		}
 	}
 
-	var result EvaluateAnswerResult
-	if err := json.Unmarshal([]byte(match), &result); err != nil {
-		return nil
+	// 容错处理：如果解析 JSON 失败，就把所有内容都放到 evaluation 字段
+	return &EvaluateAnswerResult{
+		Evaluation: cleaned,
+		Supplement: "",
 	}
-
-	return &result
 }

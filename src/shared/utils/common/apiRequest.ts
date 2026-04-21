@@ -107,13 +107,10 @@ export class ApiClient {
         }
 
         const extractedData = data.data;
-        const finalData = Array.isArray(extractedData) 
-          ? extractedData 
-          : (extractedData?.questions ?? extractedData);
         
         return {
           success: true,
-          data: finalData,
+          data: extractedData,
         };
       } catch (parseError) {
         return {

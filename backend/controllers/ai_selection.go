@@ -342,3 +342,48 @@ func AIParaphraseText(c *gin.Context) {
 		"data":    result,
 	})
 }
+
+type AIChapterUnderstandingRequest struct {
+	Content string `json:"content" binding:"required"`
+}
+
+func AIChapterUnderstanding(c *gin.Context) {
+	userId := middleware.GetUserId(c)
+	if userId == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "未授权"})
+		return
+	}
+
+	var req AIChapterUnderstandingRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数错误：" + err.Error()})
+		return
+	}
+
+	db := config.GetDB()
+	var userSettings models.Settings
+	db.Where("user_id = ?", userId).First(&userSettings)
+
+	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	if apiKey == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		return
+	}
+
+	model := userSettings.ZhipuModel
+	if model == "" {
+		model = config.AppConfig.ZhipuModel
+	}
+
+	aiService := services.NewZhipuAIService(apiKey, model)
+	result, err := aiService.UnderstandChapter(req.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "章节理解失败：" + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    result,
+	})
+}

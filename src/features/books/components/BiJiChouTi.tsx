@@ -27,8 +27,19 @@ export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi }: B
   const [biaoQian, setBiaoQian] = useState<BiaoQian>('huaxian');
   const [fuShuJiLu, setFuShuJiLu] = useState<ParaphraseRecord[]>([]);
   const [jiaZaiZhong, setJiaZaiZhong] = useState(false);
+  const [zhanKaiJiLu, setZhanKaiJiLu] = useState<Set<string>>(new Set());
 
   const paiXuHouDeHuaXian = [...highlights].sort((a, b) => b.createdAt - a.createdAt);
+
+  const qieHuanZhanKai = (id: string) => {
+    const xinZhanKai = new Set(zhanKaiJiLu);
+    if (xinZhanKai.has(id)) {
+      xinZhanKai.delete(id);
+    } else {
+      xinZhanKai.add(id);
+    }
+    setZhanKaiJiLu(xinZhanKai);
+  };
 
   useEffect(() => {
     if (biaoQian === 'fushu') {
@@ -199,41 +210,279 @@ export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi }: B
               <p style={{ margin: 0, color: '#4b5563', fontSize: '0.78rem' }}>选择文本后使用「用自己的话复述」</p>
             </div>
           ) : (
-            fuShuJiLu.map(jiLu => (
-              <div
-                key={jiLu.id}
-                style={{
-                  padding: '0.85rem',
-                  marginBottom: '0.6rem',
-                  backgroundColor: '#2d2d2d',
-                  borderRadius: '8px',
-                  border: '1px solid transparent',
-                  transition: 'border-color 0.12s ease',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#3f3f46'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#6b7280' }}>
-                    {new Date(jiLu.created_at).toLocaleDateString('zh-CN')}
-                  </span>
-                  <button
-                    onClick={() => shanChuFuShu(jiLu.id)}
-                    style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.15rem', opacity: 0.6 }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.6'; }}
-                  >
-                    <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
+            fuShuJiLu.map(jiLu => {
+              // 确定类型标签和颜色
+              let leiXingBiaoQian = '';
+              let leiXingYanSe = '';
+              let leiXingBeiJing = '';
+              let leiXingTuBiao = '';
+              let xianShiYuanWen = true;
+              
+              if (jiLu.type === 'concept') {
+                leiXingBiaoQian = '概念';
+                leiXingYanSe = '#3b82f6';
+                leiXingBeiJing = 'rgba(59, 130, 246, 0.15)';
+                leiXingTuBiao = '📚';
+                xianShiYuanWen = false;
+              } else if (jiLu.type === 'understanding') {
+                leiXingBiaoQian = '理解';
+                leiXingYanSe = '#8b5cf6';
+                leiXingBeiJing = 'rgba(139, 92, 246, 0.15)';
+                leiXingTuBiao = '💡';
+              } else if (jiLu.type === 'ai_paraphrase') {
+                leiXingBiaoQian = 'AI复述';
+                leiXingYanSe = '#10b981';
+                leiXingBeiJing = 'rgba(16, 185, 129, 0.15)';
+                leiXingTuBiao = '🤖';
+              } else {
+                leiXingBiaoQian = '其他';
+                leiXingYanSe = '#6b7280';
+                leiXingBeiJing = 'rgba(107, 114, 128, 0.15)';
+                leiXingTuBiao = '📝';
+              }
+
+              const shiFouZhanKai = zhanKaiJiLu.has(jiLu.id);
+              const yuanWenGuoChang = jiLu.original_text.length > 120;
+              const fuShuGuoChang = jiLu.paraphrased_text.length > 200;
+              const pingJiaGuoChang = (jiLu.ai_evaluation?.length || 0) > 300;
+              const xuYaoZhanKai = yuanWenGuoChang || fuShuGuoChang || pingJiaGuoChang;
+
+              const xianShiYuanWenNeiRong = shiFouZhanKai || !yuanWenGuoChang 
+                ? jiLu.original_text 
+                : jiLu.original_text.substring(0, 120) + '...';
+
+              const xianShiFuShuNeiRong = shiFouZhanKai || !fuShuGuoChang 
+                ? jiLu.paraphrased_text 
+                : jiLu.paraphrased_text.substring(0, 200) + '...';
+
+              const xianShiPingJiaNeiRong = !jiLu.ai_evaluation 
+                ? '' 
+                : (shiFouZhanKai || !pingJiaGuoChang 
+                  ? jiLu.ai_evaluation 
+                  : jiLu.ai_evaluation.substring(0, 300) + '...');
+              
+              return (
+                <div
+                  key={jiLu.id}
+                  style={{
+                    padding: '1rem',
+                    marginBottom: '0.75rem',
+                    backgroundColor: '#2d2d2d',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.backgroundColor = '#333333';
+                  }}
+                  onMouseLeave={(e) => { 
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.backgroundColor = '#2d2d2d';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {jiLu.type === 'concept' && jiLu.concept_name && (
+                        <span style={{ 
+                          fontSize: '0.8rem', 
+                          fontWeight: 700, 
+                          color: '#f3f4f6',
+                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                        }}>
+                          {jiLu.concept_name}
+                        </span>
+                      )}
+                      <span style={{ 
+                        fontSize: '0.72rem', 
+                        fontWeight: 600, 
+                        color: leiXingYanSe,
+                        backgroundColor: leiXingBeiJing,
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}>
+                        <span style={{ fontSize: '0.9rem' }}>{leiXingTuBiao}</span>
+                        {leiXingBiaoQian}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                        {new Date(jiLu.created_at).toLocaleString('zh-CN', {
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                      <button
+                        onClick={() => shanChuFuShu(jiLu.id)}
+                        style={{ 
+                          background: 'none', 
+                          border: 'none', 
+                          color: '#6b7280', 
+                          cursor: 'pointer', 
+                          padding: '0.25rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '4px',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => { 
+                          e.currentTarget.style.color = '#ef4444';
+                          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                        }}
+                        onMouseLeave={(e) => { 
+                          e.currentTarget.style.color = '#6b7280';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {xianShiYuanWen && (
+                    <div style={{ marginBottom: '0.6rem' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.35rem',
+                        marginBottom: '0.35rem',
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: '#6b7280', fontWeight: 500 }}>
+                          📖 原文
+                        </span>
+                      </div>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '0.8rem', 
+                        color: '#9ca3af', 
+                        lineHeight: 1.6,
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(255, 255, 255, 0.03)',
+                      }}>
+                        {xianShiYuanWenNeiRong}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div style={{ marginBottom: jiLu.ai_evaluation ? '0.6rem' : '0' }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '0.35rem',
+                      marginBottom: '0.35rem',
+                    }}>
+                      <span style={{ fontSize: '0.72rem', color: '#6b7280', fontWeight: 500 }}>
+                        ✍️ 复述
+                      </span>
+                    </div>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '0.85rem', 
+                      color: '#e5e7eb', 
+                      lineHeight: 1.7,
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                      padding: '0.55rem 0.7rem',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                    }}>
+                      {xianShiFuShuNeiRong}
+                    </p>
+                  </div>
+                  
+                  {jiLu.ai_evaluation && (
+                    <div style={{ 
+                      marginTop: '0.5rem', 
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.35rem',
+                        marginBottom: '0.35rem',
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: leiXingYanSe, fontWeight: 500 }}>
+                          🤔 AI 评价
+                        </span>
+                      </div>
+                      <div style={{ 
+                        padding: '0.65rem 0.75rem', 
+                        backgroundColor: leiXingBeiJing, 
+                        borderRadius: '8px',
+                        border: '1px solid ' + leiXingYanSe + '33',
+                      }}>
+                        <p style={{ 
+                          margin: 0, 
+                          fontSize: '0.8rem', 
+                          color: leiXingYanSe, 
+                          lineHeight: 1.6,
+                          whiteSpace: 'pre-wrap',
+                          fontWeight: 400,
+                        }}>
+                          {xianShiPingJiaNeiRong}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {xuYaoZhanKai && (
+                    <div style={{ marginTop: '0.6rem', display: 'flex', justifyContent: 'center' }}>
+                      <button
+                        onClick={() => qieHuanZhanKai(jiLu.id)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#6b7280',
+                          fontSize: '0.72rem',
+                          cursor: 'pointer',
+                          padding: '0.35rem 0.85rem',
+                          borderRadius: '6px',
+                          transition: 'all 0.15s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#9ca3af';
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#6b7280';
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        {shiFouZhanKai ? (
+                          <>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                            </svg>
+                            收起
+                          </>
+                        ) : (
+                          <>
+                            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            展开查看全部
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#9ca3af', lineHeight: 1.5 }}>
-                  原文：{jiLu.original_text.length > 100 ? jiLu.original_text.substring(0, 100) + '...' : jiLu.original_text}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.87rem', color: '#d1d5db', lineHeight: 1.6 }}>
-                  {jiLu.paraphrased_text}
-                </p>
-              </div>
-            ))
+              );
+            })
           )
         )}
       </div>

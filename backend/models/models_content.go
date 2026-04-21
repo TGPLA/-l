@@ -126,8 +126,11 @@ type ParaphraseRecord struct {
 	UserId      string    `gorm:"type:char(36);not null;index" json:"user_id"`
 	BookId      string    `gorm:"type:char(36);not null;index" json:"book_id"`
 	ChapterId   string    `gorm:"type:char(36);index" json:"chapter_id"`
+	Type        string    `gorm:"type:varchar(50);not null;default:'understanding';index" json:"type"` // "concept" 或 "understanding"
+	ConceptName string    `gorm:"type:varchar(255);index" json:"concept_name"`                    // 概念名称，仅 type="concept" 时有值
 	OriginalText string   `gorm:"type:text;not null" json:"original_text"`
 	ParaphrasedText string `gorm:"type:text;not null" json:"paraphrased_text"`
+	AIEvaluation string    `gorm:"type:text" json:"ai_evaluation"` // AI 评价内容，可选
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 

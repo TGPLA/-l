@@ -1,16 +1,19 @@
 // @审计已完成
 // 概念解释组件 - 解释专业名词
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy, ArrowLeft } from 'lucide-react';
 import { aiService, type ConceptExplanationResult } from '@shared/services/aiService';
+import { paraphraseService } from '@shared/services/paraphraseService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 import { JiaZaiZhuangTai } from '@shared/utils/common/JiaZaiZhuangTai';
 
 interface GaiNianJieShiProps {
+  bookId: string;
   content: string;
   onComplete: () => void;
   onBack: () => void;
+  onStartFuShu?: (explanation: string) => void;
 }
 
 interface JieShiZhuangTai {
@@ -18,9 +21,10 @@ interface JieShiZhuangTai {
   error: string | null;
 }
 
-export function GaiNianJieShi({ content, onComplete, onBack }: GaiNianJieShiProps) {
+export function GaiNianJieShi({ bookId, content, onComplete, onBack, onStartFuShu }: GaiNianJieShiProps) {
   const [zhuangTai, setZhuangTai] = useState<JieShiZhuangTai>({ jieGuo: null, error: null });
   const [jiaZai, setJiaZai] = useState(false);
+  const [baoCunZhong, setBaoCunZhong] = useState(false);
 
   const huoQuJieShi = async () => {
     setJiaZai(true);
@@ -37,9 +41,9 @@ export function GaiNianJieShi({ content, onComplete, onBack }: GaiNianJieShiProp
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     huoQuJieShi();
-  }, []);
+  }, [content]);
 
   const fuZhiJieShi = async () => {
     if (!zhuangTai.jieGuo) return;
@@ -50,6 +54,28 @@ export function GaiNianJieShi({ content, onComplete, onBack }: GaiNianJieShiProp
       showSuccess('已复制到剪贴板');
     } catch {
       showError('复制失败');
+    }
+  };
+
+  const baoCunBingWanCheng = async () => {
+    if (!zhuangTai.jieGuo) return;
+    setBaoCunZhong(true);
+    try {
+      const jieShiNeiRong = `${zhuangTai.jieGuo.explanation}${zhuangTai.jieGuo.example ? `\n\n例子：${zhuangTai.jieGuo.example}` : ''}`;
+      await paraphraseService.createParaphrase({
+        book_id: bookId,
+        chapter_id: undefined,
+        type: 'concept',
+        concept_name: content,
+        original_text: jieShiNeiRong,
+        paraphrased_text: jieShiNeiRong,
+      });
+      showSuccess('保存成功！');
+      onComplete();
+    } catch {
+      showError('保存失败，请重试');
+    } finally {
+      setBaoCunZhong(false);
     }
   };
 
@@ -86,14 +112,25 @@ export function GaiNianJieShi({ content, onComplete, onBack }: GaiNianJieShiProp
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
-              <button onClick={fuZhiJieShi} style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: '#ffffff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                <Copy size={18} />
-                复制
-              </button>
-              <button onClick={onComplete} style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: '#3b82f6', color: '#ffffff', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                完成
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
+              {onStartFuShu && zhuangTai.jieGuo && (
+                <button onClick={() => onStartFuShu(zhuangTai.jieGuo.explanation)} style={{ width: '100%', padding: '0.75rem 1.5rem', backgroundColor: '#8b5cf6', color: '#ffffff', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  现在复述一下
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button onClick={fuZhiJieShi} style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: '#ffffff', color: '#374151', border: '1px solid #d1d5db', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  <Copy size={18} />
+                  复制
+                </button>
+                <button 
+                  onClick={baoCunBingWanCheng} 
+                  disabled={baoCunZhong}
+                  style={{ flex: 1, padding: '0.75rem 1.5rem', backgroundColor: baoCunZhong ? '#9ca3af' : '#3b82f6', color: '#ffffff', borderRadius: '0.5rem', border: 'none', cursor: baoCunZhong ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+                >
+                  {baoCunZhong ? '保存中...' : '完成'}
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
