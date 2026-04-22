@@ -357,10 +357,21 @@ npm run test:e2e:ui
 
 ## 代码规范
 
-- 单文件最大 100 行，超过需拆分
+- 文件按类型分类限制行数（页面组件≤300行 / 业务Hooks≤250行 / 工具函数≤150行）
+- 复杂度限制：单函数≤30行 / 嵌套≤4层 / import≤12个
 - 文件名使用中文拼音（如 `ShuJiTiShiCiPeiZhi.ts`）
 - 函数名、变量名使用中文（如 `huoQuPeiZhi`）
 - 所有代码文件包含中文头部注释
+
+## 检查命令
+
+```bash
+# 检查文件行数（按类型分类）
+npm run check:lines
+
+# 检查文件是否符合规范
+npm run check-files
+```
 
 ## 部署
 
