@@ -11,7 +11,6 @@
 - 📚 **书籍管理**：添加、编辑、删除书籍，支持封面和描述
 - 📖 **EPUB 导入**：导入 EPUB 电子书，自动解析书名、作者、目录
 - 📖 **EPUB 阅读器**：全屏 EPUB 阅读器，支持阅读进度持久化、全文搜索、页码显示、主题切换（日间/夜间/护眼）、字体大小调整、按钮翻页、高亮标注
-- 📝 **提示词模板管理**：系统预设模板（全局共享）+ 用户自定义模板，支持名词解释、意图理解、生活应用三种题型
 - 🎯 **名词解释学习**：AI 提取重要概念→用户学习专业解释→用自己的话复述→AI 点评表达清晰度（循环）
 - 🎯 **意图理解学习**：用户阅读段落→用自己的话讲述作者意图→AI 评价对/错/不到位
 - 🎯 **练习模式**：显示段落 + 问题 + 作答，AI 评价答案
@@ -68,8 +67,7 @@
 │  - assets/*.css               │   │  /api/auth/*      - 认证                │
 │                               │   │  /api/books       - 书籍 CRUD           │
 │  技术栈: React + TypeScript   │   │  /api/books       - 书籍 CRUD           │
-│          + Vite               │   │  /api/prompts     - 提示词模板 CRUD     │
-│                               │   │  /api/questions   - 题目 CRUD           │
+│          + Vite               │   │  /api/questions   - 题目 CRUD           │
 │                               │   │  /api/settings    - 用户设置            │
 │                               │   │  /api/ai/*        - AI 功能             │
 └───────────────────────────────┘   └───────────────────────────────────────┘
@@ -142,13 +140,7 @@ src/
 │   └── user/                       # 用户系统
 │       └── components/
 │           ├── AuthPage.tsx        # 登录页面
-│           ├── SettingsPage.tsx    # 设置页面
-│           └── 提示词管理/          # 提示词管理组件
-│               ├── TiShiCiMoBan.tsx    # 提示词模板
-│               ├── TiShiCiBianJi.tsx   # 提示词编辑
-│               ├── ShouCiYinDao.tsx    # 首次引导
-│               ├── YinDaoJieShao.tsx   # 引导介绍
-│               └── YinDaoXuanZe.tsx    # 引导选择
+│           └── SettingsPage.tsx    # 设置页面
 │
 └── shared/                         # 🩺 医疗包 - 公共服务
     ├── api/                        # API 接口
@@ -214,7 +206,6 @@ src/
 | 表名 | 用途 | 关键字段 |
 |------|------|----------|
 | `books` | 书籍 | id, user_id, title, author, cover_url, question_count, mastered_count |
-| `prompt_templates` | 提示词模板 | id, user_id（NULL=系统模板）, name, question_type, content, is_default, is_system |
 | `questions` | 题目 | id, user_id, book_id, chapter_id（可空）, question, answer, question_type, category, options, correct_index, explanation, difficulty, mastery_level |
 | `users` | 用户 | id, username, password_hash, created_at |
 | `user_settings` | 用户设置 | user_id, dark_mode, zhipu_api_key, zhipu_model |

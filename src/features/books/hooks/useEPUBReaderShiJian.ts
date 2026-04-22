@@ -113,24 +113,12 @@ export function useEPUBReaderShiJian({
 
     rendition.on("selected", (cfiRange: string, contents: Contents) => {
       if (!huaCiKaiQiRef.current) return;
-      console.log('[selected事件] 原始CFI:', cfiRange);
       const selection = contents.window.getSelection();
       if (!selection || selection.isCollapsed) return;
       const selectedText = selection.toString().trim();
       if (!selectedText) return;
       
-      console.log('Selection rangeCount:', selection.rangeCount);
-      console.log('Selection toString:', selectedText);
-      
       const range = selection.getRangeAt(0);
-      
-      if (selection.rangeCount > 1) {
-        console.log('警告: 选区包含多个 range');
-        for (let i = 0; i < selection.rangeCount; i++) {
-          const r = selection.getRangeAt(i);
-          console.log(`Range ${i}:`, r.toString().substring(0, 50));
-        }
-      }
       
       let accurateCfiRange = cfiRange;
       try {
@@ -140,11 +128,7 @@ export function useEPUBReaderShiJian({
         let computedCfi = contents.cfiFromRange(range) || '';
         
         if (computedCfi) {
-          // 直接使用 epubjs 计算的 CFI，它是最准确的
           accurateCfiRange = computedCfi;
-          console.log('使用 epubjs cfiFromRange:', accurateCfiRange);
-        } else {
-          console.log('cfiFromRange 返回空，使用原始 CFI:', cfiRange);
         }
       } catch (error) {
         console.error('CFI 计算失败，使用原始值:', error);
@@ -202,8 +186,6 @@ export function useEPUBReaderShiJian({
       }
       
       setCurrentCfiRange(accurateCfiRange);
-      console.log('selected 事件 - 选中文本:', selectedText);
-      console.log('selected 事件 - CFI:', accurateCfiRange);
       setSelectedText(selectedText);
       if (xuanZeTimerRef.current) {
         clearTimeout(xuanZeTimerRef.current);
@@ -220,7 +202,7 @@ export function useEPUBReaderShiJian({
           try {
             rend.annotations.add('temp-selection', accurateCfiRange, {}, () => {}, 'temp-hl', { fill: 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' });
             linshiBiaoZhuCfiRef.current = accurateCfiRange;
-          } catch (e) { console.log('临时标注创建失败:', e); }
+          } catch (e) { console.error('临时标注创建失败:', e); }
         }
         xuanZeTimerRef.current = null;
       }, XUAN_ZE_YAN_CHI_MS);
@@ -309,12 +291,9 @@ export function useEPUBReaderShiJian({
 
       function handleIframeClick(e: Event) {
         var target = (e as any).target;
-        console.log('[DEBUG handleIframeClick] target:', target?.className || target?.tagName);
-        if (target && target.closest && target.closest('[data-biaoji]')) { console.log('[DEBUG handleIframeClick] 命中 data-biaoji，直接返回'); return; }
-        if (yiZhiXiaYiGeClickRef.current) { console.log('[DEBUG handleIframeClick] yiZhiXiaYiGeClick，直接返回'); yiZhiXiaYiGeClickRef.current = false; return; }
-        console.log('[DEBUG handleIframeClick] showMenuRef.current:', showMenuRef.current);
-        if (!showMenuRef.current) { console.log('[DEBUG handleIframeClick] 菜单未显示，直接返回'); return; }
-        console.log('[DEBUG handleIframeClick] 准备关闭菜单');
+        if (target && target.closest && target.closest('[data-biaoji]')) { return; }
+        if (yiZhiXiaYiGeClickRef.current) { yiZhiXiaYiGeClickRef.current = false; return; }
+        if (!showMenuRef.current) { return; }
         const rend = fanYeHeYeMa.renditionRef.current;
         if (rend && linshiBiaoZhuCfiRef.current) {
           try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}

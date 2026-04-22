@@ -196,6 +196,12 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     setShowXueXiCaiDan(false);
   }, [onFuShuXueXi]);
 
+  const handleParaphrase = useCallback((text: string) => {
+    setFuShuWenBen(text);
+    setShowFuShu(true);
+    setShowXueXiCaiDan(false);
+  }, []);
+
   const handleQuiz = useCallback(async (text: string) => {
     try {
       let annotationId = p.activeHuaXian?.id;
@@ -430,7 +436,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           onGetRendition={p.handleRendition} souSuoCi={p.souSuoCi} onSouSuoJieGuo={p.handleSouSuoJieGuo}
           selectedText={p.selectedText} showMenu={p.showMenu} selectionRect={p.selectionRect}
           firstLineRect={p.firstLineRect}
-          generating={p.generating} onCancel={p.handleCancel} onGenerateQuestion={p.handleGenerateQuestion}
+          onCancel={p.handleCancel}
           onHighlight={p.handleHighlight} onCopy={p.handleCopy}
           onShangYiYe={p.handlePrevPage} onXiaYiYe={p.handleNextPage} keJian={p.renditionJiuXu}
           darkMode={isDarkMode}
@@ -462,6 +468,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
             darkMode={isDarkMode}
             onExplain={handleExplain}
             onZiJiHuaFuShu={handleZiJiHuaFuShu}
+            onParaphrase={handleParaphrase}
             onClose={() => setShowXueXiCaiDan(false)}
           />
         )}
@@ -492,7 +499,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
           dangQianCfi={typeof p.location === 'string' ? p.location : ''} onZhangJieDianJi={handleZhangJieDianJi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
       {buju.daKaiDeChouTi === 'huaxian' && (
-        <BiJiChouTi highlights={p.highlights} bookId={bookId} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
+        <BiJiChouTi highlights={p.highlights} bookId={bookId} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} zhangJieLieBiao={buju.zhangJieLieBiao} />
       )}
       {buju.daKaiDeChouTi === 'chazhao' && (
         <ChaZhaoChouTi bookRef={p.bookRef} renditionRef={p.renditionRef} zhangJieLieBiao={buju.zhangJieLieBiao} onJump={handleChaZhaoTiaoZhuan} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />

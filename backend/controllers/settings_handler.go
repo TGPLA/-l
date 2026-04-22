@@ -12,7 +12,6 @@ import (
 
 type UpdateSettingsRequest struct {
 	DarkMode              *bool   `json:"dark_mode"`
-	ZhipuAPIKey           *string `json:"zhipu_api_key"`
 	ZhipuModel            *string `json:"zhipu_model"`
 	DifyAPIKey            *string `json:"dify_api_key"`
 	QuestionWorkflowUrl   *string `json:"question_workflow_url"`
@@ -31,7 +30,7 @@ func GetSettings(c *gin.Context) {
 		return
 	}
 
-	builtInApiKey := config.GetZhipuAPIKey("")
+	builtInApiKey := config.GetZhipuAPIKey()
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -39,7 +38,6 @@ func GetSettings(c *gin.Context) {
 			"id":                        settings.ID,
 			"user_id":                   settings.UserId,
 			"dark_mode":                 settings.DarkMode,
-			"zhipu_api_key":             settings.ZhipuAPIKey,
 			"zhipu_model":              settings.ZhipuModel,
 			"dify_api_key":              settings.DifyAPIKey,
 			"question_workflow_url":      settings.QuestionWorkflowUrl,
@@ -66,17 +64,12 @@ func UpdateSettings(c *gin.Context) {
 	var settings models.Settings
 	result := db.Where("user_id = ?", userId).First(&settings)
 	if result.Error == gorm.ErrRecordNotFound {
-		zhipuAPIKey := ""
-		if req.ZhipuAPIKey != nil {
-			zhipuAPIKey = *req.ZhipuAPIKey
-		}
 		zhipuModel := "glm-4-flash"
 		if req.ZhipuModel != nil {
 			zhipuModel = *req.ZhipuModel
 		}
 		settings = models.Settings{
 			UserId:                userId,
-			ZhipuAPIKey:           zhipuAPIKey,
 			ZhipuModel:            zhipuModel,
 		}
 		if req.DarkMode != nil {
@@ -97,9 +90,6 @@ func UpdateSettings(c *gin.Context) {
 
 		if req.DarkMode != nil {
 			updates["dark_mode"] = *req.DarkMode
-		}
-		if req.ZhipuAPIKey != nil {
-			updates["zhipu_api_key"] = *req.ZhipuAPIKey
 		}
 		if req.ZhipuModel != nil {
 			updates["zhipu_model"] = *req.ZhipuModel

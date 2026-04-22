@@ -68,9 +68,7 @@ export function useEPUBReaderJiChuHuo({
   }, [huaCiJiaoHu.handleCancel, externalSetShowMenu]);
 
   const {
-    generating,
     huaXianList,
-    handleGenerateQuestion,
     handleHuaXian,
     handleDeleteHuaXian,
     handleChangeYanSe,
@@ -112,7 +110,6 @@ export function useEPUBReaderJiChuHuo({
     selectedText: externalShowMenu !== undefined ? huaCiJiaoHu.selectedText : huaCiJiaoHu.selectedText,
     showMenu: externalShowMenu !== undefined ? externalShowMenu : huaCiJiaoHu.showMenu,
     selectionRect: externalShowMenu !== undefined ? huaCiJiaoHu.selectionRect : huaCiJiaoHu.selectionRect,
-    generating,
     huaXianList: huaXianList,
     huaCiKaiQi,
     setHuaCiKaiQi,
@@ -121,7 +118,6 @@ export function useEPUBReaderJiChuHuo({
     setSelectionRect: externalSetSelectionRect || huaCiJiaoHu.setSelectionRect,
     setCurrentCfiRange: externalSetCurrentCfiRange || huaCiJiaoHu.setCurrentCfiRange,
     handleCancel: guanBiCaiDan,
-    handleGenerateQuestion,
     handleHuaXian,
     handleDeleteHuaXian,
     handleChangeYanSe,

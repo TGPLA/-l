@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
+import type { NavItem } from 'epubjs';
 import { paraphraseService, type ParaphraseRecord } from '@shared/services/paraphraseService';
 import { showError } from '@shared/utils/common/ToastTiShi';
 
@@ -12,6 +13,7 @@ interface BiJiChouTiProps {
   onDelete: (id: string) => void;
   onJump: (huaXian: HuaXianXinXi) => void;
   onGuanBi: () => void;
+  zhangJieLieBiao?: NavItem[];
 }
 
 const YAN_SE_COLOR: Record<HuaXianYanSe, string> = {
@@ -23,11 +25,17 @@ const YAN_SE_COLOR: Record<HuaXianYanSe, string> = {
 
 type BiaoQian = 'huaxian' | 'fushu';
 
-export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi }: BiJiChouTiProps) {
+export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi, zhangJieLieBiao }: BiJiChouTiProps) {
   const [biaoQian, setBiaoQian] = useState<BiaoQian>('huaxian');
   const [fuShuJiLu, setFuShuJiLu] = useState<ParaphraseRecord[]>([]);
   const [jiaZaiZhong, setJiaZaiZhong] = useState(false);
   const [zhanKaiJiLu, setZhanKaiJiLu] = useState<Set<string>>(new Set());
+
+  function huoQuZhangJieMing(chapterId?: string): string {
+    if (!chapterId || !zhangJieLieBiao?.length) return '';
+    const zhang = zhangJieLieBiao.find(z => z.href.includes(chapterId) || z.id === chapterId);
+    return zhang?.label || '';
+  }
 
   const paiXuHouDeHuaXian = [...highlights].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -310,6 +318,17 @@ export function BiJiChouTi({ highlights, bookId, onDelete, onJump, onGuanBi }: B
                         <span style={{ fontSize: '0.9rem' }}>{leiXingTuBiao}</span>
                         {leiXingBiaoQian}
                       </span>
+                      {jiLu.type === 'understanding' && jiLu.chapter_id && huoQuZhangJieMing(jiLu.chapter_id) && (
+                        <span style={{
+                          fontSize: '0.72rem',
+                          color: '#9ca3af',
+                          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '6px',
+                        }}>
+                          {huoQuZhangJieMing(jiLu.chapter_id)}
+                        </span>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>

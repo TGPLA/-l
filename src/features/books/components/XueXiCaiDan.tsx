@@ -2,7 +2,7 @@
 // 智能学习菜单组件 - 简化版：AI智能理解选中内容
 
 import { useState, useEffect, useRef } from 'react';
-import { Brain, X } from 'lucide-react';
+import { Brain, X, RefreshCw } from 'lucide-react';
 
 interface XueXiCaiDanProps {
   show: boolean;
@@ -14,10 +14,12 @@ interface XueXiCaiDanProps {
   onClose: () => void;
   onExplain: (text: string) => void;
   onZiJiHuaFuShu: (text: string) => void;
+  onParaphrase?: (text: string) => void;
 }
 
 export function XueXiCaiDan({
   show, position, startPosition, text, onClose, onExplain,
+  onParaphrase,
 }: XueXiCaiDanProps) {
   const [animatedPosition, setAnimatedPosition] = useState(position);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -116,17 +118,23 @@ export function XueXiCaiDan({
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.6rem',
-    padding: '0.75rem 1rem',
+    padding: '0.6rem 0.875rem',
     border: 'none',
-    backgroundColor: '#8b5cf6',
     color: '#ffffff',
     cursor: 'pointer',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: 600,
     borderRadius: '0.5rem',
     transition: 'all 0.2s',
     width: '100%',
-    boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4)',
+    marginBottom: '0.5rem',
+  };
+
+  const handleParaphrase = () => {
+    if (onParaphrase) {
+      onParaphrase(text);
+      onClose();
+    }
   };
 
   const closeButtonStyle: React.CSSProperties = {
@@ -157,13 +165,24 @@ export function XueXiCaiDan({
         <div style={titleStyle}>智能学习</div>
         <button
           onClick={(e) => { e.stopPropagation(); handleXueXi(); }}
-          style={buttonStyle}
+          style={{ ...buttonStyle, backgroundColor: '#8b5cf6', boxShadow: '0 2px 8px rgba(139, 92, 246, 0.4)' }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#7c3aed'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#8b5cf6'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
         >
           <Brain size={18} />
-          AI理解 & 解释
+          AI概念解释
         </button>
+        {onParaphrase && (
+          <button
+            onClick={(e) => { e.stopPropagation(); handleParaphrase(); }}
+            style={{ ...buttonStyle, backgroundColor: '#10b981', boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#059669'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#10b981'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+          >
+            <RefreshCw size={18} />
+            AI改写
+          </button>
+        )}
       </div>
     </div>
   );

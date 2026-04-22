@@ -8,7 +8,6 @@ import { EPUBReaderPage } from '@features/books/components/EPUBReaderPage';
 import { FuShuXueXi } from '@features/practice/FuShuXueXi';
 import { GaiNianJieShi } from '@features/practice/GaiNianJieShi';
 import { SettingsPage } from '@features/user/components/SettingsPage';
-import { TiShiCiGuanLi } from '@features/user/components/TiShiCiGuanLi';
 import { AuthPage } from '@features/user/components/AuthPage';
 import { BackendUnavailable } from '@features/user/components/BackendUnavailable';
 import { authService } from '@shared/services/auth';
@@ -18,7 +17,7 @@ import { QuanPingJiaZai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { CuoWuBianJie } from '@shared/utils/common/CuoWuBianJie';
 import type { Book, Question } from '@infrastructure/types';
 
-type Page = 'shelf' | 'reader' | 'settings' | 'prompts' | 'concept-learning' | 'concept-explanation';
+type Page = 'shelf' | 'reader' | 'settings' | 'concept-learning' | 'concept-explanation';
 
 interface LearningSource {
   chapterId?: string;
@@ -110,15 +109,10 @@ function AppContent() {
     setCurrentPage('concept-explanation');
   };
 
+  
+
   const handleStartFuShuFromJieShi = (explanation: string) => {
-    // 从概念解释页面跳转到复述学习，保存 explanation
-    console.log('[DEBUG] handleStartFuShuFromJieShi called');
-    console.log('[DEBUG] Current learningSource:', learningSource);
-    console.log('[DEBUG] Explanation to pass:', explanation);
-    
     const newSource = learningSource ? { ...learningSource, explanation, isConcept: true } : null;
-    console.log('[DEBUG] New learningSource:', newSource);
-    
     setLearningSource(newSource);
     setCurrentPage('concept-learning');
   };
@@ -238,19 +232,7 @@ function AppContent() {
         zIndex: currentPage === 'settings' ? 2 : 0,
         overflowY: 'auto',
       }}>
-        {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} onOpenPrompts={() => setCurrentPage('prompts')} />}
-      </div>
-
-      {/* 提示词管理页面 */}
-      <div style={{ 
-        position: 'absolute', 
-        inset: 0, 
-        opacity: currentPage === 'prompts' ? 1 : 0, 
-        pointerEvents: currentPage === 'prompts' ? 'auto' : 'none',
-        transition: 'opacity 0.3s ease-in-out',
-        zIndex: currentPage === 'prompts' ? 3 : 0
-      }}>
-        {currentPage === 'prompts' && <TiShiCiGuanLi onBack={() => setCurrentPage('settings')} />}
+        {currentPage === 'settings' && <SettingsPage onBack={handleBackToShelf} />}
       </div>
     </div>
   );

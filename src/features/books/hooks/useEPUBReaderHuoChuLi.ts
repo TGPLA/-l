@@ -128,7 +128,6 @@ export function useEPUBReaderHuoChuLi({
     huaCiKaiQi,
     setHuaCiKaiQi,
     handleCancel: jiChu.handleCancel,
-    handleGenerateQuestion: jiChu.handleGenerateQuestion,
     handleHighlight: jiChu.handleHuaXian,
     handleDeleteHighlight: jiChu.handleDeleteHuaXian,
     handleCopy: jiChu.handleCopy,

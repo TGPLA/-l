@@ -52,16 +52,13 @@ func AIGenerateFromSelection(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	generatedQuestions, err := aiService.GenerateQuestionsFromSelection(req.SelectedText, req.QuestionType, req.Count)
@@ -153,16 +150,13 @@ func AIGenerateFromSelectionAuto(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	generatedQuestions, questionType, err := aiService.GenerateQuestionsAutoType(req.SelectedText, req.Count)
@@ -237,16 +231,13 @@ func AIAnalyzeText(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	result, err := aiService.AnalyzeText(req.Content)
@@ -278,16 +269,13 @@ func AIExplainConcept(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	result, err := aiService.ExplainConcept(req.Content)
@@ -319,16 +307,13 @@ func AIParaphraseText(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	result, err := aiService.ParaphraseText(req.Content)
@@ -364,16 +349,13 @@ func AIChapterUnderstanding(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	result, err := aiService.UnderstandChapter(req.Content)

@@ -16,15 +16,17 @@ services:
       - SERVER_PORT=8080
       - DB_HOST=${DB_HOST:-1Panel-mysql-OHb5}
       - DB_PORT=3306
-      - DB_USER=readrecall
-      - DB_PASSWORD=${DB_PASSWORD:-your_password}
+      - DB_USER=root
+      - DB_PASSWORD=mysql_h8TCKC
       - DB_NAME=reading_reflection
-      - JWT_SECRET=${JWT_SECRET:-your-jwt-secret-key-change-me}
+      - JWT_SECRET=readrecall-jwt-secret-2024
       - ZHIPU_API_KEY=dc9bf8defa2e47dd95a612fd16e9b3f0.hy4T83eTbaVcWKtY
       - ZHIPU_MODEL=glm-4-flash
     networks:
       - readrecall-network
       - 1panel-network
+    volumes:
+      - /data/readrecall/uploads:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s

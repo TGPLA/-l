@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"os"
 	"reading-reflection/controllers"
 	"reading-reflection/middleware"
 
@@ -11,8 +12,14 @@ import (
 func InitRoutes() *gin.Engine {
 	router := gin.Default()
 
+	allowOrigins := []string{"http://localhost:5173", "http://localhost:3000", "https://linyubo.top"}
+	
+	if os.Getenv("CORS_ALLOW_ALL") == "true" {
+		allowOrigins = []string{"*"}
+	}
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     allowOrigins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -43,18 +50,6 @@ func InitRoutes() *gin.Engine {
 			books.GET("/:id", controllers.GetBookDetail)
 			books.POST("/:id/upload-epub", controllers.UploadEPUB)
 			books.GET("/:id/epub", controllers.DownloadEPUB)
-		}
-
-		prompts := api.Group("/prompts")
-		prompts.Use(middleware.AuthMiddleware())
-		{
-			prompts.GET("", controllers.GetPromptTemplates)
-			prompts.GET("/type/:type", controllers.GetPromptTemplatesByType)
-			prompts.POST("", controllers.CreatePromptTemplate)
-			prompts.GET("/:id", controllers.GetPromptTemplateDetail)
-			prompts.PUT("/:id", controllers.UpdatePromptTemplate)
-			prompts.DELETE("/:id", controllers.DeletePromptTemplate)
-			prompts.POST("/init-system", controllers.InitSystemPrompts) // 临时接口：初始化系统模板
 		}
 
 		questions := api.Group("/questions")

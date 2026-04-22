@@ -120,7 +120,6 @@ export function useHuaXianChuTi({
   huaCiJiaoHuRef,
   activeHuaXian,
 }: UseHuaXianChuTiProps) {
-  const [generating, setGenerating] = useState(false);
   const [huaXianList, setHuaXianList] = useState<HuaXianXinXi[]>([]);
   const [loading, setLoading] = useState(true);
   const applyBiaoJiRef = useRef<(() => void) | null>(null);
@@ -321,24 +320,6 @@ export function useHuaXianChuTi({
     }
   }, [huaXianList]);
 
-  const handleGenerateQuestion = useCallback(async (selectedText: string) => {
-    if (!selectedText.trim()) return;
-    setGenerating(true);
-    try {
-      const annotationId = activeHuaXian?.id;
-      const { data, error } = await aiService.generateFromSelectionAuto(chapterId || '', bookId, selectedText, 1, annotationId);
-      if (error) {
-        showError('AI 出题失败：' + error);
-        return;
-      }
-      showSuccess(`已生成 1 道${data?.questionType || ''}题目`);
-      onQuestionGenerated?.();
-      onClose();
-    } finally {
-      setGenerating(false);
-    }
-  }, [chapterId, bookId, onClose, onQuestionGenerated, activeHuaXian]);
-
   const handleHuaXian = useCallback(async (selectedText: string, yanSe: HuaXianYanSe = 'blue', beiZhu: string = '') => {
     const cfiRange = huaCiJiaoHuRef?.getCurrentCfiRange?.() || '';
     console.log('[handleHuaXian] 收到CFI:', cfiRange);
@@ -456,10 +437,8 @@ export function useHuaXianChuTi({
   }, [onClose]);
 
   return {
-    generating,
     huaXianList,
     loading,
-    handleGenerateQuestion,
     handleHuaXian,
     handleDeleteHuaXian,
     handleChangeYanSe,

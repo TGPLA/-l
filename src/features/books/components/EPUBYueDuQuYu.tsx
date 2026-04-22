@@ -19,9 +19,6 @@ interface EPUBYueDuQuYuProps {
   showMenu: boolean;
   selectionRect: DOMRect | null;
   firstLineRect?: DOMRect | null;
-  generating: boolean;
-  onCancel: () => void;
-  onGenerateQuestion: (text: string, type: '名词解释' | '意图理解' | '生活应用') => void;
   onHighlight: (text: string) => void;
   onCopy: (text: string) => void;
   onShangYiYe?: () => void;
@@ -113,7 +110,7 @@ function QingChuKuNeiBuBianJu({ containerRef }: { containerRef: React.RefObject<
 export function EPUBYueDuQuYu({
   url, location, onLocationChanged, onGetRendition,
   souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
-  selectionRect, firstLineRect, generating, onCancel, onGenerateQuestion,
+  selectionRect, firstLineRect,
   onHighlight, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
   showEditMenu, editPosition, activeHuaXian, onCloseEdit,
   onDeleteHuaXian, onChangeYanSe, onCopyText, onFuShuXueXi, onGaiNianJieShi, onXueXi,
@@ -238,7 +235,7 @@ export function EPUBYueDuQuYu({
                   darkMode={darkMode}
                   onHuaXian={onHighlight}
                   onCopy={onCopy}
-                  onCancel={onCancel}
+                  
                   onXueXi={onXueXi}
                 />
               );

@@ -4,7 +4,6 @@ import type { Book, Question, Settings } from '@infrastructure/types';
 import { storage } from '@infrastructure/store';
 import { authService } from '@shared/services/auth';
 import { databaseService } from '@shared/services/database';
-import { promptService } from '@shared/services/promptService';
 import { AppContext } from './context';
 
 function getInitialSettings(): Settings {
@@ -27,12 +26,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (user) {
         setIsAuthenticated(true);
         databaseService.setUserId(user.id);
-        promptService.setUserId(user.id);
         loadUserData();
       } else {
         setIsAuthenticated(false);
         databaseService.setUserId('');
-        promptService.setUserId('');
         setBooks([]);
         setQuestions([]);
       }

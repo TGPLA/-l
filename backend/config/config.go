@@ -37,14 +37,8 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
-func GetZhipuAPIKey(userKey string) string {
-	if userKey != "" {
-		return userKey
-	}
-	if AppConfig.ZhipuAPIKey != "" {
-		return AppConfig.ZhipuAPIKey
-	}
-	return ""
+func GetZhipuAPIKey() string {
+	return AppConfig.ZhipuAPIKey
 }
 
 func LoadConfig() {
@@ -156,8 +150,9 @@ func InitDB() {
 	log.Println("🔍 检查并执行数据库迁移...")
 	if DB != nil {
 		migrateV5()
-		migrateV6()
-		AutoMigrate()
+		// migrateV6()
+		// AutoMigrate()
+		log.Println("⚠️  已跳过自动迁移，直接启动服务")
 	} else {
 		log.Println("⚠️  数据库未连接，跳过迁移")
 	}
@@ -182,8 +177,14 @@ func migrateV5() {
 }
 
 func migrateV6() {
-	DB.Exec("ALTER TABLE questions MODIFY COLUMN chapter_id CHAR(36) NULL")
-	log.Println("✅ questions.chapter_id 已设为可空")
+	var columnNull string
+	DB.Raw("SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema = ? AND table_name = 'questions' AND column_name = 'chapter_id'", AppConfig.DBName).Scan(&columnNull)
+	if columnNull == "NO" {
+		DB.Exec("ALTER TABLE questions MODIFY COLUMN chapter_id CHAR(36) NULL")
+		log.Println("✅ questions.chapter_id 已设为可空")
+	} else {
+		log.Println("✅ questions.chapter_id 已经是可空，跳过")
+	}
 }
 
 func AutoMigrate() {

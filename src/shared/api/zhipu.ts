@@ -136,13 +136,6 @@ ${keyPoints && keyPoints.length > 0 ? `重点内容：\n${keyPoints.join('\n')}\
 
 请严格按照要求的 JSON 格式输出${count}道题目。`;
 
-  console.log('智谱 AI Request:', {
-    url: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-    model: settings.zhipuModel || 'glm-4-flash',
-    difficulty,
-    count,
-  });
-
   let response;
   try {
     response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
@@ -175,8 +168,6 @@ ${keyPoints && keyPoints.length > 0 ? `重点内容：\n${keyPoints.join('\n')}\
     throw fetchError;
   }
 
-  console.log('智谱 AI Response status:', response.status, response.statusText);
-
   if (!response.ok) {
     const errorText = await response.text();
     console.error('智谱 AI Error response:', errorText);
@@ -191,8 +182,6 @@ ${keyPoints && keyPoints.length > 0 ? `重点内容：\n${keyPoints.join('\n')}\
 
   const data = await response.json();
   
-  console.log('Raw 智谱 AI response:', data);
-  
   if (!data.choices || data.choices.length === 0) {
     throw new Error('智谱 AI 返回了空响应');
   }
@@ -202,8 +191,6 @@ ${keyPoints && keyPoints.length > 0 ? `重点内容：\n${keyPoints.join('\n')}\
   if (!content) {
     throw new Error('智谱 AI 返回的内容为空');
   }
-
-  console.log('智谱 AI 返回的内容:', content);
 
   const parseJsonFromText = (text: string): ShortAnswerQuestion[] | null => {
     let jsonStr = text.trim();

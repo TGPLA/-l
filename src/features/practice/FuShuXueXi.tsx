@@ -45,17 +45,8 @@ export function FuShuXueXi({ bookId, content, explanation, isConcept = false, on
     setEvaluating(true);
     setError(null);
     
-    console.log('[DEBUG] handleEvaluate called');
-    console.log('[DEBUG] isConcept:', isConcept);
-    console.log('[DEBUG] content:', content);
-    console.log('[DEBUG] explanation:', explanation);
-    console.log('[DEBUG] userAnswer:', state.userAnswer);
-    
     if (isConcept && explanation) {
-      // 概念评价场景
-      console.log('[DEBUG] Calling evaluateConcept');
       const { data, error: apiError } = await aiService.evaluateConcept(content, explanation, state.userAnswer);
-      console.log('[DEBUG] evaluateConcept result:', { data, apiError });
       
       if (apiError || !data) {
         setError(apiError || '评价失败');
@@ -65,10 +56,7 @@ export function FuShuXueXi({ bookId, content, explanation, isConcept = false, on
       }
       setState(prev => ({ ...prev, conceptEvaluation: data.evaluation }));
     } else {
-      // 意图理解评价场景
-      console.log('[DEBUG] Calling evaluateIntention');
       const { data, error: apiError } = await aiService.evaluateIntention(content, state.userAnswer);
-      console.log('[DEBUG] evaluateIntention result:', { data, apiError });
       
       if (apiError || !data) {
         setError(apiError || '评价失败');

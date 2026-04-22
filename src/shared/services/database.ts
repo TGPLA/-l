@@ -185,14 +185,11 @@ class DatabaseService {
     try {
       this.checkAuth();
 
-      console.log('🔄 uploadEPUB 开始:', { bookId, fileName: file.name, fileSize: file.size });
-      
       const token = authService.getToken();
       const formData = new FormData();
       formData.append('epub_file', file);
 
       const url = `${API_BASE}/books/${bookId}/upload-epub`;
-      console.log('🌐 请求 URL:', url);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -201,8 +198,6 @@ class DatabaseService {
         },
         body: formData,
       });
-      
-      console.log('📡 响应状态:', response.status);
 
       if (response.status === 401) {
         console.warn('认证失败，清除本地认证状态');
@@ -231,7 +226,6 @@ class DatabaseService {
     let 标准化路径 = epubFilePath.replace(/\\/g, '/');
     标准化路径 = 标准化路径.replace(/^\/+/, '');
     const finalUrl = `${baseUrl}/${标准化路径}`;
-    console.log('🔗 getEPUBUrl:', { epubFilePath, 标准化路径, finalUrl });
     return finalUrl;
   }
 

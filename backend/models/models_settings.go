@@ -13,7 +13,6 @@ type Settings struct {
 	ID                    string    `gorm:"type:char(36);primaryKey" json:"id"`
 	UserId                string    `gorm:"type:char(36);uniqueIndex;not null" json:"user_id"`
 	DarkMode              bool      `gorm:"default:false" json:"dark_mode"`
-	ZhipuAPIKey           string    `gorm:"type:varchar(255)" json:"zhipu_api_key"`
 	ZhipuModel            string    `gorm:"type:varchar(100);default:'glm-4-flash'" json:"zhipu_model"`
 	DifyAPIKey            string    `gorm:"type:varchar(255)" json:"dify_api_key"`
 	QuestionWorkflowUrl   string    `gorm:"type:varchar(512)" json:"question_workflow_url"`

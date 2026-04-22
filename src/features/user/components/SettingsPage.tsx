@@ -12,10 +12,9 @@ import { showSuccess } from '@shared/utils/common/ToastTiShi';
 
 interface SettingsPageProps {
   onBack: () => void;
-  onOpenPrompts: () => void;
 }
 
-export function SettingsPage({ onBack, onOpenPrompts }: SettingsPageProps) {
+export function SettingsPage({ onBack }: SettingsPageProps) {
   const { settings, updateSettings } = useApp();
   const [formData, setFormData] = useState<Settings>(settings);
   const formDataRef = useRef<Settings>(formData);
@@ -116,39 +115,15 @@ export function SettingsPage({ onBack, onOpenPrompts }: SettingsPageProps) {
             </div>
           </div>
 
-          <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }), cursor: 'pointer' }} onClick={onOpenPrompts}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: '0.25rem' }}>📝 提示词模板管理</h2>
-                <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }}>管理三类 AI 出题的提示词模板</p>
-              </div>
-              <svg style={{ width: '1.25rem', height: '1.25rem', color: settings.darkMode ? '#9ca3af' : '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </div>
+          
 
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
-            <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>智谱 AI API 配置</h2>
+            <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>智谱 AI</h2>
             <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>系统已内置智谱 AI API Key，开箱即用</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: settings.darkMode ? '#064e3b' : '#d1fae5', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ color: '#10b981', fontSize: '1.25rem' }}>✓</span>
-                <span style={{ color: settings.darkMode ? '#6ee7b7' : '#065f46', fontWeight: 500 }}>已启用内置智谱 AI API Key</span>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: settings.darkMode ? '#e5e7eb' : '#374151', marginBottom: '0.25rem' }}>模型选择</label>
-                <select value={formData.zhipuModel || 'glm-4-flash'} onChange={(e) => setFormData({ ...formData, zhipuModel: e.target.value })} style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.875rem', backgroundColor: settings.darkMode ? '#374151' : '#ffffff', color: settings.darkMode ? '#f9fafb' : '#111827' }}>
-                  <option value="glm-4-flash">GLM-4-Flash (快速)</option>
-                  <option value="glm-4">GLM-4 (标准)</option>
-                  <option value="glm-4-plus">GLM-4-Plus (增强)</option>
-                </select>
-                <p style={{ fontSize: '0.75rem', color: settings.darkMode ? '#6b7280' : '#9ca3af', marginTop: '0.25rem' }}>GLM-4-Flash 速度快且成本低，GLM-4-Plus 效果最好</p>
-              </div>
+            <div style={{ padding: '0.75rem 1rem', backgroundColor: settings.darkMode ? '#064e3b' : '#d1fae5', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ color: '#10b981', fontSize: '1.25rem' }}>✓</span>
+              <span style={{ color: settings.darkMode ? '#6ee7b7' : '#065f46', fontWeight: 500 }}>已启用内置智谱 AI API Key</span>
             </div>
-            <button onClick={handleSave} style={{ marginTop: '1.5rem', width: '100%', padding: '0.5rem 1rem', backgroundColor: '#3b82f6', color: '#ffffff', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 500 }}>
-              {saved ? '✓ 已保存' : '保存设置'}
-            </button>
           </div>
 
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: '1.5rem' }}>

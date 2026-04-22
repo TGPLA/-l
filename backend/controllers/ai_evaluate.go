@@ -38,16 +38,13 @@ func AIEvaluateAnswer(c *gin.Context) {
 	var userSettings models.Settings
 	db.Where("user_id = ?", userId).First(&userSettings)
 
-	apiKey := config.GetZhipuAPIKey(userSettings.ZhipuAPIKey)
+	apiKey := config.GetZhipuAPIKey()
 	if apiKey == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "请先在设置页面配置智谱 AI API Key"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "系统未配置智谱 AI API Key"})
 		return
 	}
 
-	model := userSettings.ZhipuModel
-	if model == "" {
-		model = config.AppConfig.ZhipuModel
-	}
+	model := config.AppConfig.ZhipuModel
 
 	aiService := services.NewZhipuAIService(apiKey, model)
 	evaluation, err := aiService.EvaluateAnswer(question.Chapter.Content, question.Question, req.UserAnswer)

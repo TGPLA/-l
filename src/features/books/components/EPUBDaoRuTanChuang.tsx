@@ -44,7 +44,6 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks,
     setError(null);
 
     try {
-      console.log('📚 步骤 1: 创建书籍...');
       const { book: newBook, error: createError } = await databaseService.createBook({
         title: jianYuanShuJu.title,
         author: jianYuanShuJu.author,
@@ -52,23 +51,18 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks,
       } as any);
 
       if (createError || !newBook) throw new Error(createError?.message || '创建书籍失败');
-      console.log('✅ 书籍创建成功:', newBook);
-      console.log('📖 书籍详情:', { id: newBook.id, title: newBook.title, userId: newBook.userId });
 
-      console.log('⏳ 等待 500ms 确保书籍创建完成...');
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      console.log('📤 步骤 2: 上传 EPUB...', newBook.id);
       const { error: uploadError } = await databaseService.uploadEPUB(newBook.id, selectedFile);
       if (uploadError) throw new Error(uploadError?.message || '上传 EPUB 失败');
-      console.log('✅ EPUB 上传成功');
 
       showSuccess('EPUB 导入成功！');
       handleReset();
       onRefreshBooks();
       onConfirm();
     } catch (err) {
-      console.error('❌ 导入失败:', err);
+      console.error('导入失败:', err);
       setError(err instanceof Error ? err.message : '导入失败');
       showError(err instanceof Error ? err.message : '导入失败');
       setStep('confirm');

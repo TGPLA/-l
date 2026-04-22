@@ -3,7 +3,6 @@ export * from './book/book';
 export * from './book/chapter';
 export * from './book/paragraph';
 export * from './book/question';
-export * from './book/prompt';
 export * from './book/practiceRecord';
 export * from './config/settings';
 export * from './other/practice';
