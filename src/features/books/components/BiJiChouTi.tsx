@@ -2,7 +2,8 @@
 // 笔记抽屉面板 - 划线笔记和复述记录，标签页切换
 
 import React, { useState, useEffect } from 'react';
-import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
+import type { HuaXianYanSe } from '../hooks/useHuaXianChuTi';
+import type { HuaXianXinXi } from '@shared/services/annotationService';
 import type { NavItem } from 'epubjs';
 import { paraphraseService, type ParaphraseRecord } from '@shared/services/paraphraseService';
 import { showError } from '@shared/utils/common/ToastTiShi';

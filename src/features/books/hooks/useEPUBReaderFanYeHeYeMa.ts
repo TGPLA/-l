@@ -58,47 +58,15 @@ export function useEPUBReaderFanYeHeYeMa({
       return;
     }
     
-    // 获取当前 spine 位置
-    const book = (rendition as any).book;
-    const currentLocation = rendition.location;
-    const currentHref = currentLocation?.start?.href || '';
-    
-    // 直接使用 spine 计算下一页
-    book.loaded.spine.then((spine: any) => {
-      const spineItems = spine?.items || [];
-      if (spineItems.length === 0) {
-        return;
+    // 优先使用 rendition.next() 翻到下一页（处理章节内容跨页的情况）
+    rendition.next().then(() => {
+      const currentLocation = rendition.location;
+      const currentHref = currentLocation?.start?.href || '';
+      if (currentHref && saveImmediately) {
+        saveImmediately(currentHref);
       }
-      
-      const currentHrefBase = currentHref.split('#')[0];
-      let currentIndex = -1;
-      
-      for (let i = 0; i < spineItems.length; i++) {
-        const itemHrefBase = (spineItems[i].href || '').split('#')[0];
-        if (itemHrefBase === currentHrefBase) {
-          currentIndex = i;
-          break;
-        }
-      }
-      
-      // 如果不是最后一章，跳转到下一章
-      if (currentIndex >= 0 && currentIndex < spineItems.length - 1) {
-        const nextItem = spineItems[currentIndex + 1];
-        rendition.display(nextItem.href).then(() => {
-          if (nextItem.href && saveImmediately) {
-            saveImmediately(nextItem.href);
-          }
-        });
-      } else if (currentIndex === -1) {
-        // 当前页面不在 spine 中（如封面），直接跳转到第一章
-        if (spineItems.length > 0) {
-          rendition.display(spineItems[0].href).then(() => {
-            if (spineItems[0].href && saveImmediately) {
-              saveImmediately(spineItems[0].href);
-            }
-          });
-        }
-      }
+    }).catch((error) => { 
+      console.error('下一页出错:', error); 
     });
   }, [saveImmediately]);
 

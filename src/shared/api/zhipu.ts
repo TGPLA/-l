@@ -345,12 +345,19 @@ JSON 格式：
 
   const parsed = parseJsonFromText(content);
   if (parsed) {
+    const vocabCards = parsed.vocabularyCards;
+    const isValidVocabularyCards = Array.isArray(vocabCards) && vocabCards.every(
+      (card): card is { term: string; definition: string; context: string } =>
+        typeof card === 'object' && card !== null &&
+        'term' in card && 'definition' in card && 'context' in card
+    );
+
     return {
-      evaluation: parsed.evaluation || '',
-      supplement: parsed.supplement || '',
+      evaluation: (parsed.evaluation as string) || '',
+      supplement: (parsed.supplement as string) || '',
       translation: parsed.translation && typeof parsed.translation === 'string' ? parsed.translation : undefined,
       scenario: parsed.scenario && typeof parsed.scenario === 'string' ? parsed.scenario : undefined,
-      vocabularyCards: parsed.vocabularyCards || undefined,
+      vocabularyCards: isValidVocabularyCards ? vocabCards : undefined,
     };
   }
 

@@ -19,7 +19,7 @@ interface XueXiCaiDanProps {
 
 export function XueXiCaiDan({
   show, position, startPosition, text, onClose, onExplain,
-  onParaphrase,
+  onZiJiHuaFuShu, onParaphrase,
 }: XueXiCaiDanProps) {
   const [animatedPosition, setAnimatedPosition] = useState(position);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -137,6 +137,11 @@ export function XueXiCaiDan({
     }
   };
 
+  const handleZiJiHuaFuShu = () => {
+    onZiJiHuaFuShu(text);
+    onClose();
+  };
+
   const closeButtonStyle: React.CSSProperties = {
     position: 'absolute',
     top: '8px',
@@ -171,6 +176,15 @@ export function XueXiCaiDan({
         >
           <Brain size={18} />
           AI概念解释
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleZiJiHuaFuShu(); }}
+          style={{ ...buttonStyle, backgroundColor: '#3b82f6', boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#2563eb'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = '#3b82f6'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}
+        >
+          <Brain size={18} />
+          考考我
         </button>
         {onParaphrase && (
           <button

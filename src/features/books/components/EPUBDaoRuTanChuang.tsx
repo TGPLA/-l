@@ -76,7 +76,7 @@ export function EPUBDaoRuTanChuang({ isOpen, onClose, onConfirm, onRefreshBooks,
   const handleError = (errorMsg: string) => { setError(errorMsg); setLoading(false); };
 
   const modalStyle = { position: 'fixed' as const, inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: '1rem' };
-  const contentStyle = { backgroundColor: darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', maxWidth: '42rem', width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '1.5rem' };
+  const contentStyle = { backgroundColor: darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', maxWidth: '42rem', width: '100%', maxHeight: '85vh', overflowY: 'auto' as const, padding: '1.5rem' };
   const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' };
   const titleStyle = { fontSize: '1.25rem', fontWeight: 700, color: darkMode ? '#f9fafb' : '#111827' };
   const closeButtonStyle = { color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer' };

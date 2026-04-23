@@ -17,10 +17,15 @@ interface ZhangJieLiJieProps {
 
 export function ZhangJieLiJie({ chapterContent, bookId, chapterId, onClose }: ZhangJieLiJieProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ summary: string; keyPoints: string; paraphrase: string } | null>(null);
+  const [result, setResult] = useState<{ summary: string; keyPoints: string } | null>(null);
+  const [userParaphrase, setUserParaphrase] = useState('');
+  const [evaluation, setEvaluation] = useState<{ correct: string; incorrect: string; incomplete: string } | null>(null);
+  const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
     huoQuZhangJieLiJie();
+    setUserParaphrase('');
+    setEvaluation(null);
   }, [chapterContent]);
 
   const huoQuZhangJieLiJie = async () => {
@@ -45,24 +50,53 @@ export function ZhangJieLiJie({ chapterContent, bookId, chapterId, onClose }: Zh
 
   const handleChongXin = () => {
     huoQuZhangJieLiJie();
+    setUserParaphrase('');
+    setEvaluation(null);
+  };
+
+  const handleEvaluate = async () => {
+    if (!userParaphrase.trim()) return;
+    setEvaluating(true);
+    try {
+      const { data, error } = await aiService.evaluateIntention(result!.summary, userParaphrase);
+      if (error) {
+        showError('评价失败：' + error);
+        return;
+      }
+      if (data) {
+        setEvaluation(data);
+        showSuccess('评价完成');
+      }
+    } finally {
+      setEvaluating(false);
+    }
   };
 
   const handleWanCheng = async () => {
-    if (result?.paraphrase) {
-      try {
-        await paraphraseService.createParaphrase({
-          book_id: bookId,
-          chapter_id: chapterId,
-          type: 'understanding',
-          original_text: chapterContent.substring(0, 2000),
-          paraphrased_text: result.paraphrase,
-        });
-      } catch (e) {
-        console.error('保存复述记录失败:', e);
-      }
+    if (!userParaphrase.trim()) {
+      showError('请先复述');
+      return;
     }
-    showSuccess('章节理解完成！');
-    onClose();
+    if (!evaluation) {
+      showError('请先提交评价');
+      return;
+    }
+    try {
+      const aiEvaluation = `✓ 说得对的地方：\n${evaluation.correct}${evaluation.incorrect ? '\n\n✗ 说得不对的地方：\n' + evaluation.incorrect : ''}${evaluation.incomplete ? '\n\n⚠ 说得不够的地方：\n' + evaluation.incomplete : ''}`;
+      await paraphraseService.createParaphrase({
+        book_id: bookId,
+        chapter_id: chapterId,
+        type: 'understanding',
+        original_text: chapterContent.substring(0, 2000),
+        paraphrased_text: userParaphrase,
+        ai_evaluation: aiEvaluation,
+      });
+      showSuccess('章节理解完成！');
+      onClose();
+    } catch (e) {
+      console.error('保存复述记录失败:', e);
+      showError('保存失败');
+    }
   };
 
   return (
@@ -194,7 +228,7 @@ export function ZhangJieLiJie({ chapterContent, bookId, chapterId, onClose }: Zh
                 </div>
               </div>
 
-              {/* 用自己话描述 */}
+              {/* 用户复述 */}
               <div style={{
                 backgroundColor: 'rgba(139, 92, 246, 0.08)',
                 borderRadius: '12px',
@@ -209,17 +243,141 @@ export function ZhangJieLiJie({ chapterContent, bookId, chapterId, onClose }: Zh
                     margin: 0,
                     color: 'var(--zhu-yao-wen-zi)',
                   }}>
-                    用自己话描述
+                    考考我
                   </h3>
                 </div>
-                <p style={{
-                  fontSize: '14px',
-                  lineHeight: '1.7',
-                  margin: 0,
-                  color: 'var(--zhu-yao-wen-zi)',
-                }}>
-                  {result.paraphrase}
-                </p>
+                {!evaluation ? (
+                  <>
+                    <p style={{
+                      fontSize: '13px',
+                      color: 'var(--ci-yao-wen-zi)',
+                      marginBottom: '12px',
+                    }}>
+                      看完了吗？试着用自己的话复述一下
+                    </p>
+                    <textarea
+                      value={userParaphrase}
+                      onChange={(e) => setUserParaphrase(e.target.value)}
+                      placeholder="读完这一章，你学到了什么？"
+                      style={{
+                        width: '100%',
+                        minHeight: '100px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--bian-kuang)',
+                        backgroundColor: 'var(--bei-jing)',
+                        color: 'var(--zhu-yao-wen-zi)',
+                        fontSize: '14px',
+                        lineHeight: '1.6',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                    <button
+                      onClick={handleEvaluate}
+                      disabled={!userParaphrase.trim() || evaluating || loading}
+                      style={{
+                        marginTop: '12px',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        backgroundColor: !userParaphrase.trim() || evaluating ? '#9ca3af' : '#8b5cf6',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: !userParaphrase.trim() || evaluating ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {evaluating ? 'AI评价中...' : '提交复述'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{
+                      backgroundColor: 'var(--bei-jing)',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      marginBottom: '12px',
+                    }}>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        marginBottom: '8px',
+                        color: 'var(--ci-yao-wen-zi)',
+                      }}>
+                        你的回答
+                      </p>
+                      <p style={{
+                        fontSize: '14px',
+                        lineHeight: '1.7',
+                        color: 'var(--zhu-yao-wen-zi)',
+                        whiteSpace: 'pre-wrap',
+                      }}>
+                        {userParaphrase}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        marginBottom: '8px',
+                        color: 'var(--ci-yao-wen-zi)',
+                      }}>
+                        AI评价
+                      </p>
+                      {evaluation.correct && (
+                        <div style={{
+                          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          marginBottom: '8px',
+                        }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#22c55e', marginBottom: '4px' }}>✓ 说得对的地方</p>
+                          <p style={{ fontSize: '14px', lineHeight: '1.7', color: 'var(--zhu-yao-wen-zi)' }}>{evaluation.correct}</p>
+                        </div>
+                      )}
+                      {evaluation.incorrect && (
+                        <div style={{
+                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          marginBottom: '8px',
+                        }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#ef4444', marginBottom: '4px' }}>✗ 说得不对的地方</p>
+                          <p style={{ fontSize: '14px', lineHeight: '1.7', color: 'var(--zhu-yao-wen-zi)' }}>{evaluation.incorrect}</p>
+                        </div>
+                      )}
+                      {evaluation.incomplete && (
+                        <div style={{
+                          backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                          padding: '12px',
+                          borderRadius: '8px',
+                        }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: '#f59e0b', marginBottom: '4px' }}>⚠ 说得不够的地方</p>
+                          <p style={{ fontSize: '14px', lineHeight: '1.7', color: 'var(--zhu-yao-wen-zi)' }}>{evaluation.incomplete}</p>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setUserParaphrase('');
+                        setEvaluation(null);
+                      }}
+                      style={{
+                        marginTop: '12px',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--bian-kuang)',
+                        backgroundColor: 'transparent',
+                        color: 'var(--zhu-yao-wen-zi)',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      重新复述
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ) : null}

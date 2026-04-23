@@ -148,7 +148,7 @@ export function FuShuXueXi({ bookId, content, explanation, isConcept = false, on
             <textarea
               value={state.userAnswer}
               onChange={(e) => setState(prev => ({ ...prev, userAnswer: e.target.value }))}
-              placeholder="读完之后，用你自己的话怎么说？"
+              placeholder="读完之后你自己复述一下试试看"
               disabled={evaluating}
               style={{ width: '100%', minHeight: '8rem', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '0.5rem', fontSize: '0.9375rem', resize: 'vertical', backgroundColor: evaluating ? '#f3f4f6' : '#ffffff', fontFamily: 'inherit', lineHeight: 1.6 }}
             />

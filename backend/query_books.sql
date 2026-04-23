@@ -1,0 +1,1 @@
+SELECT id, title, epub_file_path FROM books WHERE epub_file_path LIKE '%f4b69de31a62%';

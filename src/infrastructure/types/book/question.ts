@@ -28,6 +28,7 @@ export interface Question {
   answerStatus?: AnswerStatus;
   answeredAt?: number;
   userAnswer?: string;
+  explanation?: string;
   category?: 'standard' | 'concept';
   createdAt: number;
   updatedAt?: number;
