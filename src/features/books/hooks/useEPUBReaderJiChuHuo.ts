@@ -29,7 +29,7 @@ interface UseEPUBReaderJiChuHuoProps {
 export function useEPUBReaderJiChuHuo({ 
   bookId, 
   chapterId, 
-  onParagraphCreated,
+  _onParagraphCreated,
   onQuestionGenerated,
   renditionRef,
   bookRef,

@@ -21,7 +21,8 @@ export function useEPUBReaderFanYeHeYeMa({
   externalRenditionRef,
   saveImmediately,
 }: UseEPUBReaderFanYeHeYeMaProps) {
-  const renditionRef = externalRenditionRef || useRef<Rendition | undefined>(undefined);
+  const _renditionRef = useRef<Rendition | undefined>(undefined);
+  const renditionRef = externalRenditionRef || _renditionRef;
   const tocRef = useRef<NavItem[]>([]);
   const [renditionJiuXu, setRenditionJiuXu] = useState(false);
 

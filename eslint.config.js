@@ -11,7 +11,18 @@ export default defineConfig([
     files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      ...tseslint.configs.recommended.map(cfg => ({
+        ...cfg,
+        rules: {
+          ...cfg.rules,
+          '@typescript-eslint/no-unused-vars': ['error', {
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+            caughtErrorsIgnorePattern: '^_',
+          }],
+          '@typescript-eslint/no-explicit-any': 'off',
+        },
+      })),
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],

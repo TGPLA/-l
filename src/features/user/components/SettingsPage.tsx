@@ -48,7 +48,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
       .catch(() => setVersion('未知'));
   }, []);
 
-  const handleSave = () => {
+  const _handleSave = () => {
     updateSettings(formData);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

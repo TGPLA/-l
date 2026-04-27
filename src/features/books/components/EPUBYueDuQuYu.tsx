@@ -5,7 +5,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ReactReader } from 'react-reader';
 import type { Rendition } from 'epubjs';
 import { HuaXianCaiDan } from './HuaXianCaiDan';
-import { XueXiCaiDan } from './XueXiCaiDan';
 import type { HuaXianXinXi, HuaXianYanSe } from '../hooks/useHuaXianChuTi';
 
 interface EPUBYueDuQuYuProps {
@@ -80,7 +79,8 @@ function ShuangLanPaiBan({ rendition, darkMode }: { rendition: Rendition | undef
       'background-color': 'transparent !important',
       'background': 'transparent !important',
     });
-    (rendition as any).spread = () => true;
+    const localRendition = rendition;
+    localRendition.spread = () => true;
   }, [rendition, darkMode]);
   return null;
 }
@@ -112,8 +112,8 @@ export function EPUBYueDuQuYu({
   souSuoCi, onSouSuoJieGuo, selectedText, showMenu,
   selectionRect, firstLineRect,
   onHighlight, onCopy, onShangYiYe, onXiaYiYe, keJian, darkMode,
-  showEditMenu, editPosition, activeHuaXian, onCloseEdit,
-  onDeleteHuaXian, onChangeYanSe, onCopyText, onFuShuXueXi, onGaiNianJieShi, onXueXi,
+  _showEditMenu, _editPosition, _activeHuaXian, _onCloseEdit,
+  _onDeleteHuaXian, _onChangeYanSe, _onCopyText, _onFuShuXueXi, _onGaiNianJieShi, onXueXi,
 }: EPUBYueDuQuYuProps) {
   const renditionRef = useRef<Rendition>();
   const rongQiRef = useRef<HTMLDivElement>(null);

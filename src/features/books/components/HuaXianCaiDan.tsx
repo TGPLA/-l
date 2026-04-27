@@ -20,7 +20,7 @@ export function HuaXianCaiDan({
   selectedText,
   position,
   showMenu,
-  darkMode,
+  _darkMode,
   showCaretUp,
   onHuaXian,
   onCopy,

@@ -21,7 +21,7 @@ export function KongZhuangTai({
   anNiu,
   darkMode = false,
 }: KongZhuangTaiProps) {
-  const beiJingYanSe = darkMode ? '#1f2937' : '#ffffff';
+  const _beiJingYanSe = darkMode ? '#1f2937' : '#ffffff';
   const wenBenYanSe = darkMode ? '#f9fafb' : '#111827';
   const ciJiYanSe = darkMode ? '#9ca3af' : '#6b7280';
 

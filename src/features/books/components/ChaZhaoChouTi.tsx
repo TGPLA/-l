@@ -2,7 +2,8 @@
 // 查找抽屉主视图 - 整合所有子组件
 
 import React, { useCallback } from 'react';
-import type { NavItem } from 'epubjs';
+import type { NavItem, Rendition } from 'epubjs';
+import type { Book } from '@infrastructure/types';
 import { useChaZhaoChouTi } from '../hooks/useChaZhaoChouTi';
 import { ChaZhaoChouTiTouBu } from './ChaZhaoChouTiTouBu';
 import { ChaZhaoChouTiLieBiao } from './ChaZhaoChouTiLieBiao';
@@ -17,8 +18,8 @@ interface SearchResult {
 }
 
 interface ChaZhaoChouTiProps {
-  bookRef: React.RefObject<any>;
-  renditionRef: React.RefObject<any>;
+  bookRef: React.RefObject<Book>;
+  renditionRef: React.RefObject<Rendition>;
   zhangJieLieBiao: NavItem[];
   onJump: (cfi: string, keyword?: string, onlyOne?: boolean, weiZhi?: number) => void;
   onGuanBi: () => void;
@@ -30,10 +31,10 @@ const PANEL_STYLE = {
   animation: 'slideInRight 0.25s ease-out'
 };
 
-export function ChaZhaoChouTi({ bookRef, renditionRef, zhangJieLieBiao, onJump, onGuanBi }: ChaZhaoChouTiProps) {
+export function ChaZhaoChouTi({ bookRef, onJump, onGuanBi }: Omit<ChaZhaoChouTiProps, 'renditionRef' | 'zhangJieLieBiao'>) {
   const { input, setInput, results, loading, searched, inputRef, dangQianSuoYin, shangYiGe, xiaYiGe } = useChaZhaoChouTi(bookRef);
 
-  const handleJump = useCallback((result: SearchResult, index: number) => {
+  const handleJump = useCallback((result: SearchResult) => {
     onJump(result.cfi, input, false);
     onGuanBi();
   }, [onJump, onGuanBi, input]);

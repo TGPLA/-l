@@ -5,7 +5,6 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Rendition } from 'epubjs';
-import { aiService } from '@shared/services/aiService';
 import { showError, showSuccess } from '@shared/utils/common/ToastTiShi';
 import { annotationService, type HuaXianXinXi } from '@shared/services/annotationService';
 
@@ -114,11 +113,11 @@ export function useHuaXianChuTi({
   bookId,
   chapterId,
   onClose,
-  onQuestionGenerated,
+  _onQuestionGenerated,
   renditionRef,
-  bookRef,
+  _bookRef,
   huaCiJiaoHuRef,
-  activeHuaXian,
+  _activeHuaXian,
 }: UseHuaXianChuTiProps) {
   const [huaXianList, setHuaXianList] = useState<HuaXianXinXi[]>([]);
   const [loading, setLoading] = useState(true);
@@ -293,7 +292,7 @@ export function useHuaXianChuTi({
             } catch (e) { console.warn('annotations.add 失败:', e, 'CFI:', fixedCfi); }
             try {
               baoGuaSpan(r, fixedCfi, cls, h.id);
-            } catch (e) { }
+            } catch (_e) { /* 忽略单行高亮失败 */ }
           });
         } finally {
           isApplying = false;

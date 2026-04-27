@@ -22,7 +22,7 @@ import '../styles/YueDuSeCai.css';
 import { aiService } from '@shared/services/aiService';
 import { showSuccess } from '@shared/utils/common/ToastTiShi';
 import { questionService } from '@shared/services/questionService';
-import { paraphraseService } from '@shared/services/paraphraseService';
+
 
 interface EPUBReaderProps {
   url: string;
@@ -35,7 +35,7 @@ interface EPUBReaderProps {
   onGaiNianJieShi?: (text: string) => void;
 }
 
-export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagraphCreated, onFuShuXueXi, onGaiNianJieShi }: EPUBReaderProps) {
+export function EPUBReader({ url, _darkMode, onClose, bookId, chapterId, onParagraphCreated, onFuShuXueXi, onGaiNianJieShi }: EPUBReaderProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [showLianXiMianBan, setShowLianXiMianBan] = useState(false);
   const [bookInfo, setBookInfo] = useState<Partial<Book>>({ id: bookId, title: '' });
@@ -85,14 +85,14 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
     rendition.display(huaXian.cfiRange).then(() => {
       showInfo('已跳转到划线位置');
-    }).catch((e) => {
+    }).catch((_e) => {
       const spine = rendition.book.spine;
       const spineItems = (spine as any).spineItems || [];
       
       if (spineItems.length > 0) {
         rendition.display(spineItems[0].href).then(() => {
           showInfo('已跳转到第一章节，请手动查找');
-        }).catch((e2) => {
+        }).catch((_e2) => {
           showInfo('跳转失败，请通过目录查找');
         });
       } else {
@@ -183,7 +183,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     setShowXueXiCaiDan(false);
   }, [onGaiNianJieShi]);
 
-  const handleAIFuShu = useCallback((text: string) => {
+  const _handleAIFuShu = useCallback((text: string) => {
     setFuShuWenBen(text);
     setShowFuShu(true);
     setShowXueXiCaiDan(false);
@@ -202,7 +202,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
     setShowXueXiCaiDan(false);
   }, []);
 
-  const handleQuiz = useCallback(async (text: string) => {
+  const _handleQuiz = useCallback(async (text: string) => {
     try {
       let annotationId = p.activeHuaXian?.id;
       if (!annotationId && text) {
@@ -340,7 +340,7 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
               let node: Node | null;
               const textNodes: Node[] = [];
               
-              while (node = walker.nextNode()) {
+              while ((node = walker.nextNode())) {
                 textNodes.push(node);
               }
 
@@ -394,7 +394,9 @@ export function EPUBReader({ url, darkMode, onClose, bookId, chapterId, onParagr
 
               if (gaoLiangCount > 0) {
                 if (onlyOne && gaoLiangCount === 0) {
+                  /* 不执行任何操作 */
                 } else if (onlyOne) {
+                  /* 不执行任何操作 */
                 } else {
                   showInfo(`已跳转并高亮 ${gaoLiangCount} 处`);
                 }

@@ -10,7 +10,7 @@ import { JiaZaiZhuangTai } from '@shared/utils/common/JiaZaiZhuangTai';
 import { BookCard } from './BookCard';
 import { AddBookModal } from './AddBookModal';
 import { EPUBDaoRuTanChuang } from './EPUBDaoRuTanChuang';
-
+import type { EPUBMetadata, EPUBChapter } from '@shared/utils/epubParser';
 import { BookShelfCaoZuo } from './BookShelfCaoZuo';
 import { BookShieKongZhi } from './BookShieKongZhi';
 import { ShanChuQueRenTanChuang } from './ShanChuQueRenTanChuang';
@@ -21,11 +21,11 @@ interface BookShelfProps {
 }
 
 export function BookShelf({ onSelectBook, onOpenSettings }: BookShelfProps) {
-  const { books, deleteBook, settings, isLoading, refreshBooks } = useApp();
+  const { books, deleteBook, settings, isLoading, addBook, refreshBooks } = useApp();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEPUBModal, setShowEPUBModal] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | undefined>();
-  const [importing, _setImporting] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [shanChuTiShi, setShanChuTiShi] = useState<{ bookId: string; bookTitle: string } | null>(null);
 
   const handleShanChuQueRen = (bookId: string, bookTitle: string) => {
@@ -46,8 +46,23 @@ export function BookShelf({ onSelectBook, onOpenSettings }: BookShelfProps) {
     setShanChuTiShi(null);
   };
 
+  const shanChuTiShiBiaoTi = shanChuTiShi 
+    ? `《${shanChuTiShi.bookTitle}》已删除` 
+    : '';
+
   const handleEditBook = (book: Book) => { setEditingBook(book); setShowAddModal(true); };
-const handleCloseModal = () => { setShowAddModal(false); setEditingBook(undefined); };
+  const handleCloseModal = () => { setShowAddModal(false); setEditingBook(undefined); };
+
+  const handleEPUBImport = async (data: { metadata: EPUBMetadata; chapters: EPUBChapter[] }) => {
+    setImporting(true);
+    try {
+      const newBook = await addBook({ title: data.metadata.title || '未命名书籍', author: data.metadata.author || '未知作者' });
+      if (!newBook) throw new Error('创建书籍失败');
+      showSuccess(`导入成功！创建书籍《${newBook.title}》`);
+      setShowEPUBModal(false);
+    } catch (error) { showError(error instanceof Error ? error.message : '导入失败'); }
+    finally { setImporting(false); }
+  };
 
   if (isLoading || importing) return <div style={{ minHeight: '100vh', backgroundColor: settings.darkMode ? '#111827' : '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><JiaZaiZhuangTai wenAn={importing ? "正在导入 EPUB..." : "加载书架..."} chiCun="large" /></div>;
 

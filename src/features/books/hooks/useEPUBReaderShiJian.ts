@@ -36,16 +36,16 @@ export function useEPUBReaderShiJian({
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
   setFirstLineRect,
-  externalRenditionRef, externalBookRef, onHuaXianDianJi,
+  externalRenditionRef, _externalBookRef, onHuaXianDianJi,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
     externalRenditionRef, saveImmediately,
   });
 
-  const cfiRangeRef = useRef<string | null>(null);
+  const _cfiRangeRef = useRef<string | null>(null);
   const contentsRef = useRef<Contents | null>(null);
-  const bookRef = externalBookRef || useRef<any>(null);
+  const bookRef = useRef<any>(null);
   const xuanZeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const huaCiKaiQiRef = useRef(huaCiKaiQi);
   const linshiBiaoZhuCfiRef = useRef<string | null>(null);
@@ -73,7 +73,7 @@ export function useEPUBReaderShiJian({
     if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
       const rendition = fanYeHeYeMa.renditionRef.current;
       if (rendition && linshiBiaoZhuCfiRef.current) {
-        try { rendition.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
+        try { rendition.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch { /* 忽略删除失败 */ }
         linshiBiaoZhuCfiRef.current = null;
       }
       setShowMenu(false);
@@ -122,10 +122,10 @@ export function useEPUBReaderShiJian({
       
       let accurateCfiRange = cfiRange;
       try {
-        const doc = contents.document;
+        const _doc = contents.document;
         
         // 使用 epubjs 的 cfiFromRange 获取准确的 CFI
-        let computedCfi = contents.cfiFromRange(range) || '';
+        const computedCfi = contents.cfiFromRange(range) || '';
         
         if (computedCfi) {
           accurateCfiRange = computedCfi;
@@ -166,7 +166,7 @@ export function useEPUBReaderShiJian({
         right: rect.right + totalLeft,
         bottom: rect.bottom + totalTop,
       };
-      setSelectionRect(correctedRect);
+      setSelectionRect(correctedRect as DOMRect);
       
       if (setFirstLineRect) {
         const clientRects = range.getClientRects();
@@ -180,8 +180,8 @@ export function useEPUBReaderShiJian({
             right: firstRect.right + totalLeft,
             bottom: firstRect.bottom + totalTop,
           };
-          firstLineRectRef.current = firstLineRect;
-          setFirstLineRect(firstLineRect);
+          firstLineRectRef.current = firstLineRect as DOMRect;
+          setFirstLineRect(firstLineRect as DOMRect);
         }
       }
       
@@ -291,7 +291,7 @@ export function useEPUBReaderShiJian({
 
       function handleIframeClick(e: Event) {
     console.log('[调试] handleIframeClick 被调用', e);
-    var target = (e as any).target;
+    const target = (e as any).target;
     if (target && target.closest && target.closest('[data-biaoji]')) { return; }
     // 清除可能残留的标记
     yiZhiXiaYiGeClickRef.current = false;
@@ -302,7 +302,7 @@ export function useEPUBReaderShiJian({
     console.log('[调试] handleIframeClick: 关闭菜单');
     const rend = fanYeHeYeMa.renditionRef.current;
     if (rend && linshiBiaoZhuCfiRef.current) {
-      try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch {}
+      try { rend.annotations.remove(linshiBiaoZhuCfiRef.current, 'temp-selection'); } catch (_e) { /* 忽略删除失败 */ }
       linshiBiaoZhuCfiRef.current = null;
     }
     setShowMenu(false);

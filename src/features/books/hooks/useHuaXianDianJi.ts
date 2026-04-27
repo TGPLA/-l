@@ -138,7 +138,7 @@ export function useHuaXianDianJi({
   const handleCopyText = useCallback(async () => {
     if (!activeHuaXian) return;
     if (onCopy) { onCopy(activeHuaXian.text); }
-    else { try { await navigator.clipboard.writeText(activeHuaXian.text); } catch {} }
+    else { try { await navigator.clipboard.writeText(activeHuaXian.text); } catch { /* 忽略剪贴板写入失败 */ } }
     handleCloseEdit();
   }, [activeHuaXian, onCopy, handleCloseEdit]);
 

@@ -31,9 +31,9 @@ function AppContent() {
   const { settings } = useApp();
   const [currentPage, setCurrentPage] = useState<Page>('shelf');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
-  const [selectedParagraph, setSelectedParagraph] = useState<{ id: string; content: string } | null>(null);
+  const [_selectedParagraph, setSelectedParagraph] = useState<{ id: string; content: string } | null>(null);
   const [learningSource, setLearningSource] = useState<LearningSource | null>(null);
-  const [practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
+  const [_practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isBackendAvailable, setIsBackendAvailable] = useState(true);
@@ -92,11 +92,6 @@ function AppContent() {
     setSelectedParagraph(null);
     setLearningSource(null);
     setPracticeQuestions([]);
-  };
-
-  const handleStartConceptLearning = (source: LearningSource) => {
-    setLearningSource(source);
-    setCurrentPage('concept-learning');
   };
 
   const handleFuShuXueXi = (text: string) => {
