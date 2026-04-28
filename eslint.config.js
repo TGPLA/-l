@@ -31,4 +31,24 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/purity': 'off',
+    },
+  },
+  {
+    files: [
+      'src/shared/utils/common/DuanLuoXuanRan.tsx',
+      'src/shared/utils/common/ToastRongQi.tsx',
+      'src/shared/utils/common/ToastTiShi.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

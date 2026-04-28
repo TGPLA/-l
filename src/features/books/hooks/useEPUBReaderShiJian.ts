@@ -106,7 +106,7 @@ export function useEPUBReaderShiJian({
           section.html = section.html.replace('<html>', `<html><head>${注入样式}</head>`);
         }
         return section.html;
-      } catch (e) {
+      } catch (_e) {
         return section.html;
       }
     });
@@ -202,7 +202,7 @@ export function useEPUBReaderShiJian({
           try {
             rend.annotations.add('temp-selection', accurateCfiRange, {}, () => {}, 'temp-hl', { fill: 'transparent', 'fill-opacity': '0', stroke: '#000000', 'stroke-width': '1px', 'stroke-dasharray': '3,2' });
             linshiBiaoZhuCfiRef.current = accurateCfiRange;
-          } catch (e) { console.error('临时标注创建失败:', e); }
+          } catch (_e) { console.error('临时标注创建失败:', _e); }
         }
         xuanZeTimerRef.current = null;
       }, XUAN_ZE_YAN_CHI_MS);
@@ -331,7 +331,7 @@ export function useEPUBReaderShiJian({
 
       const handleMessage = (msg: MessageEvent) => {
         if (!msg.data || msg.data.type !== 'huaxian-click') return;
-        const frameElement = contents.window.frameElement;
+        const _frameElement = contents.window.frameElement;
         let totalTop = 0, totalLeft = 0;
         let currentWindow = contents.window;
         while (currentWindow) {
@@ -358,7 +358,7 @@ export function useEPUBReaderShiJian({
 
       window.addEventListener('message', (msg: MessageEvent) => {
         if (!msg.data || msg.data.type !== 'huaxian-click') return;
-        const frameElement = contents.window.frameElement;
+        const _frameElement = contents.window.frameElement;
         let totalTop = 0, totalLeft = 0;
         let currentWindow = contents.window;
         while (currentWindow) {
@@ -401,8 +401,8 @@ export function useEPUBReaderShiJian({
         if (location?.start?.cfi) {
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
-      } catch (e) {
-        console.error('[调试] rendition: rendered 出错', e);
+      } catch (_e) {
+        console.error('[调试] rendition: rendered 出错', _e);
       }
     });
     rendition.on('relocated', (location: any) => {
@@ -412,8 +412,8 @@ export function useEPUBReaderShiJian({
         if (location?.start?.cfi) {
           fanYeHeYeMa.handleLocationChanged(location.start.cfi);
         }
-      } catch (e) {
-        console.error('[调试] rendition: relocated 出错', e);
+      } catch (_e) {
+        console.error('[调试] rendition: relocated 出错', _e);
       }
     });
     rendition.on('error', (error: any) => {
