@@ -187,6 +187,7 @@ export function useEPUBReaderShiJian({
       
       setCurrentCfiRange(accurateCfiRange);
       setSelectedText(selectedText);
+      setShowMenu(true);
       if (xuanZeTimerRef.current) {
         clearTimeout(xuanZeTimerRef.current);
       }
@@ -305,6 +306,12 @@ export function useEPUBReaderShiJian({
       console.log('[调试] handleIframeClick: 菜单未显示，不执行任何操作');
       return; 
     }
+    // 修复Bug：用户完成文本选择后松开鼠标时，如果有选中的文本，则不关闭菜单
+    const currentSelection = contents.window.getSelection();
+    if (currentSelection && !currentSelection.isCollapsed && currentSelection.toString().trim().length >= ZUI_XIAO_WEN_ZI_SHU) {
+      console.log('[调试] handleIframeClick: 当前有选中的文本，不关闭菜单');
+      return;
+    }
     console.log('[调试] handleIframeClick: 关闭菜单');
     const rend = fanYeHeYeMa.renditionRef.current;
     if (rend && linshiBiaoZhuCfiRef.current) {
@@ -327,9 +334,60 @@ export function useEPUBReaderShiJian({
         const text = selection.toString().trim();
         if (!text || text.length < ZUI_XIAO_WEN_ZI_SHU) return;
         if (showMenuRef.current) return;
+        
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        let totalTop = 0;
+        let totalLeft = 0;
+        let currentWindow = contents.window;
+        while (currentWindow) {
+          const frameElement = currentWindow.frameElement;
+          if (frameElement) {
+            const frameRect = frameElement.getBoundingClientRect();
+            totalTop += frameRect.top;
+            totalLeft += frameRect.left;
+            try {
+              const parentWindow = frameElement.ownerDocument?.defaultView?.parent;
+              if (parentWindow && parentWindow !== currentWindow) {
+                currentWindow = parentWindow as Window;
+              } else {
+                break;
+              }
+            } catch {
+              break;
+            }
+          } else {
+            break;
+          }
+        }
+        const correctedRect = {
+          top: rect.top + totalTop,
+          left: rect.left + totalLeft,
+          width: rect.width,
+          height: rect.height,
+          right: rect.right + totalLeft,
+          bottom: rect.bottom + totalTop,
+        };
+        setSelectionRect(correctedRect as DOMRect);
+        
+        if (setFirstLineRect) {
+          const clientRects = range.getClientRects();
+          if (clientRects && clientRects.length > 0) {
+            const firstRect = clientRects[0];
+            const firstLineRect = {
+              top: firstRect.top + totalTop,
+              left: firstRect.left + totalLeft,
+              width: firstRect.width,
+              height: firstRect.height,
+              right: firstRect.right + totalLeft,
+              bottom: firstRect.bottom + totalTop,
+            };
+            setFirstLineRect(firstLineRect as DOMRect);
+          }
+        }
+        
+        setSelectedText(text);
         showMenuRef.current = true;
-        // 移除这个标记，因为它会导致第一次点击翻页按钮失效
-        // yiZhiXiaYiGeClickRef.current = true;
         setShowMenu(true);
       }
 
