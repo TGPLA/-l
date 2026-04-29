@@ -13,19 +13,6 @@ interface YueDuQiDiBuFanYeProps {
 export function YueDuQiDiBuFanYe({ onShangYiYe, onXiaYiYe, keJian }: YueDuQiDiBuFanYeProps) {
   if (!keJian) return null;
 
-  const anNiuYangShi = {
-    padding: '0.4rem 0.8rem',
-    border: 'none',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: 'var(--ci-yao-wen-zi)',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    opacity: 0.6,
-    transition: 'opacity 0.2s ease',
-    userSelect: 'none' as const,
-  };
-
   return (
     <div style={{
       display: 'flex',
@@ -34,20 +21,48 @@ export function YueDuQiDiBuFanYe({ onShangYiYe, onXiaYiYe, keJian }: YueDuQiDiBu
       padding: '0.5rem 1.5rem 0.75rem',
     }}>
       <button
-        onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-        onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
-        onClick={onShangYiYe}
-        style={anNiuYangShi}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('[翻页按钮] 上一页 clicked');
+          onShangYiYe();
+        }}
+        style={{
+          padding: '0.4rem 0.8rem',
+          border: 'none',
+          borderRadius: '4px',
+          backgroundColor: 'transparent',
+          color: 'var(--ci-yao-wen-zi)',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          opacity: 0.6,
+          transition: 'opacity 0.2s ease',
+          userSelect: 'none' as const,
+        }}
+        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.opacity = '1'}
+        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
       >
         （上一页）
       </button>
       <button
-        onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-        onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.6'; }}
-        onClick={onXiaYiYe}
-        style={anNiuYangShi}
+        onClick={(e) => {
+          e.stopPropagation();
+          console.log('[翻页按钮] 下一页 clicked');
+          onXiaYiYe();
+        }}
+        style={{
+          padding: '0.4rem 0.8rem',
+          border: 'none',
+          borderRadius: '4px',
+          backgroundColor: 'transparent',
+          color: 'var(--ci-yao-wen-zi)',
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          opacity: 0.6,
+          transition: 'opacity 0.2s ease',
+          userSelect: 'none' as const,
+        }}
+        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.opacity = '1'}
+        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.opacity = '0.6'}
       >
         （下一页）
       </button>

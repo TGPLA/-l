@@ -142,6 +142,9 @@ export function EPUBYueDuQuYu({
     userSelect: 'none' as const, fontFamily: 'inherit',
   };
 
+  const anNiuOnMouseEnter = (e: React.MouseEvent) => (e.currentTarget as HTMLElement).style.opacity = '1';
+  const anNiuOnMouseLeave = (e: React.MouseEvent) => (e.currentTarget as HTMLElement).style.opacity = '0.7';
+
   return (
     <div style={BAO_CHI_QI_YANG_SHI} ref={rongQiRef}>
       <QingChuKuNeiBuBianJu containerRef={rongQiRef} />
@@ -251,9 +254,8 @@ export function EPUBYueDuQuYu({
                 e.stopPropagation(); 
                 onShangYiYe(); 
               }} style={anNiuYangShi}
-                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>
+                onMouseEnter={anNiuOnMouseEnter}
+                onMouseLeave={anNiuOnMouseLeave}>
                 ← 上一页
               </button>
             )}
@@ -264,9 +266,8 @@ export function EPUBYueDuQuYu({
                 e.stopPropagation(); 
                 onXiaYiYe(); 
               }} style={anNiuYangShi}
-                onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-                onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.7'; }}>
+                onMouseEnter={anNiuOnMouseEnter}
+                onMouseLeave={anNiuOnMouseLeave}>
                 下一页 →
               </button>
             )}

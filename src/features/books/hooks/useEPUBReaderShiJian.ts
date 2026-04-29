@@ -292,7 +292,13 @@ export function useEPUBReaderShiJian({
       function handleIframeClick(e: Event) {
     console.log('[调试] handleIframeClick 被调用', e);
     const target = (e as any).target;
-    if (target && target.closest && target.closest('[data-biaoji]')) { return; }
+    const targetTagName = target?.tagName || 'unknown';
+    const targetClassName = target?.className || '';
+    console.log('[调试] handleIframeClick: 点击目标 tagName=', targetTagName, 'className=', targetClassName);
+    if (target && target.closest && target.closest('[data-biaoji]')) { 
+      console.log('[调试] handleIframeClick: 点击的是划线元素，直接返回');
+      return; 
+    }
     // 清除可能残留的标记
     yiZhiXiaYiGeClickRef.current = false;
     if (!showMenuRef.current) { 
