@@ -6,10 +6,11 @@ import React from 'react';
 interface YueDuQiDingBuDaoHangProps {
   shuMing: string;
   zuoZhe: string;
+  yeMaXinXi?: string;
   onClose: () => void;
 }
 
-export function YueDuQiDingBuDaoHang({ shuMing, zuoZhe, onClose }: YueDuQiDingBuDaoHangProps) {
+export function YueDuQiDingBuDaoHang({ shuMing, zuoZhe, yeMaXinXi, onClose }: YueDuQiDingBuDaoHangProps) {
   return (
     <div style={{
       height: '48px',
@@ -21,21 +22,32 @@ export function YueDuQiDingBuDaoHang({ shuMing, zuoZhe, onClose }: YueDuQiDingBu
       zIndex: 100,
       position: 'relative'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <span style={{
-          fontSize: '1rem',
-          fontWeight: 600,
-          color: 'var(--ci-yao-wen-zi)',
-          maxWidth: '400px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }}>
-          {shuMing || '加载中...'}
-        </span>
-        {zuoZhe && (
-          <span style={{ fontSize: '0.8rem', color: 'var(--ci-yao-wen-zi)' }}>
-            · {zuoZhe}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{
+            fontSize: '1rem',
+            fontWeight: 600,
+            color: 'var(--ci-yao-wen-zi)',
+            maxWidth: '400px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {shuMing || '加载中...'}
+          </span>
+          {zuoZhe && (
+            <span style={{ fontSize: '0.8rem', color: 'var(--ci-yao-wen-zi)' }}>
+              · {zuoZhe}
+            </span>
+          )}
+        </div>
+        {yeMaXinXi && (
+          <span style={{
+            fontSize: '0.75rem',
+            color: 'var(--ci-yao-wen-zi)',
+            opacity: 0.7,
+          }}>
+            {yeMaXinXi}
           </span>
         )}
       </div>

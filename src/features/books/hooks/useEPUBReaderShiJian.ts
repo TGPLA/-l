@@ -27,6 +27,7 @@ interface UseEPUBReaderShiJianProps {
   setFirstLineRect?: (rect: DOMRect | null) => void;
   externalRenditionRef?: React.RefObject<Rendition | undefined>;
   externalBookRef?: React.RefObject<any>;
+  setBookState?: (book: any) => void;
   onHuaXianDianJi?: (xinXi: { cfi: string; id: string; className: string; rect: { top: number; left: number; width: number; height: number }; text: string }) => void;
 }
 
@@ -36,7 +37,7 @@ export function useEPUBReaderShiJian({
   chuLiSouSuoJieGuo, tiaoDaoShangYiGe, tiaoDaoXiaYiGe, huaCiKaiQi,
   showMenu, setSelectedText, setShowMenu, setSelectionRect, setCurrentCfiRange,
   setFirstLineRect,
-  externalRenditionRef, _externalBookRef, onHuaXianDianJi,
+  externalRenditionRef, externalBookRef, setBookState, onHuaXianDianJi,
 }: UseEPUBReaderShiJianProps) {
   const fanYeHeYeMa = useEPUBReaderFanYeHeYeMa({
     setYeMaXinXi, setLocation, tiaoDaoShangYiGe, tiaoDaoXiaYiGe,
@@ -85,9 +86,20 @@ export function useEPUBReaderShiJian({
   }, [setShowMenu, setSelectedText, setSelectionRect, setCurrentCfiRange, setFirstLineRect]);
 
   const handleRendition = useCallback((rendition: Rendition) => {
+    console.log('[调试] handleRendition 被调用', { rendition: !!rendition, book: !!rendition?.book });
+    console.log('[调试] externalRenditionRef:', externalRenditionRef?.current);
+    // 重置翻页状态，防止重新导入书籍时状态冲突
+    fanYeHeYeMa.lastSetLocationRef.current = '';
     fanYeHeYeMa.renditionRef.current = rendition;
     fanYeHeYeMa.setRenditionJiuXu(true);
+    console.log('[调试] 设置后 renditionRef.current:', !!fanYeHeYeMa.renditionRef.current);
     bookRef.current = rendition.book;
+    if (externalBookRef) {
+      externalBookRef.current = rendition.book;
+    }
+    if (setBookState) {
+      setBookState(rendition.book);
+    }
 
     const beiJingSe = zhuTi === 'dark' ? '#222228' : '#F2F2F4';
     const wenZiSe = zhuTi === 'dark' ? '#BBBBc4' : '#1A1A2E';
@@ -456,14 +468,21 @@ export function useEPUBReaderShiJian({
         if (oldProxy && oldProxy.parentNode === contents.window.document.head) oldProxy.remove();
       };
     });
-    rendition.on('rendered', () => {
+    // 使用 ref 防止重复处理渲染事件，避免闪烁
+    const lastRenderedCfiRef = { current: '' };
+
+    rendition.on('rendered', (_section: any, view: any) => {
       console.log('[调试] rendition: rendered 事件触发');
       fanYeHeYeMa.gengXinYeMaXinXi();
       try {
-        const location = rendition.location;
+        const location = view?.location || rendition.location;
         console.log('[调试] rendition: rendered 中的 location', location);
         if (location?.start?.cfi) {
-          fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+          // 避免重复处理相同的 CFI，防止闪烁
+          if (lastRenderedCfiRef.current !== location.start.cfi) {
+            lastRenderedCfiRef.current = location.start.cfi;
+            fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+          }
         }
       } catch (_e) {
         console.error('[调试] rendition: rendered 出错', _e);
@@ -474,7 +493,11 @@ export function useEPUBReaderShiJian({
       fanYeHeYeMa.gengXinYeMaXinXi();
       try {
         if (location?.start?.cfi) {
-          fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+          // 避免重复处理相同的 CFI，防止闪烁
+          if (lastRenderedCfiRef.current !== location.start.cfi) {
+            lastRenderedCfiRef.current = location.start.cfi;
+            fanYeHeYeMa.handleLocationChanged(location.start.cfi);
+          }
         }
       } catch (_e) {
         console.error('[调试] rendition: relocated 出错', _e);
@@ -491,7 +514,7 @@ export function useEPUBReaderShiJian({
       fanYeHeYeMa.tocRef.current = nav.toc || [];
       fanYeHeYeMa.gengXinYeMaXinXi();
     });
-  }, [huaCiKaiQi, handleHidePopup, yingYongZhuTi, zhuTi, ziTiDaXiao, fanYeHeYeMa, setSelectionRect, setCurrentCfiRange, setSelectedText, setShowMenu]);
+  }, [huaCiKaiQi, handleHidePopup, yingYongZhuTi, zhuTi, ziTiDaXiao, fanYeHeYeMa, setSelectionRect, setCurrentCfiRange, setSelectedText, setShowMenu, setBookState]);
 
   useEffect(() => {
     const rendition = fanYeHeYeMa.renditionRef.current;
@@ -513,6 +536,7 @@ export function useEPUBReaderShiJian({
   return {
     renditionRef: fanYeHeYeMa.renditionRef,
     renditionJiuXu: fanYeHeYeMa.renditionJiuXu,
+    setRenditionJiuXu: fanYeHeYeMa.setRenditionJiuXu,
     handleRendition,
     handleNextPage: fanYeHeYeMa.handleNextPage, handlePrevPage: fanYeHeYeMa.handlePrevPage,
     handleShangYiGeSouSuoJieGuo: fanYeHeYeMa.handleShangYiGeSouSuoJieGuo,

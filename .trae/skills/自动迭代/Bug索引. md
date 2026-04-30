@@ -1,0 +1,287 @@
+# Bug索引 - 智能复用核心数据库
+> **用途**：当遇到Bug时，**先查此索引匹配多个历史方案**，根据场景选择最合适的解决方案，避免重复踩坑。
+> **更新时机**：每次复盘存档创建/更新时自动同步。
+## 核心特性：多方案并存
+```json
+{
+  "Bug ID": {
+    "问题名称": "...",
+    "解决方案": [
+      { "序号": "方案A", "方法": "...", "适用场景": "...", "优先级": "primary|alternative|fallback", "状态": "在用|废弃|实验" },
+      { "序号": "方案B", "方法": "...", "适用场景": "...", "优先级": "...", "状态": "..." }
+    ]
+  }
+}
+```
+**核心原则**：
+- ✅ **每个Bug可以有多个解决方案并存**
+- ✅ **每个方案标注适用场景**，帮助选择
+- ✅ **标注优先级**：primary（首选）> alternative（备选）> fallback（最后手段）
+- ✅ **标注状态**：在用（当前使用）| 废弃（历史方案）| 实验（测试中）
+- ✅ **保留废弃方案的历史记录**，作为参考或回退方案
+---
+
+## 索引表（按问题分类）
+
+### 一、划线笔记相关 (B001)
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | 三套同步机制冲突导致划线不显示 |
+| **问题类型** | 逻辑错误 |
+| **风险等级** | P1严重 |
+| **相关文件** | `useHuaXianChuTi.ts`, `useHuaXianDianJi.ts` |
+| **来源** | 划线数据同步问题_2026-04-08. md |
+| **解决状态** | ✅ 已解决 |
+
+#### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 信任库自带同步，移除手动监听 | **生产环境推荐** | ⭐ primary | 🟢 在用 | `useLocalStorageState` + `huaXianList` 监听 |
+| **方案B** | 添加标志位区分本地/外部变化 | 特殊跨标签页同步 | ⚠️ alternative | 🔴 废弃 | 使用 `isLocalChangeRef` 标志位 |
+| **方案C** | 简化标志位逻辑 | 过渡方案 | 🔴 fallback | 🔴 废弃 | 移除标志位，使用单一套监听 |
+
+##### 方案A详情（当前使用）
+```typescript
+// 核心思路：信任 useLocalStorageState 库，它已经自动处理了跨浏览器/标签页同步
+// 我们只需要监听 huaXianList 变化并重新应用划线即可
+
+import { useLocalStorageState } from 'use-local-storage-state'
+
+// 1. 使用 useLocalStorageState（库已自动处理跨浏览器同步）
+const [huaXianList, setHuaXianList] = useLocalStorageState<HuaXianXinXi[]>(storageKey, {
+  defaultValue: []
+})
+
+// 2. 只依赖 huaXianList 变化，信任库的同步机制
+useEffect(() => {
+  if (applyBiaoJiRef. current) {
+    applyBiaoJiRef. current()
+  }
+}, [huaXianList])
+
+// 3. 【禁止】不要手动添加 storage 事件监听器！
+// ❌ window. addEventListener('storage', handleStorageChange) // 不要这样做！
+```
+**验证结果**：✅ 构建成功，跨浏览器同步正常工作
+---
+### 二、EPUB翻页相关 (B003)
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | spine跳转导致跳过章节内页面 |
+| **问题类型** | 逻辑错误 |
+| **风险等级** | P1严重 |
+| **相关文件** | `useEPUBReaderFanYeHeYeMa. ts` |
+| **来源** | EPUB阅读器翻页跳过问题_2026-04-23. md |
+| **解决状态** | ✅ 已解决 |
+
+#### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 使用 `rendition. next()` 翻页 | **标准使用** | ⭐ primary | 🟢 在用 | `rendition. next()` |
+| **方案B** | 使用 spine + `rendition. next()` 混合 | 需要保留章节信息 | ⚠️ alternative | 🟡 实验 | spine + rendition 组合 |
+
+##### 方案A详情（当前使用）
+```typescript
+// 核心思路：使用 epubjs 原生的 rendition. next() 翻页，而不是 spine 跳转
+
+const handleNextPage = useCallback(() => {
+  const rendition = renditionRef. current
+  if (!rendition) {
+    return
+  }
+
+  // 使用 rendition. next() 翻到下一页（处理章节内容跨页的情况）
+  rendition. next().then(() => {
+    const currentLocation = rendition. location
+    const currentHref = currentLocation?.start?.href || ''
+    if (currentHref && saveImmediately) {
+      saveImmediately(currentHref)
+    }
+  }).catch((error) => {
+    console. error('下一页出错:', error)
+  })
+}, [saveImmediately])
+
+const handlePrevPage = useCallback(() => {
+  const rendition = renditionRef. current
+  if (!rendition) {
+    return
+  }
+
+  rendition. prev().then(() => {
+    const currentLocation = rendition. location
+    const currentHref = currentLocation?.start?.href || ''
+    if (currentHref && saveImmediately) {
+      saveImmediately(currentHref)
+    }
+  }).catch((error) => {
+    console. error('上一页出错:', error)
+  })
+}, [saveImmediately])
+```
+**验证结果**：✅ 构建成功，翻页不会跳过章节内页面
+---
+### 三、封面处理相关 (B005-B006)
+
+#### B005：封面字段长度问题
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | 封面URL字段过长导致存储失败 |
+| **问题类型** | 数据问题 |
+| **风险等级** | P2一般 |
+| **相关文件** | `backend/models/models_content. go` |
+| **来源** | EPUB导入封面字段长度问题_2026-04-01. md |
+| **解决状态** | ✅ 已解决 |
+
+##### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 扩大字段长度 | **推荐** | ⭐ primary | 🟢 在用 | VARCHAR(500) 或 TEXT |
+| **方案B** | 压缩封面URL | 不想改数据库结构 | ⚠️ alternative | 🟡 实验 | 截断或存储缩略图路径 |
+| **方案C** | 改为外键引用 | 封面单独表存储 | 🔴 fallback | 🟡 实验 | 创建 cover_assets 表 |
+
+##### 方案A详情
+```go
+// 方案：扩大封面字段长度到500字符
+type Book struct {
+  ID          int64
+  Title       string
+  CoverURL    string  // 原来是 VARCHAR(255)，可能导致截断
+  // 修复后：改为 TEXT 类型或 VARCHAR(500)
+}
+```
+---
+#### B006：封面为空问题
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | 封面解析失败返回空 |
+| **问题类型** | 解析问题 |
+| **风险等级** | P2一般 |
+| **相关文件** | `backend/controllers/book_ epu_ upload. go` |
+| **来源** | EPUB导入封面问题_2026-04-01. md |
+| **解决状态** | ✅ 已解决 |
+
+##### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 检查 `epub. getMetadata()` 返回 | **推荐** | ⭐ primary | 🟢 在用 | 添加空值判断 |
+| **方案B** | 使用默认封面兜底 | UI需要封面展示 | ⚠️ alternative | 🟢 在用 | 设置 fallback 图片 |
+| **方案C** | 提取封面后再验证 | 额外验证步骤 | 🔴 fallback | 🟡 实验 | 双重验证逻辑 |
+
+##### 方案A详情
+```go
+// 方案：检查元数据解析逻辑，添加空值判断
+metadata, err := epub. GetMetadata()
+if err != nil {
+  // 处理错误
+}
+coverURL := metadata. Cover
+if coverURL == "" {
+  // 封面为空，设置为默认封面或跳过
+  coverURL = "/default-cover. png"
+}
+```
+---
+### 四、文件选择相关 (B007)
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | 文件��择器无法打开 |
+| **问题类型** | UI问题 |
+| **风险等级** | P3低 |
+| **相关文件** | `EPUBDaoRuTanChuangShangChuanWenJian. tsx` |
+| **来源** | EPUB导入文件选择器问题_2026-03-20. md |
+| **解决状态** | ✅ 已解决 |
+
+##### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 检查文件输入组件状态和 ref | **推荐** | ⭐ primary | 🟢 在用 | 确保 ref 正确挂载 |
+| **方案B** | 重新渲染文件输入 | 特殊情况下无法触发 | ⚠️ alternative | 🟡 实验 | 条件渲染或延迟挂载 |
+---
+### 五、划线不显示相关 (B002)
+
+| 字段 | 值 |
+|-----|-----|
+| **问题名称** | 跨浏览器划线丢失 |
+| **问题类型** | 渲染问题 |
+| **风险等级** | P2一般 |
+| **相关文件** | `EPUBYueDuQuYu. tsx` |
+| **来源** | B001 同源 |
+| **解决状态** | ✅ 已解决 |
+
+##### 解决方案列表
+
+| 序号 | 方法 | 适用场景 | 优先级 | 状态 | 核心代码 |
+|------|-----|---------|--------|------|-------|--------|
+| **方案A** | 只依赖 huaXianList 变化，信任库同步 | **推荐** | ⭐ primary | 🟢 在用 | 参考 B001 方案A |
+| **方案B** | 强制重新渲染划线层 | 紧急修复 | ⚠️ alternative | 🔴 废弃 | 强制刷新 |
+---
+## 快速匹配表
+
+| 问题关键词 | Bug ID | 推荐方案 | 备选方案 |
+|---------|-------|---------|---------| 
+| 划线不同步 | B001 | 方案A | - |
+| 翻页跳过 | B003 | 方案A | 方案B |
+| 封面为空 | B006 | 方案A | 方案B |
+| 字段过长 | B005 | 方案A | 方案B |
+| 文件选择 | B007 | 方案A | 方案B |
+| 划线丢失 | B002 | 方案A | - |
+
+---
+
+## 多方案匹配算法
+
+### 当遇到Bug时的匹配流程
+
+```
+1. 用户描述问题
+   ↓
+2. 提取问题关键词
+   ↓
+3. 匹配 Bug 索引
+   ↓
+4. 找到对应Bug，获取所有解决方案
+   ↓
+5. 按优先级排序展示
+   ├─ ⭐ primary → 推荐使用
+   ├─ ⚠️ alternative → 备选方案
+   └─ 🔴 fallback → 最后手段
+   ↓
+6. 根据【适用场景】选择方案
+   或展示所有方案让用户选择
+   ↓
+7. 如果无匹配
+   → 这是新问题！
+   → 创建新的复盘存档记录
+   → 更新此索引（新Bug + 新方案）
+```
+
+### 多方案并存的核心原则
+
+1. **不删除历史方案**：即使废弃也保留作为参考
+2. **明确标注状态**：
+   - 🟢 在用 = 当前生产使用的
+   - 🟡 实验 = 正在测试的
+   - 🔴 废弃 = 历史方案，已知有问题
+3. **按优先级排序**：用户可快速找到首选方案
+4. **详细适用场景**：帮助判断哪个方案最合适
+5. **保留核心代码**：避免每次重新查找
+
+---
+
+## 更新记录
+
+| 日期 | 操作 | Bug ID | 变更内容 |
+|------|------|-------|---------| 
+| 2026-04-29 | 初始创建 | B001- B007 | 从5个复盘存档提取，支持多方案并存 |
+| - | - | - | - |

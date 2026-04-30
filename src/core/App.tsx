@@ -165,6 +165,7 @@ function AppContent() {
       }}>
         {selectedBook && (
           <EPUBReaderPage
+            key={selectedBook.id}
             book={selectedBook}
             onClose={handleCloseReader}
             onFuShuXueXi={handleFuShuXueXi}

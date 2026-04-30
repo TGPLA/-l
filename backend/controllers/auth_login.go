@@ -3,6 +3,8 @@
 package controllers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"reading-reflection/config"
 	"reading-reflection/middleware"
@@ -109,7 +111,11 @@ func Login(c *gin.Context) {
 		if result.Error == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "数据库查询失败"})
+			log.Printf("数据库查询错误 [%s]: %v", req.Username, result.Error)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error": fmt.Sprintf("数据库查询失败: %v", result.Error),
+			})
 		}
 		return
 	}

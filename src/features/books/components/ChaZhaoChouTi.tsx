@@ -18,7 +18,7 @@ interface SearchResult {
 }
 
 interface ChaZhaoChouTiProps {
-  bookRef: React.RefObject<Book>;
+  book: Book;
   renditionRef: React.RefObject<Rendition>;
   zhangJieLieBiao: NavItem[];
   onJump: (cfi: string, keyword?: string, onlyOne?: boolean, weiZhi?: number) => void;
@@ -31,8 +31,8 @@ const PANEL_STYLE = {
   animation: 'slideInRight 0.25s ease-out'
 };
 
-export function ChaZhaoChouTi({ bookRef, onJump, onGuanBi }: Omit<ChaZhaoChouTiProps, 'renditionRef' | 'zhangJieLieBiao'>) {
-  const { input, setInput, results, loading, searched, inputRef, dangQianSuoYin, shangYiGe, xiaYiGe } = useChaZhaoChouTi(bookRef);
+export function ChaZhaoChouTi({ book, onJump, onGuanBi }: Omit<ChaZhaoChouTiProps, 'renditionRef' | 'zhangJieLieBiao'>) {
+  const { input, setInput, results, loading, searched, inputRef, dangQianSuoYin, shangYiGe, xiaYiGe } = useChaZhaoChouTi(book);
 
   const handleJump = useCallback((result: SearchResult) => {
     onJump(result.cfi, input, false);
