@@ -119,21 +119,8 @@ export function EPUBYueDuQuYu({
   const rongQiRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 翻页期间不更新 ReactReader 的 location prop，避免 rendition.display() 导致闪烁
-  const [xianShiWeiZhi, setXianShiWeiZhi] = useState(location);
-  const fanYeZhongRef = useRef(false);
-
-  // 仅在非翻页期间更新显示位置
-  useEffect(() => {
-    if (!fanYeZhongRef.current) {
-      setXianShiWeiZhi(location);
-    }
-  }, [location]);
-
   const handleGetRendition = (rendition: Rendition) => {
-    console.log('[EPUBYueDuQuYu] handleGetRendition 被调用', { rendition: !!rendition });
     renditionRef.current = rendition;
-    console.log('[EPUBYueDuQuYu] 设置后 renditionRef.current:', !!renditionRef.current);
     onGetRendition(rendition);
     
     rendition.on('rendered', () => {
@@ -146,24 +133,6 @@ export function EPUBYueDuQuYu({
   const handleLocationChanged = (epubcfi: string) => {
     setIsLoading(false);
     onLocationChanged(epubcfi);
-  };
-
-  // 翻页按钮点击时标记翻页中，阻止 location prop 更新导致 ReactReader 重新 display
-  const handleShangYiYe = () => {
-    fanYeZhongRef.current = true;
-    onShangYiYe?.();
-    // 翻页完成后恢复，允许后续导航正常更新
-    setTimeout(() => {
-      fanYeZhongRef.current = false;
-    }, 500);
-  };
-
-  const handleXiaYiYe = () => {
-    fanYeZhongRef.current = true;
-    onXiaYiYe?.();
-    setTimeout(() => {
-      fanYeZhongRef.current = false;
-    }, 500);
   };
 
   const anNiuYangShi: React.CSSProperties = {
@@ -188,7 +157,7 @@ export function EPUBYueDuQuYu({
           {url && (
             <ReactReader
               url={url}
-              location={xianShiWeiZhi}
+              location={location}
               locationChanged={handleLocationChanged}
               showToc={false}
               getRendition={handleGetRendition}
@@ -288,7 +257,7 @@ export function EPUBYueDuQuYu({
                   console.log('[调试] 上一页按钮被点击'); 
                   e.stopPropagation(); 
                   try {
-                    handleShangYiYe(); 
+                    onShangYiYe(); 
                   } catch (err) {
                     console.error('[翻页] 执行失败:', err);
                   }
@@ -306,7 +275,7 @@ export function EPUBYueDuQuYu({
                   console.log('[调试] 下一页按钮被点击'); 
                   e.stopPropagation(); 
                   try {
-                    handleXiaYiYe(); 
+                    onXiaYiYe(); 
                   } catch (err) {
                     console.error('[翻页] 执行失败:', err);
                   }

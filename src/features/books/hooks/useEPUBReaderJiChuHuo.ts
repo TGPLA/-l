@@ -56,7 +56,6 @@ export function useEPUBReaderJiChuHuo({
     chuLiSouSuoJieGuo,
   } = useSouSuo();
 
-  const [yeMaXinXi, setYeMaXinXi] = useState('');
   const [ziTiDaXiao, setZiTiDaXiao] = useState(100);
   const [huaCiKaiQi, setHuaCiKaiQi] = useState(true);
 
@@ -103,8 +102,6 @@ export function useEPUBReaderJiChuHuo({
     tiaoDaoXiaYiGe,
     tiaoDaoShangYiGe,
     chuLiSouSuoJieGuo,
-    yeMaXinXi,
-    setYeMaXinXi,
     ziTiDaXiao,
     setZiTiDaXiao,
     selectedText: externalShowMenu !== undefined ? huaCiJiaoHu.selectedText : huaCiJiaoHu.selectedText,

@@ -62,14 +62,13 @@ export function EPUBReader({ url, _darkMode, onClose, bookId, chapterId, onParag
     }
   }, [bookId]);
 
-  const p = useEPUBReaderHuoChuLi({
-    bookId,
-    url,
-    chapterId,
-    onParagraphCreated,
+  const p = useEPUBReaderHuoChuLi({ 
+    bookId, 
+    chapterId, 
+    onParagraphCreated, 
     onQuestionGenerated: loadQuestions,
   });
-  const buju = useYueDuQiBuJu({ book: p.bookState, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
+  const buju = useYueDuQiBuJu({ bookRef: p.bookRef, renditionRef: p.renditionRef, highlights: p.highlights, handleDeleteHighlight: p.handleDeleteHighlight });
 
   const handleTiaoZhuanCfi = useCallback((huaXian: HuaXianXinXi) => {
     buju.setDaKaiDeChouTi(null);
@@ -433,7 +432,7 @@ export function EPUBReader({ url, _darkMode, onClose, bookId, chapterId, onParag
   return (
     <div className="yue-du-qi" data-theme={isDarkMode ? 'dark' : 'light'}
       style={{ height: '100vh', width: '100vw', backgroundColor: 'var(--ye-du-bei-jing)', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-      <YueDuQiDingBuDaoHang shuMing={buju.shuMing} zuoZhe={buju.zuoZhe} yeMaXinXi={p.yeMaXinXi} onClose={onClose} />
+      <YueDuQiDingBuDaoHang shuMing={buju.shuMing} zuoZhe={buju.zuoZhe} onClose={onClose} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', maxWidth: '1320px', width: '100%', margin: '0 auto' }}>
         <EPUBYueDuQuYu url={url} location={p.location} onLocationChanged={p.handleLocationChanged}
           onGetRendition={p.handleRendition} souSuoCi={p.souSuoCi} onSouSuoJieGuo={p.handleSouSuoJieGuo}
@@ -505,7 +504,7 @@ export function EPUBReader({ url, _darkMode, onClose, bookId, chapterId, onParag
         <BiJiChouTi highlights={p.highlights} bookId={bookId} onDelete={p.handleDeleteHighlight} onJump={handleTiaoZhuanCfi} onGuanBi={() => buju.setDaKaiDeChouTi(null)} zhangJieLieBiao={buju.zhangJieLieBiao} />
       )}
       {buju.daKaiDeChouTi === 'chazhao' && (
-        <ChaZhaoChouTi book={p.bookState} renditionRef={p.renditionRef} zhangJieLieBiao={buju.zhangJieLieBiao} onJump={handleChaZhaoTiaoZhuan} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
+        <ChaZhaoChouTi bookRef={p.bookRef} renditionRef={p.renditionRef} zhangJieLieBiao={buju.zhangJieLieBiao} onJump={handleChaZhaoTiaoZhuan} onGuanBi={() => buju.setDaKaiDeChouTi(null)} />
       )}
       <LianXiMianBan
         isOpen={showLianXiMianBan}

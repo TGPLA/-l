@@ -1,7 +1,7 @@
 // @审计已完成
 // EPUB 阅读器 Hooks 初始化 Hook
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Rendition } from 'epubjs';
 import { useEPUBReaderJiChuHuo } from './useEPUBReaderJiChuHuo';
 import { useEPUBReaderShiJian } from './useEPUBReaderShiJian';
@@ -9,7 +9,6 @@ import { useHuaXianDianJi } from './useHuaXianDianJi';
 
 interface UseEPUBReaderHuoChuLiProps {
   bookId: string;
-  url: string;
   chapterId?: string;
   onParagraphCreated?: () => void;
   onQuestionGenerated?: () => void;
@@ -19,7 +18,6 @@ interface UseEPUBReaderHuoChuLiProps {
 
 export function useEPUBReaderHuoChuLi({ 
   bookId, 
-  url,
   chapterId, 
   onParagraphCreated,
   onQuestionGenerated,
@@ -28,7 +26,6 @@ export function useEPUBReaderHuoChuLi({
 }: UseEPUBReaderHuoChuLiProps) {
   const renditionRef = useRef<Rendition | undefined>(undefined);
   const bookRef = useRef<any>(null);
-  const [bookState, setBookState] = useState<any>(null);
 
   const [showMenu, setShowMenu] = useState(false);
   const [selectedText, setSelectedText] = useState('');
@@ -76,7 +73,6 @@ export function useEPUBReaderHuoChuLi({
 
   const {
     renditionJiuXu,
-    setRenditionJiuXu,
     handleRendition,
     handleNextPage,
     handlePrevPage,
@@ -88,7 +84,6 @@ export function useEPUBReaderHuoChuLi({
     yingYongZhuTi: jiChu.yingYongZhuTi,
     zhuTi: jiChu.zhuTi,
     ziTiDaXiao: 100,
-    setYeMaXinXi: jiChu.setYeMaXinXi,
     setLocation: jiChu.setLocation,
     saveImmediately: jiChu.saveImmediately,
     chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
@@ -103,19 +98,8 @@ export function useEPUBReaderHuoChuLi({
     setFirstLineRect: setFirstLineRect,
     externalRenditionRef: renditionRef,
     externalBookRef: bookRef,
-    setBookState,
     onHuaXianDianJi: editMenu.handleHuaXianDianJi,
   });
-
-  const prevUrlRef = useRef<string>(url);
-  useEffect(() => {
-    if (prevUrlRef.current && prevUrlRef.current !== url) {
-      console.log('[调试] URL 发生变化，重置翻页状态', { 旧URL: prevUrlRef.current, 新URL: url });
-      renditionRef.current = undefined;
-      setRenditionJiuXu(false);
-    }
-    prevUrlRef.current = url;
-  }, [url, renditionRef, setRenditionJiuXu]);
 
   return {
     location: jiChu.location,
@@ -130,7 +114,6 @@ export function useEPUBReaderHuoChuLi({
     tiaoDaoXiaYiGe: jiChu.tiaoDaoXiaYiGe,
     tiaoDaoShangYiGe: jiChu.tiaoDaoShangYiGe,
     chuLiSouSuoJieGuo: jiChu.chuLiSouSuoJieGuo,
-    yeMaXinXi: jiChu.yeMaXinXi,
     ziTiDaXiao: jiChu.ziTiDaXiao,
     setZiTiDaXiao: jiChu.setZiTiDaXiao,
     selectedText: selectedText,
@@ -165,7 +148,5 @@ export function useEPUBReaderHuoChuLi({
     handleDeleteSingleHuaXian: editMenu.handleDeleteSingle,
     handleChangeYanSe: editMenu.handleChangeYanSe,
     handleCopyText: editMenu.handleCopyText,
-    bookState,
-    setBookState,
   };
 }

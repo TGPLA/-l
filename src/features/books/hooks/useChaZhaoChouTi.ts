@@ -33,7 +33,7 @@ function saveState(input: string, results: SearchResult[], searched: boolean, da
   }
 }
 
-export function useChaZhaoChouTi(book: any) {
+export function useChaZhaoChouTi(bookRef: React.RefObject<any>) {
   const savedState = loadSavedState();
   const [input, setInput] = useState(savedState?.input || '');
   const [results, setResults] = useState<SearchResult[]>(savedState?.results || []);
@@ -75,6 +75,7 @@ export function useChaZhaoChouTi(book: any) {
     setSearched(true);
     setDangQianSuoYin(0);
 
+    const book = bookRef.current;
     const resultList: SearchResult[] = [];
 
     try {
@@ -94,9 +95,9 @@ export function useChaZhaoChouTi(book: any) {
 
         try {
           console.log('搜索章节:', item.href, 'index:', (item as any).index, 'spineItem:', item);
-
+          
           let sectionContent = '';
-
+          
           if (typeof (book as any).loadSection === 'function') {
             const index = (item as any).index !== undefined ? (item as any).index : spineItems.indexOf(item);
             const section = await (book as any).loadSection(index);
@@ -146,7 +147,7 @@ export function useChaZhaoChouTi(book: any) {
     } finally {
       setLoading(false);
     }
-  }, [book]);
+  }, [bookRef]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
