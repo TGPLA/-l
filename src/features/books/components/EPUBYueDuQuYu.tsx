@@ -118,19 +118,32 @@ export function EPUBYueDuQuYu({
   const renditionRef = useRef<Rendition>();
   const rongQiRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [key, setKey] = useState(0);
+
+  useEffect(() => {
+    console.log('[EPUB] 使用URL:', url);
+    setIsLoading(true);
+    setKey(k => k + 1);
+  }, [url]);
 
   const handleGetRendition = (rendition: Rendition) => {
+    console.log('[EPUB] 获取到rendition');
     renditionRef.current = rendition;
     onGetRendition(rendition);
     
     rendition.on('rendered', () => {
+      console.log('[EPUB] 渲染完成');
       setIsLoading(false);
     });
     
-    setIsLoading(false);
+    rendition.on('error', (err) => {
+      console.error('[EPUB] 渲染错误:', err);
+      setIsLoading(false);
+    });
   };
 
   const handleLocationChanged = (epubcfi: string) => {
+    console.log('[EPUB] 位置改变:', epubcfi);
     setIsLoading(false);
     onLocationChanged(epubcfi);
   };
@@ -156,6 +169,7 @@ export function EPUBYueDuQuYu({
           <ShuangLanPaiBan rendition={renditionRef.current} darkMode={darkMode} />
           {url && (
             <ReactReader
+              key={key}
               url={url}
               location={location}
               locationChanged={handleLocationChanged}

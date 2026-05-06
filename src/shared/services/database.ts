@@ -221,12 +221,11 @@ class DatabaseService {
     }
   }
 
-  getEPUBUrl(bookId: string, epubFilePath: string): string {
+  getEPUBUrl(_bookId: string, epubFilePath: string): string {
     const baseUrl = window.location.origin;
-    let 标准化路径 = epubFilePath.replace(/\\/g, '/');
-    标准化路径 = 标准化路径.replace(/^\/+/, '');
-    const finalUrl = `${baseUrl}/${标准化路径}`;
-    return finalUrl;
+    // 确保路径以斜杠开头
+    const path = epubFilePath.startsWith('/') ? epubFilePath : '/' + epubFilePath;
+    return `${baseUrl}${path}`;
   }
 
   async getQuestionsByBook(bookId: string): Promise<{ questions: Question[]; error: DatabaseError | null }> {
