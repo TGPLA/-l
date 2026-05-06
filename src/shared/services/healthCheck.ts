@@ -1,4 +1,3 @@
-// @审计已完成
 // 后端健康检查服务
 
 const API_BASE = '/api';
@@ -26,19 +25,13 @@ export async function checkBackendHealth(): Promise<HealthStatus> {
         isHealthy: true,
         isBackendAvailable: true,
       };
-    } else if (response.status === 404) {
-      return {
-        isHealthy: false,
-        isBackendAvailable: false,
-        errorMessage: '后端健康检查端点不存在（404）',
-      };
-    } else {
-      return {
-        isHealthy: false,
-        isBackendAvailable: true,
-        errorMessage: `后端服务响应异常：${response.status}`,
-      };
     }
+
+    return {
+      isHealthy: false,
+      isBackendAvailable: false,
+      errorMessage: `后端服务响应异常：${response.status}`,
+    };
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
@@ -48,7 +41,7 @@ export async function checkBackendHealth(): Promise<HealthStatus> {
           errorMessage: '后端服务响应超时（5 秒）',
         };
       }
-      
+
       if (error.message.includes('Failed to fetch')) {
         return {
           isHealthy: false,
@@ -57,7 +50,7 @@ export async function checkBackendHealth(): Promise<HealthStatus> {
         };
       }
     }
-    
+
     return {
       isHealthy: false,
       isBackendAvailable: false,

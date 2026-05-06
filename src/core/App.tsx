@@ -36,7 +36,7 @@ function AppContent() {
   const [_practiceQuestions, setPracticeQuestions] = useState<Question[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isBackendAvailable, setIsBackendAvailable] = useState(true);
+  const [isBackendAvailable, setIsBackendAvailable] = useState(false);
   const [checkingBackend, setCheckingBackend] = useState(true);
 
   useEffect(() => {
@@ -130,12 +130,13 @@ function AppContent() {
     return <QuanPingJiaZai wenAn="加载应用..." />;
   }
 
-  if (!isBackendAvailable) {
+  // 只有已登录用户才需要后端服务，未登录用户可以直接看到登录页
+  if (!isBackendAvailable && isAuthenticated) {
     return <BackendUnavailable darkMode={settings.darkMode} />;
   }
 
   if (!isAuthenticated) {
-    return <AuthPage onAuthSuccess={() => setIsAuthenticated(true)} />;
+    return <AuthPage onAuthSuccess={() => setIsAuthenticated(true)} backendAvailable={isBackendAvailable} />;
   }
 
   return (

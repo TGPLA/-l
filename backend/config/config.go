@@ -45,10 +45,10 @@ func LoadConfig() {
 	exePath, _ := os.Executable()
 	exeDir := filepath.Dir(exePath)
 	
-	possiblePaths := []string{
-		filepath.Join(exeDir, ".env"),
-		filepath.Join(exeDir, "backend", ".env"),
+possiblePaths := []string{
 		"backend/.env",
+		filepath.Join(exeDir, "backend", ".env"),
+		filepath.Join(exeDir, ".env"),
 		".env",
 	}
 	
@@ -151,6 +151,7 @@ func InitDB() {
 	if DB != nil {
 		migrateV5()
 		// migrateV6()
+		migrateV7()
 		// AutoMigrate()
 		log.Println("⚠️  已跳过自动迁移，直接启动服务")
 	} else {
@@ -203,9 +204,68 @@ func AutoMigrate() {
 		&models.ConceptPracticeRecord{},
 		&models.Annotation{},
 		&models.ParaphraseRecord{},
+		&models.TokenBlacklist{},
+		&models.PasswordResetToken{},
 	); err != nil {
 		log.Fatal("❌ 数据库迁移失败:", err)
 	}
 
 	log.Println("✅ 数据库表结构迁移完成")
+}
+
+func migrateV7() {
+	// 添加 users 表的新列
+	type ColumnCheck struct {
+		Name  string
+		Type  string
+		Table string
+	}
+	checks := []ColumnCheck{
+		{"login_attempts", "INT DEFAULT 0", "users"},
+		{"locked_until", "DATETIME NULL", "users"},
+		{"recovery_phrase", "VARCHAR(255) DEFAULT ''", "users"},
+	}
+
+	for _, check := range checks {
+		var count int64
+		DB.Raw(
+			"SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?",
+			AppConfig.DBName, check.Table, check.Name,
+		).Scan(&count)
+
+		if count == 0 {
+			log.Printf("📝 添加 %s.%s 字段...", check.Table, check.Name)
+			if err := DB.Exec("ALTER TABLE " + check.Table + " ADD COLUMN " + check.Name + " " + check.Type).Error; err != nil {
+				log.Printf("⚠️  添加 %s 字段失败: %v", check.Name, err)
+			} else {
+				log.Printf("✅ 成功添加 %s 字段", check.Name)
+			}
+		} else {
+			log.Printf("✅ %s 字段已存在，跳过", check.Name)
+		}
+	}
+
+	// 创建 token_blacklists 表
+	if !DB.Migrator().HasTable(&models.TokenBlacklist{}) {
+		log.Println("📝 创建 token_blacklists 表...")
+		if err := DB.AutoMigrate(&models.TokenBlacklist{}); err != nil {
+			log.Printf("⚠️  创建 token_blacklists 表失败: %v", err)
+		} else {
+			log.Println("✅ token_blacklists 表创建成功")
+		}
+	} else {
+		log.Println("✅ token_blacklists 表已存在，跳过")
+	}
+
+	// 创建 password_reset_tokens 表
+	if !DB.Migrator().HasTable(&models.PasswordResetToken{}) {
+		log.Println("📝 创建 password_reset_tokens 表...")
+		if err := DB.AutoMigrate(&models.PasswordResetToken{}); err != nil {
+			log.Printf("⚠️  创建 password_reset_tokens 表失败: %v", err)
+		} else {
+			log.Println("✅ password_reset_tokens 表创建成功")
+		}
+	} else {
+		log.Println("✅ password_reset_tokens 表已存在，跳过")
+	}
 }

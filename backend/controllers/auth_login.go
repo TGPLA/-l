@@ -1,4 +1,3 @@
-// @审计已完成
 // 认证控制器 - 注册与登录
 package controllers
 
@@ -10,7 +9,7 @@ import (
 	"reading-reflection/middleware"
 	"reading-reflection/models"
 	"regexp"
-	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -19,6 +18,11 @@ import (
 
 var usernameRegex = regexp.MustCompile(`^[1-9][0-9]{3,15}$`)
 
+const (
+	maxLoginAttempts = 5
+	lockoutDuration  = 15 * time.Minute
+)
+
 func isValidUsername(username string) bool {
 	return usernameRegex.MatchString(username)
 }
@@ -26,7 +30,7 @@ func isValidUsername(username string) bool {
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数错误：" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数格式错误"})
 		return
 	}
 
@@ -63,10 +67,21 @@ func Register(c *gin.Context) {
 		nickname = "用户" + req.Username
 	}
 
+	recoveryPhrase := req.RecoveryPhrase
+	if recoveryPhrase != "" {
+		recoveryHash, err := bcrypt.GenerateFromPassword([]byte(recoveryPhrase), bcrypt.DefaultCost)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "恢复短语加密失败"})
+			return
+		}
+		recoveryPhrase = string(recoveryHash)
+	}
+
 	newUser := models.User{
-		Username:     req.Username,
-		PasswordHash: string(passwordHash),
-		Nickname:     nickname,
+		Username:       req.Username,
+		PasswordHash:   string(passwordHash),
+		Nickname:       nickname,
+		RecoveryPhrase: recoveryPhrase,
 	}
 
 	if err := db.Create(&newUser).Error; err != nil {
@@ -95,7 +110,12 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数错误：" + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "请求参数格式错误"})
+		return
+	}
+
+	if !isValidUsername(req.Username) {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
 		return
 	}
 
@@ -111,19 +131,47 @@ func Login(c *gin.Context) {
 		if result.Error == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
 		} else {
-			log.Printf("数据库查询错误 [%s]: %v", req.Username, result.Error)
+			log.Printf("数据库查询失败")
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"error": fmt.Sprintf("数据库查询失败: %v", result.Error),
+				"error": "数据库查询失败",
 			})
 		}
 		return
 	}
 
+	// 检查账户是否被锁定
+	if user.LockedUntil != nil && time.Now().Before(*user.LockedUntil) {
+		remaining := user.LockedUntil.Sub(time.Now())
+		minutes := int(remaining.Minutes()) + 1
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"success": false,
+			"error":   fmt.Sprintf("账户已被锁定，请在 %d 分钟后重试", minutes),
+		})
+		return
+	}
+
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
 	if err != nil {
+		// 增加登录失败计数
+		user.LoginAttempts++
+		updates := map[string]interface{}{"login_attempts": user.LoginAttempts}
+		if user.LoginAttempts >= maxLoginAttempts {
+			lockedUntil := time.Now().Add(lockoutDuration)
+			user.LockedUntil = &lockedUntil
+			updates["locked_until"] = lockedUntil
+		}
+		db.Model(&user).Updates(updates)
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "用户名或密码错误"})
 		return
+	}
+
+	// 登录成功，重置失败计数
+	if user.LoginAttempts > 0 || user.LockedUntil != nil {
+		db.Model(&user).Updates(map[string]interface{}{
+			"login_attempts": 0,
+			"locked_until":   nil,
+		})
 	}
 
 	token, err := middleware.GenerateToken(user.ID, user.Username)
@@ -139,8 +187,4 @@ func Login(c *gin.Context) {
 			"token": token,
 		},
 	})
-}
-
-func init() {
-	_ = strconv.Itoa(0)
 }

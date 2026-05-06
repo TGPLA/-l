@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { checkBackendHealth, type HealthStatus } from '@shared/services/healthCheck';
+import { authService } from '@shared/services/auth';
 import { getResponsiveValue } from '@shared/utils/responsive';
 
 interface BackendUnavailableProps {
@@ -166,6 +167,18 @@ export function BackendUnavailable({ darkMode = false }: BackendUnavailableProps
           </svg>
           刷新页面
         </button>
+
+        {authService.isAuthenticated() && (
+          <button
+            onClick={async () => {
+              await authService.signOut();
+              window.location.reload();
+            }}
+            style={buttonStyle}
+          >
+            退出登录，返回登录页
+          </button>
+        )}
 
         <button
           onClick={checkHealth}

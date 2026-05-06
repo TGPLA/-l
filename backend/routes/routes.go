@@ -12,7 +12,7 @@ import (
 func InitRoutes() *gin.Engine {
 	router := gin.Default()
 
-	allowOrigins := []string{"http://localhost:5173", "http://localhost:3000", "https://linyubo.top"}
+	allowOrigins := []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:4173", "https://linyubo.top"}
 	
 	if os.Getenv("CORS_ALLOW_ALL") == "true" {
 		allowOrigins = []string{"*"}
@@ -27,16 +27,18 @@ func InitRoutes() *gin.Engine {
 		MaxAge:           12 * 3600,
 	}))
 
-	router.Static("/uploads", "./uploads")
+	router.Static("/uploads", "./backend/uploads")
 
 	api := router.Group("/api")
 	{
 		auth := api.Group("/auth")
+		auth.Use(middleware.AuthRateLimiter.Middleware())
 		{
 			auth.POST("/signup", controllers.Register)
 			auth.POST("/signin", controllers.Login)
-			auth.POST("/signout", controllers.Logout)
-			auth.POST("/reset-password", controllers.ResetPassword)
+			auth.POST("/signout", middleware.AuthMiddleware(), controllers.Logout)
+			auth.POST("/forgot-password", middleware.StrictRateLimiter.Middleware(), controllers.ForgotPassword)
+			auth.POST("/reset-password", middleware.StrictRateLimiter.Middleware(), controllers.ResetPassword)
 			auth.POST("/update-password", middleware.AuthMiddleware(), controllers.UpdatePassword)
 		}
 

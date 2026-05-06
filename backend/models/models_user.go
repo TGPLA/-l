@@ -10,15 +10,18 @@ import (
 )
 
 type User struct {
-	ID           string     `gorm:"type:char(36);primaryKey" json:"id"`
-	Username     string     `gorm:"type:varchar(16);uniqueIndex;not null" json:"username"`
-	PasswordHash string     `gorm:"type:varchar(255);not null" json:"-"`
-	Nickname     string     `gorm:"type:varchar(100)" json:"nickname"`
-	AvatarUrl    string     `gorm:"type:varchar(512)" json:"avatar_url"`
-	CreatedAt    time.Time  `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt    time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
-	Books        []Book     `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE" json:"books,omitempty"`
-	Settings     *Settings  `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE" json:"settings,omitempty"`
+	ID             string     `gorm:"type:char(36);primaryKey" json:"id"`
+	Username       string     `gorm:"type:varchar(16);uniqueIndex;not null" json:"username"`
+	PasswordHash   string     `gorm:"type:varchar(255);not null" json:"-"`
+	Nickname       string     `gorm:"type:varchar(100)" json:"nickname"`
+	RecoveryPhrase string     `gorm:"type:varchar(255)" json:"-"`
+	LoginAttempts  int        `gorm:"default:0" json:"-"`
+	LockedUntil    *time.Time `gorm:"type:datetime" json:"-"`
+	AvatarUrl      string     `gorm:"type:varchar(512)" json:"avatar_url"`
+	CreatedAt      time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt      time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
+	Books          []Book     `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE" json:"books,omitempty"`
+	Settings       *Settings  `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE" json:"settings,omitempty"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) error {
