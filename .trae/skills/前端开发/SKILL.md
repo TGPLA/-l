@@ -277,3 +277,30 @@ import { useSomeHook } from './hooks/useSomeHook'
 // 6. 样式文件
 import './some.css'
 ```
+
+---
+
+## 2026-05-06 自动更新
+
+### 最近更新
+
+**路径**: `src/features/books/`
+
+| 名称 | 类型 | 说明 |
+|------|------|------|
+| `useEPUBReaderFanYeHeYeMa` | Hook | Use EPUB Reader Fan Ye He Ye Ma |
+| `useEPUBReaderShiJian` | Hook | Use EPUB Reader Shi Jian |
+| `useEPUBReaderHuoChuLi` | Hook | Use EPUB Reader Huo Chu Li |
+| `useEPUBReaderJiChuHuo` | Hook | Use EPUB Reader Ji Chu Huo |
+| `EPUBYueDuQuYu` | 组件 | EPUB Yue Du Qu Yu |
+| `useYueDuQiBuJu` | Hook | Use Yue Du Qi Bu Ju |
+| `EPUBReader` | 组件 | EPUB Reader |
+| `YueDuQiDingBuDaoHang` | 组件 | Yue Du Qi Ding Bu Dao Hang |
+| `useChaZhaoChouTi` | Hook | Use Cha Zhao Chou Ti |
+| `ChaZhaoChouTi` | 组件 | Cha Zhao Chou Ti |
+
+### 本次变更说明
+- 移除了EPUB阅读器的页码显示功能
+- 简化了翻页逻辑，删除了`gengXinYeMaXinXi`函数
+- 修复了翻页后内容空白的问题
+- 优化了阅读器顶部导航栏，移除了页码显示
