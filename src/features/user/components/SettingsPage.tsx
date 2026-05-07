@@ -130,10 +130,17 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: getResponsiveValue({ mobile: '1rem', tablet: '1.5rem' }) }}>
             <h2 style={{ fontSize: getResponsiveValue({ mobile: '1rem', tablet: '1.125rem' }), fontWeight: 600, color: settings.darkMode ? '#f9fafb' : '#111827', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>智谱 AI</h2>
             <p style={{ fontSize: '0.875rem', color: settings.darkMode ? '#9ca3af' : '#6b7280', marginBottom: getResponsiveValue({ mobile: '0.75rem', tablet: '1rem' }) }}>系统已内置智谱 AI API Key，开箱即用</p>
-            <div style={{ padding: '0.75rem 1rem', backgroundColor: settings.darkMode ? '#064e3b' : '#d1fae5', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ color: '#10b981', fontSize: '1.25rem' }}>✓</span>
-              <span style={{ color: settings.darkMode ? '#6ee7b7' : '#065f46', fontWeight: 500 }}>已启用内置智谱 AI API Key</span>
-            </div>
+            {settings.hasBuiltInKey ? (
+              <div style={{ padding: '0.75rem 1rem', backgroundColor: settings.darkMode ? '#064e3b' : '#d1fae5', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#10b981', fontSize: '1.25rem' }}>✓</span>
+                <span style={{ color: settings.darkMode ? '#6ee7b7' : '#065f46', fontWeight: 500 }}>已启用内置智谱 AI API Key</span>
+              </div>
+            ) : (
+              <div style={{ padding: '0.75rem 1rem', backgroundColor: settings.darkMode ? '#7f1d1d' : '#fee2e2', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#ef4444', fontSize: '1.25rem' }}>✗</span>
+                <span style={{ color: settings.darkMode ? '#fecaca' : '#991b1b', fontWeight: 500 }}>未配置智谱 AI API Key，学习功能将不可用</span>
+              </div>
+            )}
           </div>
 
           <div style={{ backgroundColor: settings.darkMode ? '#1f2937' : '#ffffff', borderRadius: '0.75rem', boxShadow: settings.darkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 3px rgba(0, 0, 0, 0.1)', padding: '1.5rem' }}>
