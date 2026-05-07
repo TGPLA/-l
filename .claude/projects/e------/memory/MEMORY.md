@@ -1,0 +1,3 @@
+- [翻页后 saveImmediately 导致视觉回弹](feedback_page_turn_save.md) — EPUB翻页成功后的saveImmediately调用会触发rendition.display造成视觉闪烁
+- [用户语言偏好](user_chinese_language.md) — 用户希望所有交流使用中文
+- [上传文件路径必须用绝对路径](feedback_uploads_path.md) — routes.go Static 路径不能用相对路径，本地/Docker/直接运行的工作目录不同
