@@ -24,6 +24,7 @@ type Config struct {
 	JWTSecret     string
 	ZhipuAPIKey   string
 	ZhipuModel    string
+	UploadsPath   string
 }
 
 var AppConfig Config
@@ -39,6 +40,10 @@ func GetDB() *gorm.DB {
 
 func GetZhipuAPIKey() string {
 	return AppConfig.ZhipuAPIKey
+}
+
+func GetUploadsPath() string {
+	return AppConfig.UploadsPath
 }
 
 func LoadConfig() {
@@ -78,7 +83,28 @@ possiblePaths := []string{
 		ZhipuAPIKey: getEnv("ZHIPU_API_KEY", ""),
 		ZhipuModel:  getEnv("ZHIPU_MODEL", "glm-4-flash"),
 	}
-	log.Printf("✅ 配置加载完成，DB=%s:%s/%s", AppConfig.DBHost, AppConfig.DBPort, AppConfig.DBName)
+	// 计算 uploads 目录的绝对路径（不依赖工作目录）
+	AppConfig.UploadsPath = resolveUploadsPath(exePath)
+
+	log.Printf("✅ 配置加载完成，DB=%s:%s/%s, Uploads=%s", AppConfig.DBHost, AppConfig.DBPort, AppConfig.DBName, AppConfig.UploadsPath)
+}
+
+func resolveUploadsPath(exePath string) string {
+	if p := os.Getenv("UPLOADS_PATH"); p != "" {
+		return p
+	}
+	exeDir := filepath.Dir(exePath)
+	candidate := filepath.Join(exeDir, "uploads")
+	if info, err := os.Stat(candidate); err == nil && info.IsDir() {
+		return candidate
+	}
+	// 从 backend/ 目录运行 go run 时，exe 在临时目录，回退到 cwd
+	cwd, _ := os.Getwd()
+	cwdCandidate := filepath.Join(cwd, "uploads")
+	if info, err := os.Stat(cwdCandidate); err == nil && info.IsDir() {
+		return cwdCandidate
+	}
+	return "./uploads"
 }
 
 func ValidateStartup() error {

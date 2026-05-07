@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitRoutes() *gin.Engine {
+func InitRoutes(uploadsPath string) *gin.Engine {
 	router := gin.Default()
 
 	allowOrigins := []string{"http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:4173", "https://linyubo.top"}
@@ -27,7 +27,7 @@ func InitRoutes() *gin.Engine {
 		MaxAge:           12 * 3600,
 	}))
 
-	router.Static("/uploads", "./backend/uploads")
+	router.Static("/uploads", uploadsPath)
 
 	api := router.Group("/api")
 	{
